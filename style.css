@@ -12215,6 +12215,8 @@ body.documentstyle .rpg-inline-thoughts {
     .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="good"] { --forge-tier: var(--forge-good); }
     .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="hurt"] { --forge-tier: var(--forge-hurt); }
     .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="danger"] { --forge-tier: var(--forge-danger); }
+    /* Stats where low is not bad (like arousal) stay brass instead of warning colours */
+    .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tone="neutral"] { --forge-tier: var(--forge-brass); }
 
     /* The ring: thin gaps between wedges on top, filled wedges underneath */
     .rpg-panel[data-theme="forge"] .rpg-stat-bar {
@@ -12276,7 +12278,7 @@ body.documentstyle .rpg-inline-thoughts {
     /* Status word under each ring, so colour is never the only signal */
     .rpg-panel[data-theme="forge"] .rpg-stat-row::after {
         order: 3;
-        content: attr(data-tier);
+        content: attr(data-word);
         font-size: 0.8125rem;
         font-weight: 700;
         color: var(--forge-tier);
@@ -12401,5 +12403,198 @@ body.documentstyle .rpg-inline-thoughts {
     .rpg-panel[data-theme="forge"] .rpg-character-field {
         font-size: 0.9375rem;
         line-height: 1.45;
+    }
+
+    /* Info section as labelled text: date, time, weather, temperature, then location and events */
+    .rpg-panel[data-theme="forge"] .rpg-info-section {
+        padding: 0.875em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-info-content {
+        gap: 0.75em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-row-1 {
+        gap: 0.75em 0.625em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-widget {
+        background: none;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+        min-height: 0;
+        overflow: visible;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 0.125em;
+        text-align: left;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-widget::before {
+        order: -1;
+        font-size: 0.8125rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--forge-muted);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-calendar-widget::before { content: 'Date'; }
+    .rpg-panel[data-theme="forge"] .rpg-clock-widget::before { content: 'Time'; }
+    .rpg-panel[data-theme="forge"] .rpg-weather-widget::before { content: 'Weather'; }
+    .rpg-panel[data-theme="forge"] .rpg-temp-widget::before { content: 'Temperature'; }
+    .rpg-panel[data-theme="forge"] .rpg-location-widget::before { content: 'Location'; }
+
+    /* Hide the illustrations; every value stays clickable to edit */
+    .rpg-panel[data-theme="forge"] .rpg-thermometer,
+    .rpg-panel[data-theme="forge"] .rpg-clock,
+    .rpg-panel[data-theme="forge"] .rpg-map-bg,
+    .rpg-panel[data-theme="forge"] .rpg-notebook-header,
+    .rpg-panel[data-theme="forge"] .rpg-weather-icon {
+        display: none;
+    }
+
+    /* Shared value style */
+    .rpg-panel[data-theme="forge"] .rpg-calendar-day-text,
+    .rpg-panel[data-theme="forge"] .rpg-weather-forecast,
+    .rpg-panel[data-theme="forge"] .rpg-temp-value,
+    .rpg-panel[data-theme="forge"] .rpg-time-range {
+        font-family: 'Alegreya Sans', system-ui, sans-serif;
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--rpg-text);
+        text-transform: none;
+        text-shadow: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-weather-forecast,
+    .rpg-panel[data-theme="forge"] .rpg-temp-value,
+    .rpg-panel[data-theme="forge"] .rpg-time-range {
+        align-self: flex-start;
+        justify-content: flex-start;
+        width: auto;
+        margin: 0;
+        text-align: left;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-weather-forecast::first-letter {
+        text-transform: uppercase;
+    }
+
+    /* Date: day name bold, then month and year underneath */
+    .rpg-panel[data-theme="forge"] .rpg-calendar-day {
+        order: 1;
+        width: auto;
+        height: auto;
+        padding: 0;
+        border: none;
+        background: none;
+        box-shadow: none;
+        overflow: visible;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-calendar-top,
+    .rpg-panel[data-theme="forge"] .rpg-calendar-year {
+        width: auto;
+        padding: 0;
+        background: none;
+        border: none;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        color: var(--forge-muted);
+        text-align: left;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-calendar-top { order: 2; }
+    .rpg-panel[data-theme="forge"] .rpg-calendar-year { order: 3; }
+
+    .rpg-panel[data-theme="forge"] .rpg-time-range {
+        display: flex;
+        align-items: center;
+        gap: 0.375em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-time-value {
+        font: inherit;
+        color: inherit;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-time-separator {
+        color: var(--forge-muted);
+        font-weight: 400;
+    }
+
+    /* Location: brass engraved name under a divider */
+    .rpg-panel[data-theme="forge"] .rpg-location-widget,
+    .rpg-panel[data-theme="forge"] .rpg-events-widget {
+        border-top: 1px solid var(--rpg-border);
+        padding-top: 0.75em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-location-text {
+        font-family: 'Cinzel', serif;
+        font-size: 0.9375rem;
+        font-weight: 700;
+        line-height: 1.35;
+        color: var(--forge-brass);
+        text-align: left;
+        white-space: normal;
+        background: none;
+        text-shadow: none;
+    }
+
+    /* Recent events: plain label and diamond bullets */
+    .rpg-panel[data-theme="forge"] .rpg-notebook-title {
+        font-family: 'Alegreya Sans', system-ui, sans-serif;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-align: left;
+        color: var(--forge-muted);
+        border: none;
+        background: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-notebook-lines {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375em;
+        width: 100%;
+        background: none;
+        padding: 0;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-notebook-line {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5em;
+        border: none;
+        background: none;
+        padding: 0;
+        font-size: 0.9375rem;
+        line-height: 1.4;
+        color: var(--rpg-text);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-bullet {
+        font-size: 0;
+        flex: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-bullet::before {
+        content: '◆';
+        font-size: 0.625rem;
+        color: var(--rpg-highlight);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-event-text {
+        font-size: 0.9375rem;
+        color: var(--rpg-text);
     }
 }
