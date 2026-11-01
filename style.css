@@ -13840,3 +13840,18 @@ body.documentstyle .rpg-inline-thoughts {
     line-height: 1.55;
     color: var(--rpg-text, #F1E3D6);
 }
+
+/* ==========================================================================
+   Arcane Forge: breathing room in the scrolling tab area (desktop)
+   Box borders sat 8px from the edge, where the macOS overlay scrollbar
+   covers them, and flush against the tabs at the top. Wider padding keeps
+   borders clear, and a soft fade lets boxes ease under the tabs instead of
+   being sliced off.
+   ========================================================================== */
+@media (min-width: 1001px) {
+    .rpg-panel[data-theme="forge"] .rpg-tab-content.active {
+        padding: 0.875rem 0.875rem 1rem;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 0.75rem, #000 calc(100% - 0.75rem), transparent 100%);
+        mask-image: linear-gradient(to bottom, transparent 0, #000 0.75rem, #000 calc(100% - 0.75rem), transparent 100%);
+    }
+}
