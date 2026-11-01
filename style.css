@@ -14139,3 +14139,34 @@ body.documentstyle .rpg-inline-thoughts {
         font-size: 0.75rem;
     }
 }
+
+/* ===== Arcane Forge: panel top continues SillyTavern's top bar =====
+   The panel starts where #top-bar ends (SillyTavern sizes the bar with --bottomFormBlockSize), and a
+   strip above it carries the bar across. The strip overhangs the panel's inner border, so that border
+   only runs below the bar. Colours come from Arcane Forge UI when it is on, else SillyTavern's bar tint. */
+@media (min-width: 1001px) {
+    .rpg-panel[data-theme="forge"] {
+        top: var(--bottomFormBlockSize);
+    }
+
+    .rpg-panel[data-theme="forge"]:not(.rpg-collapsed)::before {
+        content: '';
+        position: absolute;
+        top: calc(-1 * var(--bottomFormBlockSize));
+        left: 0;
+        right: 0;
+        height: var(--bottomFormBlockSize);
+        box-sizing: border-box;
+        background: var(--forge-bar-bg, var(--SmartThemeBlurTintColor));
+        border-bottom: 1px solid var(--forge-bar-line, transparent);
+        pointer-events: none;
+    }
+
+    .rpg-panel[data-theme="forge"].rpg-position-right:not(.rpg-collapsed)::before {
+        left: -3px;
+    }
+
+    .rpg-panel[data-theme="forge"].rpg-position-left:not(.rpg-collapsed)::before {
+        right: -3px;
+    }
+}
