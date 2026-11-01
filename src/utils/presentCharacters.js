@@ -191,12 +191,20 @@ export function parsePresentCharacters(characterThoughtsData, { enabledFields = 
     return presentCharacters;
 }
 
-export function resolvePresentCharacterPortrait(name) {
+/**
+ * @param {string} name - Character name
+ * @param {{fullSize?: boolean}} [options] - fullSize returns the original image instead of the small thumbnail
+ */
+export function resolvePresentCharacterPortrait(name, options = {}) {
     let characterPortrait = FALLBACK_AVATAR_DATA_URI;
 
     if (!name) {
         return characterPortrait;
     }
+
+    const getAvatarUrl = (file) => options.fullSize
+        ? `/characters/${encodeURIComponent(file)}`
+        : getSafeThumbnailUrl('avatar', file);
 
     if (extensionSettings.npcAvatars && extensionSettings.npcAvatars[name]) {
         return extensionSettings.npcAvatars[name];
@@ -210,7 +218,7 @@ export function resolvePresentCharacterPortrait(name) {
             );
 
             if (matchingMember?.avatar && matchingMember.avatar !== 'none') {
-                const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingMember.avatar);
+                const thumbnailUrl = getAvatarUrl(matchingMember.avatar);
                 if (thumbnailUrl) {
                     return thumbnailUrl;
                 }
@@ -226,7 +234,7 @@ export function resolvePresentCharacterPortrait(name) {
         );
 
         if (matchingCharacter?.avatar && matchingCharacter.avatar !== 'none') {
-            const thumbnailUrl = getSafeThumbnailUrl('avatar', matchingCharacter.avatar);
+            const thumbnailUrl = getAvatarUrl(matchingCharacter.avatar);
             if (thumbnailUrl) {
                 return thumbnailUrl;
             }
@@ -234,7 +242,7 @@ export function resolvePresentCharacterPortrait(name) {
     }
 
     if (this_chid !== undefined && characters?.[this_chid]?.name && namesMatch(characters[this_chid].name, name)) {
-        const thumbnailUrl = getSafeThumbnailUrl('avatar', characters[this_chid].avatar);
+        const thumbnailUrl = getAvatarUrl(characters[this_chid].avatar);
         if (thumbnailUrl) {
             return thumbnailUrl;
         }

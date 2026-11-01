@@ -12064,7 +12064,8 @@ body.documentstyle .rpg-inline-thoughts {
 #rpg-thought-panel[data-theme="forge"],
 #rpg-thought-icon[data-theme="forge"],
 #rpg-alt-present-characters[data-theme="forge"],
-.rpg-mobile-toggle[data-theme="forge"] {
+.rpg-mobile-toggle[data-theme="forge"],
+.rpg-focus-modal[data-theme="forge"] {
     --rpg-bg: #120908;
     --rpg-accent: #1E100D;
     --rpg-text: #F1E3D6;
@@ -12438,9 +12439,49 @@ body.documentstyle .rpg-inline-thoughts {
         transform: none;
     }
 
-    .rpg-panel[data-theme="forge"] .rpg-relationship-badge {
+    /* Portrait focus button in the top-right; the relationship badge moves to the top-left */
+    .rpg-panel[data-theme="forge"] .rpg-portrait-focus-btn {
+        position: absolute;
         top: 0.5rem;
         right: 0.5rem;
+        z-index: 3;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: 1px solid var(--forge-brass);
+        background: rgba(18, 9, 8, 0.82);
+        color: var(--forge-brass);
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-portrait-focus-btn:hover,
+    .rpg-panel[data-theme="forge"] .rpg-portrait-focus-btn:focus-visible {
+        background: var(--forge-crimson);
+        color: #FCEBDD;
+        outline: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-avatar img {
+        transition: transform 0.2s ease, object-position 0.2s ease;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-avatar {
+        overflow: hidden;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-avatar-upload::after {
+        display: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-relationship-badge {
+        top: 0.5rem;
+        left: 0.5rem;
+        right: auto;
         width: 1.75rem;
         height: 1.75rem;
         font-size: 0.875rem;
@@ -12732,4 +12773,172 @@ body.documentstyle .rpg-inline-thoughts {
         font-size: 0.9375rem;
         color: var(--rpg-text);
     }
+}
+
+/* ==========================================================================
+   Portrait focus picker (opened from the crop button on large portraits)
+   ========================================================================== */
+.rpg-focus-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.rpg-focus-dialog {
+    width: min(720px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--rpg-bg, #1a1a2e);
+    color: var(--rpg-text, #eaeaea);
+    border: 1px solid var(--rpg-border, #4a7ba7);
+    border-radius: 8px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    font-family: 'Alegreya Sans', system-ui, sans-serif;
+}
+
+.rpg-focus-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 1.125rem;
+    color: var(--forge-brass, var(--rpg-highlight, #e94560));
+}
+
+.rpg-focus-hint {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--forge-muted, var(--rpg-text, #eaeaea));
+}
+
+.rpg-focus-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.rpg-focus-stage {
+    position: relative;
+    flex: 1 1 280px;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    cursor: crosshair;
+    touch-action: none;
+    border-radius: 6px;
+}
+
+.rpg-focus-stage:focus-visible {
+    outline: 2px solid var(--forge-brass, var(--rpg-highlight, #e94560));
+    outline-offset: 4px;
+}
+
+.rpg-focus-stage img {
+    display: block;
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: 6px;
+    user-select: none;
+}
+
+.rpg-focus-marker {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.7), inset 0 0 0 2px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+}
+
+.rpg-focus-marker::after {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    background: var(--rpg-highlight, #e94560);
+}
+
+/* The marker is positioned against the image box, so the stage shrink-wraps the image */
+.rpg-focus-stage {
+    flex: 0 1 auto;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.rpg-focus-side {
+    flex: 1 1 220px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rpg-focus-label {
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--forge-muted, var(--rpg-text, #eaeaea));
+}
+
+.rpg-focus-preview {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 6px;
+    border: 1px solid var(--rpg-border, #4a7ba7);
+    border-bottom: 2px solid var(--forge-crimson, var(--rpg-highlight, #e94560));
+    background: #000;
+}
+
+.rpg-focus-preview img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rpg-focus-zoom {
+    width: 100%;
+    accent-color: var(--rpg-highlight, #e94560);
+}
+
+.rpg-focus-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.rpg-focus-btn {
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 6px;
+    border: 1px solid var(--rpg-border, #4a7ba7);
+    background: none;
+    color: var(--rpg-text, #eaeaea);
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.rpg-focus-btn:hover,
+.rpg-focus-btn:focus-visible {
+    border-color: var(--forge-brass, var(--rpg-highlight, #e94560));
+}
+
+.rpg-focus-btn-primary {
+    background: var(--forge-crimson, var(--rpg-highlight, #e94560));
+    border-color: #D2402F;
+    color: #FCEBDD;
 }

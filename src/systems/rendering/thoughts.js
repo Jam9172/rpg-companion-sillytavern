@@ -22,6 +22,7 @@ import {
 } from '../../utils/presentCharacters.js';
 import { isItemLocked, setItemLock } from '../generation/lockManager.js';
 import { statMeterAttributes } from '../../utils/statMeter.js';
+import { getPortraitFocus, portraitFocusStyle, openPortraitFocusPicker } from '../ui/portraitFocus.js';
 import { renderAlternatePresentCharacters } from '../ui/alternatePresentCharacters.js';
 import { queueThoughtBasedExpressionsUpdate } from '../integration/thoughtBasedExpressions.js';
 
@@ -358,7 +359,10 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
                 debugLog(`[RPG Thoughts] Building HTML for character ${characterIndex}/${presentCharacters.length}:`, char.name);
 
                 debugLog(`[RPG Thoughts] Looking up avatar for: ${char.name}`);
-                const characterPortrait = resolvePresentCharacterPortrait(char.name);
+                // Large portrait themes show the original image, cropped around a saved focus point
+                const largePortrait = extensionSettings.theme === 'forge';
+                const characterPortrait = resolvePresentCharacterPortrait(char.name, { fullSize: largePortrait });
+                const portraitStyle = largePortrait ? portraitFocusStyle(getPortraitFocus(char.name)) : '';
 
                 debugLog(`[RPG Thoughts] Final avatar for ${char.name}:`, characterPortrait.substring(0, 50) + '...');
 
@@ -383,7 +387,8 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
                     <div class="rpg-character-card" data-character-name="${char.name}">
                         <div class="rpg-character-header-row">
                             <div class="rpg-character-avatar rpg-avatar-upload" data-character="${char.name}" title="${i18n.getTranslation('thoughts.clickToUpload') || 'Click to upload avatar'}">
-                                <img src="${characterPortrait}" alt="${char.name}" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                                <img src="${characterPortrait}" alt="${char.name}" style="${portraitStyle}" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                                ${largePortrait ? `<button type="button" class="rpg-portrait-focus-btn" data-character="${char.name}" title="${i18n.getTranslation('portraitFocus.open') || 'Adjust portrait focus'}" aria-label="${i18n.getTranslation('portraitFocus.open') || 'Adjust portrait focus'}"><i class="fa-solid fa-crop-simple" aria-hidden="true"></i></button>` : ''}
                                 ${hasRelationshipEnabled ? `<div class="rpg-relationship-badge rpg-editable" contenteditable="true" data-character="${char.name}" data-field="${relationshipFieldName}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'} (emoji: ⚔️ ⚖️ ⭐ ❤️)">${relationshipBadge}</div>` : ''}
                             </div>
                             <div class="rpg-character-header">
@@ -531,6 +536,31 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
 
         const characterName = $(this).data('character');
         removeCharacter(characterName);
+    });
+
+    // Portrait focus button: opens the crop picker instead of the avatar upload
+    $thoughtsContainer.find('.rpg-portrait-focus-btn').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const button = this;
+        const characterName = $(button).data('character');
+        const $avatar = $(button).closest('.rpg-character-avatar');
+        const img = $avatar.find('img').get(0);
+        const rect = $avatar.get(0).getBoundingClientRect();
+
+        openPortraitFocusPicker({
+            name: characterName,
+            imageUrl: img?.getAttribute('src'),
+            aspect: rect.height ? rect.width / rect.height : 1.6,
+            returnFocusTo: button,
+            onSave: (focus) => {
+                $thoughtsContainer.find('.rpg-character-avatar')
+                    .filter((_, el) => $(el).data('character') === characterName)
+                    .find('img')
+                    .attr('style', portraitFocusStyle(focus));
+            }
+        });
     });
 
     // Add event listener for avatar upload clicks
