@@ -95,8 +95,7 @@ import {
     updateDiceDisplay,
     addDiceQuickReply,
     getSettingsModal,
-    showWelcomeModalIfNeeded,
-    showDeprecationModalIfNeeded
+    showWelcomeModalIfNeeded
 } from './src/systems/ui/modals.js';
 import {
     initTrackerEditor
@@ -1512,12 +1511,9 @@ jQuery(async () => {
             // Non-critical - continue without it
         }
 
-        // Show deprecation notice once for this release; otherwise keep the old welcome flow.
+        // Show the welcome notice once per release
         try {
-            const deprecationModalShown = showDeprecationModalIfNeeded();
-            if (!deprecationModalShown) {
-                showWelcomeModalIfNeeded();
-            }
+            showWelcomeModalIfNeeded();
         } catch (error) {
             console.error('[RPG Companion] Startup modal failed:', error);
             // Non-critical - continue without it
