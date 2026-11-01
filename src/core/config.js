@@ -50,7 +50,7 @@ export const defaultSettings = {
     enablePlotButtons: true, // Show plot progression buttons above chat input
     saveTrackerHistory: false, // Save tracker data in chat history for each message
     panelPosition: 'right', // 'left', 'right', or 'top'
-    theme: 'default', // Theme: default, sci-fi, fantasy, cyberpunk, custom
+    theme: 'forge', // Theme: forge (default), default, sci-fi, fantasy, cyberpunk, custom
     customColors: {
         bg: '#1a1a2e',
         accent: '#16213e',

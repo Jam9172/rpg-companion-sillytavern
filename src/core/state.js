@@ -10,7 +10,7 @@
  * Extension settings - persisted to SillyTavern settings
  */
 export let extensionSettings = {
-    settingsVersion: 5, // Version number for settings migrations
+    settingsVersion: 6, // Version number for settings migrations
     enabled: true,
     autoUpdate: false,
     updateDepth: 4, // How many messages to include in the context
@@ -67,7 +67,7 @@ export let extensionSettings = {
         sendAllEnabledOnRefresh: false // If true, sends all enabled stats from preset instead of only persistInHistory-enabled stats on Refresh RPG Info
     },
     panelPosition: 'right', // 'left', 'right', or 'top'
-    theme: 'default', // Theme: default, sci-fi, fantasy, cyberpunk, custom
+    theme: 'forge', // Theme: forge (default), default, sci-fi, fantasy, cyberpunk, custom
     customColors: {
         bg: '#1a1a2e',
         bgOpacity: 100,

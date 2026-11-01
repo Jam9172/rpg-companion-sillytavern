@@ -23,7 +23,7 @@ import { validateStoredInventory, cleanItemString } from '../utils/security.js';
 import { migrateToV3JSON } from '../utils/jsonMigration.js';
 
 const extensionName = 'third-party/rpg-companion-sillytavern';
-const CURRENT_SETTINGS_VERSION = 5;
+const CURRENT_SETTINGS_VERSION = 6;
 
 const DEFAULT_USER_STATS = {
     health: 100,
@@ -613,6 +613,15 @@ export function loadSettings() {
                 if (extensionSettings.statBarColorLowOpacity === undefined) extensionSettings.statBarColorLowOpacity = 100;
                 if (extensionSettings.statBarColorHighOpacity === undefined) extensionSettings.statBarColorHighOpacity = 100;
                 extensionSettings.settingsVersion = 5;
+                settingsChanged = true;
+            }
+
+            // Migration to version 6: Arcane Forge is this fork's default theme
+            if (currentVersion < 6) {
+                if (extensionSettings.theme === 'default') {
+                    extensionSettings.theme = 'forge';
+                }
+                extensionSettings.settingsVersion = 6;
                 settingsChanged = true;
             }
 
