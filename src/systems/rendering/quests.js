@@ -234,13 +234,21 @@ export function renderQuests() {
     }
     const optionalQuests = extensionSettings.quests.optional || [];
 
-    // Build HTML
-    let html = '<div class="rpg-quests-wrapper">';
-    html += renderQuestsSubTabs(activeSubTab);
+    // Journal-style themes show main and optional quests together on one page
+    const singlePage = extensionSettings.theme === 'forge';
 
-    // Render active sub-tab
+    // Build HTML
+    let html = `<div class="rpg-quests-wrapper${singlePage ? ' rpg-quests-journal' : ''}">`;
+    if (!singlePage) {
+        html += renderQuestsSubTabs(activeSubTab);
+    }
+
+    // Render active sub-tab (or both)
     html += '<div class="rpg-quests-panels">';
-    if (activeSubTab === 'main') {
+    if (singlePage) {
+        html += renderMainQuestView(mainQuest);
+        html += renderOptionalQuestsView(optionalQuests);
+    } else if (activeSubTab === 'main') {
         html += renderMainQuestView(mainQuest);
     } else {
         html += renderOptionalQuestsView(optionalQuests);

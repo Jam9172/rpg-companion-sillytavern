@@ -12942,3 +12942,456 @@ body.documentstyle .rpg-inline-thoughts {
     border-color: #D2402F;
     color: #FCEBDD;
 }
+
+/* ==========================================================================
+   Arcane Forge: Inventory as a ledger, Quests as a journal (desktop widths)
+   ========================================================================== */
+@media (min-width: 1001px) {
+    /* Inventory sub-tabs as filter pills */
+    .rpg-panel[data-theme="forge"] .rpg-inventory-subtabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375em;
+        border: none;
+        background: none;
+        padding: 0;
+        margin-bottom: 0.75em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-inventory-subtab {
+        flex: none;
+        min-height: 2.25rem;
+        padding: 0 0.875em;
+        border-radius: 999px;
+        background: none;
+        border: 1px solid var(--rpg-border);
+        color: var(--forge-muted);
+        font-family: 'Alegreya Sans', system-ui, sans-serif;
+        font-size: 0.875rem;
+        font-weight: 400;
+        box-shadow: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-inventory-subtab.active {
+        background: #2C1511;
+        border-color: var(--rpg-highlight);
+        color: var(--rpg-text);
+        font-weight: 700;
+    }
+
+    /* Each section is a ledger card */
+    .rpg-panel[data-theme="forge"] .rpg-inventory-views > .rpg-inventory-section {
+        background: var(--forge-card);
+        border: 1px solid var(--rpg-border);
+        border-radius: 6px;
+        padding: 0.625em 0.75em;
+        box-shadow: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-inventory-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.25em 0.5em;
+        padding: 0 0 0.5em;
+        margin: 0;
+        border: none;
+        border-bottom: 1px solid var(--rpg-border);
+        background: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-inventory-header h4 {
+        margin: 0;
+        font-family: 'Cinzel', serif;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--forge-brass);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-inventory-header h4 {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-inventory-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.375em;
+        margin-left: auto;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-view-toggle {
+        display: flex;
+        gap: 0.125em;
+        background: none;
+        border: none;
+        padding: 0;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-view-btn {
+        width: 1.75rem;
+        height: 1.75rem;
+        padding: 0;
+        border-radius: 4px;
+        background: none;
+        border: none;
+        color: #8A6E62;
+        box-shadow: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-view-btn.active {
+        color: var(--rpg-highlight);
+        background: #2C1511;
+    }
+
+    /* Quiet text buttons for "Add item" and "Add location" */
+    .rpg-panel[data-theme="forge"] .rpg-inventory-add-btn {
+        min-height: 2rem;
+        padding: 0 0.25em;
+        background: none;
+        border: none;
+        box-shadow: none;
+        color: var(--forge-muted);
+        font-family: 'Alegreya Sans', system-ui, sans-serif;
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-inventory-add-btn:hover {
+        color: var(--rpg-text);
+    }
+
+    /* Item rows: ×qty, name, remove */
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-row {
+        display: flex;
+        align-items: center;
+        gap: 0.375em;
+        padding: 0.5625em 0;
+        margin: 0;
+        background: none;
+        border: none;
+        border-bottom: 1px solid #2A1410;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-row::before {
+        content: '×';
+        order: 1;
+        margin-right: -0.375em;
+        font-family: 'Cinzel', serif;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--rpg-highlight);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-qty-edit {
+        order: 2;
+        flex: none;
+        width: 1.5rem !important;
+        padding: 0 !important;
+        background: none !important;
+        border: none !important;
+        border-bottom: 1px dashed transparent !important;
+        border-radius: 0 !important;
+        color: var(--rpg-highlight);
+        font-family: 'Cinzel', serif;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        text-align: left;
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-qty-edit:hover,
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-qty-edit:focus {
+        border-bottom-color: var(--rpg-highlight) !important;
+        outline: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-qty-edit::-webkit-inner-spin-button,
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-qty-edit::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-name {
+        order: 3;
+        flex: 1;
+        min-width: 0;
+        font-size: 0.9375rem;
+        line-height: 1.35;
+        color: var(--rpg-text);
+        text-align: left;
+    }
+
+    /* Lock icon only shows while hovering or focusing a row, to leave room for names */
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-section-lock-icon {
+        order: 4;
+        position: static;
+        display: none;
+        font-size: 0.75rem;
+        opacity: 0.6;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-row:hover .rpg-section-lock-icon,
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-row:focus-within .rpg-section-lock-icon,
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-section-lock-icon.locked {
+        display: block;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-remove {
+        order: 5;
+        flex: none;
+        width: 1.5rem;
+        height: 1.75rem;
+        padding: 0;
+        background: none;
+        border: none;
+        box-shadow: none;
+        color: #8A6E62;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-remove:hover {
+        color: var(--rpg-highlight);
+    }
+
+    /* Storage locations: brass heading with a rule instead of a solid bar */
+    .rpg-panel[data-theme="forge"] .rpg-storage-location {
+        background: none;
+        border: none;
+        box-shadow: none;
+        margin: 0.25em 0 0.5em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-storage-header {
+        padding: 0.5em 0;
+        background: none;
+        border-bottom: 1px solid var(--rpg-border);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-storage-name {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        font-family: 'Cinzel', serif;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--forge-brass);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-storage-toggle,
+    .rpg-panel[data-theme="forge"] .rpg-storage-actions button {
+        width: 1.75rem;
+        height: 1.75rem;
+        padding: 0;
+        background: none;
+        border: none;
+        box-shadow: none;
+        color: #8A6E62;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-storage-content {
+        padding: 0;
+        background: none;
+        border: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-storage-add-item-container {
+        padding: 0.375em 0 0;
+        background: none;
+        border: none;
+        text-align: left;
+    }
+
+    /* Inline add/edit forms */
+    .rpg-panel[data-theme="forge"] .rpg-inventory-section .rpg-inline-input,
+    .rpg-panel[data-theme="forge"] .rpg-quests-section .rpg-inline-input {
+        background: var(--forge-inset);
+        border: 1px solid var(--rpg-border);
+        border-radius: 4px;
+        color: var(--rpg-text);
+        font-family: 'Alegreya Sans', system-ui, sans-serif;
+    }
+
+    /* Quests journal: main quest card, then side quests with diamond bullets */
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quests-panels {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-section {
+        background: none;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-section:first-child {
+        background: var(--forge-card);
+        border: 1px solid var(--rpg-border);
+        border-top: 2px solid var(--forge-crimson);
+        border-radius: 6px;
+        padding: 1em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-header {
+        display: flex;
+        align-items: center;
+        gap: 0.625em;
+        margin: 0 0 0.5em;
+        padding: 0;
+        background: none;
+        border: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-section-title {
+        margin: 0;
+        font-family: 'Alegreya Sans', system-ui, sans-serif;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--rpg-highlight);
+        white-space: nowrap;
+    }
+
+    /* Side quests heading: brass with a rule */
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-section:nth-child(2) .rpg-quest-section-title {
+        font-family: 'Cinzel', serif;
+        font-size: 0.875rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: none;
+        color: var(--forge-brass);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-section:nth-child(2) .rpg-quest-header::after {
+        content: '';
+        order: 1;
+        flex: 1;
+        height: 1px;
+        background: var(--rpg-border);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-section:nth-child(2) .rpg-add-quest-btn {
+        order: 2;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-add-quest-btn {
+        min-height: 2rem;
+        padding: 0 0.25em;
+        background: none;
+        border: none;
+        box-shadow: none;
+        color: var(--forge-muted);
+        font-family: 'Alegreya Sans', system-ui, sans-serif;
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.625em;
+        padding: 0.375em 0;
+        margin: 0;
+        background: none;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-title {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.9375rem;
+        line-height: 1.45;
+        color: var(--rpg-text);
+        text-align: left;
+    }
+
+    /* Main quest: title across the full width, buttons underneath */
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="main"] {
+        flex-wrap: wrap;
+        row-gap: 0.625em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="main"] .rpg-quest-title {
+        flex: 1 1 100%;
+        order: 1;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="main"] .rpg-quest-actions {
+        order: 2;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="main"] .rpg-section-lock-icon {
+        order: 3;
+        align-self: center;
+    }
+
+    /* Main quest title: large engraved text */
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="main"] .rpg-quest-title {
+        font-family: 'Cinzel', serif;
+        font-size: 1.125rem;
+        font-weight: 700;
+        line-height: 1.35;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="optional"]::before {
+        content: '◆';
+        flex: none;
+        margin-top: 0.3em;
+        font-size: 0.625rem;
+        color: var(--rpg-highlight);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-section-lock-icon {
+        position: static;
+        order: 3;
+        font-size: 0.75rem;
+        opacity: 0.6;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-actions {
+        order: 4;
+        display: flex;
+        gap: 0.25em;
+        flex: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-edit,
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-remove {
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        border-radius: 6px;
+        background: none;
+        border: 1px solid var(--rpg-border);
+        box-shadow: none;
+        color: var(--forge-soft);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-edit:hover,
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-remove:hover {
+        border-color: var(--forge-brass);
+        color: var(--rpg-text);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-empty {
+        font-style: italic;
+        color: #8A6E62;
+        background: none;
+        border: none;
+        padding: 0.25em 0;
+        text-align: left;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-hint {
+        display: none;
+    }
+}

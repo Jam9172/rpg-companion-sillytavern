@@ -921,6 +921,8 @@ async function initUI() {
         toggleCustomColors();
         updateSettingsPopupTheme(getSettingsModal()); // Update popup theme instantly
         updateChatThoughts(); // Recreate thought bubbles with new theme
+        renderThoughts(); // Some themes use full-size portraits
+        renderQuests(); // Some themes show all quests on one page
     });
 
     // Custom color pickers
