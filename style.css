@@ -12755,16 +12755,42 @@ body.documentstyle .rpg-inline-thoughts {
         display: none;
     }
 
-    /* Weather keeps its (editable) emoji, small and inline above the forecast */
+    /* Weather: label on top, then the (editable) emoji with the forecast to its right */
+    .rpg-panel[data-theme="forge"] .rpg-weather-widget {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        column-gap: 0.5em;
+        row-gap: 0.125em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-weather-widget::before {
+        grid-column: 1 / -1;
+    }
+
     .rpg-panel[data-theme="forge"] .rpg-weather-icon {
         display: block;
         width: auto;
         height: auto;
-        margin: 0.125em 0 0;
+        margin: 0;
         font-size: 1.25rem;
         line-height: 1.1;
         background: none;
         border: none;
+    }
+
+    /* Emoji and word share one centre line; "mist" reads "Mist" */
+    .rpg-panel[data-theme="forge"] .rpg-weather-widget .rpg-weather-icon,
+    .rpg-panel[data-theme="forge"] .rpg-weather-widget .rpg-weather-forecast {
+        align-self: center;
+        margin: 0;
+        padding: 0;
+        transform: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-weather-widget .rpg-weather-forecast {
+        line-height: 1.2;
+        text-transform: capitalize;
     }
 
     /* Shared value style */
@@ -13278,19 +13304,24 @@ body.documentstyle .rpg-inline-thoughts {
         text-align: left;
     }
 
-    /* Lock icon only shows while hovering or focusing a row, to leave room for names */
+    /* Lock icon keeps its space at all times (so names never re-wrap) and only fades in on hover */
     .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-section-lock-icon {
         order: 4;
         position: static;
-        display: none;
-        font-size: 0.75rem;
-        opacity: 0.6;
+        display: block;
+        flex: none;
+        opacity: 0;
+        transition: opacity 0.15s ease;
     }
 
     .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-row:hover .rpg-section-lock-icon,
     .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-row:focus-within .rpg-section-lock-icon,
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-section-lock-icon:focus-visible {
+        opacity: 0.6;
+    }
+
     .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-section-lock-icon.locked {
-        display: block;
+        opacity: 1;
     }
 
     .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-remove {
