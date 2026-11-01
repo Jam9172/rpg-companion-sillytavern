@@ -15,7 +15,6 @@ import {
 } from './jsonPromptHelpers.js';
 import { applyLocks } from './lockManager.js';
 import { isPresentCharactersEnabled } from '../../utils/presentCharacters.js';
-import { getStatWord } from '../../utils/statMeter.js';
 
 // Type imports
 /** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
@@ -588,9 +587,7 @@ function formatTrackerDataForContext(jsonData, trackerType, userName) {
                     if (stat && stat.value !== undefined) {
                         const statName = stat.name || (stat.id ? stat.id.charAt(0).toUpperCase() + stat.id.slice(1) : 'Unknown');
                         const statId = stat.id || statName.toLowerCase();
-                        const percent = (Number(stat.value) / getMaxValue(statId)) * 100;
-                        const word = displayMode === 'number' ? getStatWord(statId, percent) : getStatWord(statId, stat.value);
-                        formatted += `${statName}: ${formatStatValue(stat.value, statId)}${word ? ` (${word})` : ''}\n`;
+                        formatted += `${statName}: ${formatStatValue(stat.value, statId)}\n`;
                     }
                 }
             } else {

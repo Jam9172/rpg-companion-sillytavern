@@ -20,32 +20,6 @@ export function getStatMeter(statName, percentage) {
     return { pct, wedges, tier, tone };
 }
 
-// Words describing each tier [full, good, hurt, danger, empty], so the AI reads a condition, not just a number
-const STAT_WORDS = {
-    health: ['healthy', 'lightly hurt', 'wounded', 'critically wounded', 'near death'],
-    satiety: ['well fed', 'fed', 'hungry', 'starving', 'famished'],
-    hunger: ['well fed', 'fed', 'hungry', 'starving', 'famished'],
-    energy: ['well rested', 'alert', 'tired', 'exhausted', 'spent'],
-    stamina: ['fresh', 'steady', 'winded', 'exhausted', 'spent'],
-    hygiene: ['clean', 'presentable', 'grubby', 'filthy', 'reeking'],
-    mana: ['brimming', 'steady', 'waning', 'drained', 'empty']
-};
-const DEFAULT_WORDS = ['very high', 'high', 'low', 'very low', 'empty'];
-const TIER_ORDER = ['full', 'good', 'hurt', 'danger', 'empty'];
-
-/**
- * A short condition word for a stat (e.g. "hungry"), or '' for neutral stats where low is not bad.
- * @param {string} statName - Stat id or name
- * @param {number} percentage - Value as a percentage of its maximum
- * @returns {string}
- */
-export function getStatWord(statName, percentage) {
-    const { tier, tone } = getStatMeter(statName, percentage);
-    if (tone === 'neutral') return '';
-    const words = STAT_WORDS[String(statName).toLowerCase()] || DEFAULT_WORDS;
-    return words[TIER_ORDER.indexOf(tier)];
-}
-
 /**
  * Attributes to put on a stat element: data-tier, data-tone and the --rpg-pct / --rpg-wedges variables.
  * @param {string} statName
