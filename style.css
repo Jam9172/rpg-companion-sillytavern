@@ -11928,3 +11928,128 @@ body.documentstyle .rpg-inline-thoughts {
 .rpg-item-qty-edit:focus {
     outline: 1px solid var(--SmartThemeQuoteColor, #e94560);
 }
+
+/* ==========================================================================
+   Readable side panel (desktop widths)
+   The Status tab scrolls as one area instead of giving each section an
+   equal slice of height with its own scrollbar. Stat bars get the full
+   width with attributes underneath, and text no longer shrinks with the
+   viewport width.
+   ========================================================================== */
+@media (min-width: 1001px) {
+    .rpg-panel:not(.rpg-position-top) .rpg-tabs-container {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    /* Let all tabs fit side by side instead of the last one being cut off */
+    .rpg-panel:not(.rpg-position-top) .rpg-tabs-nav .rpg-tab-btn {
+        min-width: 0;
+        padding: 0.625em 0.375em;
+        gap: 0.375em;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-tab-content.active {
+        overflow-y: auto;
+        gap: 0.75em;
+        scrollbar-width: thin;
+        scrollbar-color: var(--rpg-border) transparent;
+    }
+
+    /* Sections size to their content; the tab scrolls as a whole */
+    .rpg-panel:not(.rpg-position-top) .rpg-tab-content > .rpg-section,
+    .rpg-panel:not(.rpg-position-top) #rpg-user-stats,
+    .rpg-panel:not(.rpg-position-top) #rpg-info-box,
+    .rpg-panel:not(.rpg-position-top) #rpg-thoughts,
+    .rpg-panel:not(.rpg-position-top) .rpg-location-text,
+    .rpg-panel:not(.rpg-position-top) .rpg-stats-content,
+    .rpg-panel:not(.rpg-position-top) .rpg-stats-left,
+    .rpg-panel:not(.rpg-position-top) .rpg-stats-right,
+    .rpg-panel:not(.rpg-position-top) .rpg-classic-stats,
+    .rpg-panel:not(.rpg-position-top) .rpg-info-content,
+    .rpg-panel:not(.rpg-position-top) .rpg-thoughts-content,
+    .rpg-panel:not(.rpg-position-top) .rpg-character-card,
+    .rpg-panel:not(.rpg-position-top) .rpg-character-content,
+    .rpg-panel:not(.rpg-position-top) .rpg-character-info,
+    .rpg-panel:not(.rpg-position-top) .rpg-character-stats {
+        flex: 0 0 auto;
+        min-height: auto;
+        max-height: none;
+        overflow: visible;
+    }
+
+    /* Stat bars full width, attributes underneath */
+    .rpg-panel:not(.rpg-position-top) .rpg-stats-content {
+        flex-direction: column;
+        gap: 0.625em;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-stats-grid {
+        gap: 0.375em;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-stat-row,
+    .rpg-panel:not(.rpg-position-top) .rpg-stat-bar {
+        min-height: 1.5rem;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-stat-bar {
+        border-radius: 0.5em;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-stat-label {
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        max-width: calc(100% - 3.5rem);
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-stat-value {
+        font-size: 0.8125rem;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-user-info-row {
+        font-size: 0.75rem;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-mood {
+        font-size: 0.8125rem;
+        padding: 0.5em 0.625em;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-mood-emoji {
+        font-size: 1.25rem;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-mood-conditions {
+        font-size: 0.8125rem;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-classic-stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.375em;
+    }
+
+    /* Info widgets in a 2x2 grid instead of four squeezed into one row */
+    .rpg-panel:not(.rpg-position-top) .rpg-info-content {
+        grid-template-rows: auto;
+        gap: 0.375em;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-dashboard-row-1 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.375em;
+        height: auto;
+        overflow: visible;
+    }
+
+    .rpg-panel:not(.rpg-position-top) .rpg-dashboard-row-1 .rpg-dashboard-widget {
+        height: auto;
+        min-height: 4.5rem;
+        aspect-ratio: auto;
+    }
+}
