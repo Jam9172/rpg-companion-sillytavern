@@ -12388,8 +12388,8 @@ body.documentstyle .rpg-inline-thoughts {
     outline: none;
 }
 
-/* Layout pieces for the side panel at desktop widths (the phone layout keeps its own) */
-@media (min-width: 1001px) {
+/* Layout pieces for the side panel */
+@media screen { /* Forge side-panel layout, desktop and phone (was desktop-only) */
     /* Stats as 8-wedge rings: 5 across, wrapping to fewer on narrow panels */
     .rpg-panel[data-theme="forge"] .rpg-stats-grid {
         display: flex;
@@ -13120,9 +13120,9 @@ body.documentstyle .rpg-inline-thoughts {
 }
 
 /* ==========================================================================
-   Arcane Forge: Inventory as a ledger, Quests as a journal (desktop widths)
+   Arcane Forge: Inventory as a ledger, Quests as a journal
    ========================================================================== */
-@media (min-width: 1001px) {
+@media screen { /* Forge inventory and quests, desktop and phone (was desktop-only) */
     /* Inventory sub-tabs as filter pills */
     .rpg-panel[data-theme="forge"] .rpg-inventory-subtabs {
         display: flex;
@@ -14120,7 +14120,7 @@ body.documentstyle .rpg-inline-thoughts {
    borders clear, and a soft fade lets boxes ease under the tabs instead of
    being sliced off.
    ========================================================================== */
-@media (min-width: 1001px) {
+@media screen { /* Forge tab padding and fade, desktop and phone (was desktop-only) */
     .rpg-panel[data-theme="forge"] .rpg-tab-content.active {
         padding: 0.875rem 0.875rem 1rem;
         -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 0.75rem, #000 calc(100% - 0.75rem), transparent 100%);
@@ -14185,4 +14185,151 @@ body.documentstyle .rpg-inline-thoughts {
     .rpg-panel[data-theme="forge"].rpg-position-left:not(.rpg-collapsed)::before {
         right: -3px;
     }
+}
+
+/* ===== Arcane Forge on phones =====
+   The phone layout (max-width: 1000px) forces its own arrangement with !important. These put the Forge
+   layout back on top of it, so phones get the same rings, tiles and info text as desktop. */
+@media (max-width: 1000px) {
+    .rpg-panel[data-theme="forge"] .rpg-stats-grid {
+        flex-direction: row !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-user-info-row.rpg-user-banner {
+        display: block !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-user-banner .rpg-user-portrait {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* Attribute tiles: name over value, as many across as fit (two on a phone) */
+    .rpg-panel[data-theme="forge"] .rpg-classic-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr)) !important;
+        grid-template-rows: none !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-classic-stat {
+        display: flex !important;
+        flex-direction: column;
+        padding: 0.625em 0.25em;
+    }
+    /* Info: date, weather, temperature and time in a 2 x 2 grid; location and events at full height */
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-row-1 {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        column-gap: 0.625em;
+        row-gap: 0.75em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-widget {
+        height: auto !important;
+        flex: none !important;
+        aspect-ratio: auto !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-row-1 > .rpg-dashboard-widget {
+        flex: 0 0 calc(50% - 0.3125em) !important;
+        min-width: 0;
+        /* Date and weather are size containers, which would give them zero height here */
+        container-type: normal;
+    }
+
+    /* Inventory and quest filters as a wrapping row of pills, not a stacked list */
+    .rpg-panel[data-theme="forge"] .rpg-inventory-subtabs,
+    .rpg-panel[data-theme="forge"] .rpg-quests-subtabs {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        justify-content: center;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-inventory-subtab,
+    .rpg-panel[data-theme="forge"] .rpg-quests-subtab {
+        width: auto !important;
+        flex: 0 0 auto !important;
+    }
+
+    /* Same text sizes as desktop (the phone layout shrinks them with the screen width) */
+    .rpg-panel[data-theme="forge"] .rpg-calendar-day,
+    .rpg-panel[data-theme="forge"] .rpg-weather-forecast,
+    .rpg-panel[data-theme="forge"] .rpg-temp-value,
+    .rpg-panel[data-theme="forge"] .rpg-time-value,
+    .rpg-panel[data-theme="forge"] .rpg-location-text,
+    .rpg-panel[data-theme="forge"] .rpg-event-text {
+        font-size: 0.9375rem !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-calendar-top,
+    .rpg-panel[data-theme="forge"] .rpg-calendar-year,
+    .rpg-panel[data-theme="forge"] .rpg-notebook-title {
+        font-size: 0.8125rem !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-time-separator {
+        font-size: 0.75rem !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-bullet {
+        font-size: 0 !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-info-content {
+        display: flex !important;
+        flex-direction: column;
+        grid-template-rows: none !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-row-1,
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-row-2,
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-row-3 {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-weather-widget {
+        display: grid !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-events-widget {
+        max-height: none !important;
+    }
+}
+
+/* ===== Arcane Forge: floating widgets (FAB) =====
+   They live outside the panel, so they don't inherit its theme. When the panel uses Forge, they take
+   the same palette: dark card, brass trim, ember accents, Forge fonts. */
+body:has(.rpg-panel[data-theme="forge"]) #rpg-fab-widget-container {
+    --rpg-text: #F1E3D6;
+    --rpg-accent: #1E100D;
+    --rpg-border: #4A2219;
+    --rpg-highlight: #E8622C;
+}
+
+body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget {
+    background: rgba(30, 16, 13, 0.95);
+    border: 1px solid #4A2219;
+    border-radius: 10px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    color: #F1E3D6;
+    font-family: 'Alegreya Sans', system-ui, sans-serif;
+}
+
+body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget:hover {
+    border-color: #E8622C;
+}
+
+body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-attr-name,
+body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-stat-name {
+    color: #B79A88;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.04em;
+}
+
+body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-attr-value,
+body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-stat-value {
+    color: #D9A35B;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
 }
