@@ -1,5 +1,17 @@
 # RPG Companion Extension for SillyTavern
 
+> **About this fork.** This is a modified version of [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern) by Marysia (marinara_spaghetti), maintained by [Jam9172](https://github.com/Jam9172). It is not the official extension and is not endorsed by the original author.
+>
+> Changes since November 2026 include:
+> - the Arcane Forge theme (stat rings, portrait cards, ledger inventory, journal quests, Whisper thoughts and an original icon set),
+> - a full-size portrait crop picker,
+> - character stats sent to the main model, and
+> - the deprecation popup removed.
+>
+> The full list is in the git history. To install this fork, use `https://github.com/Jam9172/rpg-companion-sillytavern` in step 4 below.
+>
+> Like the original, this fork is licensed under the GNU AGPL v3 or later; see [License](#-license) and the full text in [LICENSE](LICENSE).
+
 An immersive RPG extension for browsers that tracks character stats, scene information, and character thoughts in a beautiful, customizable UI panel. All automated! Works with any preset. Choose between Together or Separate generation modes for context and generation control.
 
 [![My Discord](https://img.shields.io/badge/Discord-Join%20Server-7289da)](https://discord.com/invite/KdAkTg94ME)
@@ -260,6 +272,8 @@ This program is free software: you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
 Copyright (C) 2024 marinara_spaghetti
+
+Modifications copyright (C) 2026 Jam9172
 
 ## 💖 Support
 
