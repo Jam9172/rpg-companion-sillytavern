@@ -2,13 +2,14 @@
 
 > **About this fork.** This is a modified version of [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern) by Marysia (marinara_spaghetti), maintained by [Jam9172](https://github.com/Jam9172). It is not the official extension and is not endorsed by the original author.
 >
-> Changes since November 2026 include:
-> - the Arcane Forge theme (stat rings, portrait cards, ledger inventory, journal quests, Whisper thoughts and an original icon set),
+> Changes since October 2026 include:
+> - the Arcane Forge theme, now the default (stat rings, portrait cards, ledger inventory, journal quests, Whisper thoughts and an original icon set),
+> - Arcane Forge on phones and in TauriTavern,
 > - a full-size portrait crop picker,
 > - character stats sent to the main model, and
 > - the deprecation popup removed.
 >
-> The full list is in the git history. To install this fork, use `https://github.com/Jam9172/rpg-companion-sillytavern` in step 4 below.
+> Every change is listed with its date in [CHANGELOG.md](CHANGELOG.md). For the Arcane Forge look across the rest of SillyTavern, pair it with [Arcane Forge UI](https://github.com/Jam9172/arcane-forge-ui).
 >
 > Like the original, this fork is licensed under the GNU AGPL v3 or later; see [License](#-license) and the full text in [LICENSE](LICENSE).
 
@@ -33,7 +34,8 @@ Moving on to developing the Marinara Engine frontend, the extension will now be 
 
 3. Go to Install extension
 
-4. Copy-paste this link: <https://github.com/SpicyMarinara/rpg-companion-sillytavern>
+4. Copy-paste this link: <https://github.com/Jam9172/rpg-companion-sillytavern>
+   (the original, unmodified extension is at <https://github.com/SpicyMarinara/rpg-companion-sillytavern>)
 
 5. Press Install for all users/Install just for me
 
@@ -225,8 +227,9 @@ There is a new setting "Skip Tracker & HTML Injections during Guided Generations
 
 ## 🎨 Themes
 
-Choose from 6 beautiful themes:
+Choose from 7 beautiful themes:
 
+- **Arcane Forge** (this fork's default): Ember and brass, with stat rings, portrait cards, a ledger inventory and a quest journal. Works on phones too
 - **Cyberpunk**: Neon pink and cyan with futuristic vibes
 - **Fantasy**: Purple and gold with mystical aesthetics
 - **Minimal**: Clean monochrome design
