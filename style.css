@@ -14236,6 +14236,56 @@ body.documentstyle .rpg-inline-thoughts {
         container-type: normal;
     }
 
+    /* Character cards show their whole body (stat rings included) instead of a 200-250px window */
+    .rpg-panel[data-theme="forge"] .rpg-character-card {
+        max-height: none !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-content {
+        overflow-y: visible !important;
+    }
+
+    /* Phones have less width to give away: thinner padding around tab content and the inventory boxes */
+    .rpg-panel[data-theme="forge"] .rpg-mobile-tab-content.active,
+    .rpg-panel[data-theme="forge"] .rpg-tab-content.active {
+        padding: 0.5rem 0.5rem 0.75rem !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-inventory-views > .rpg-inventory-section {
+        padding: 0.5em 0.625em;
+    }
+
+    /* Inventory rows: quantity, name and buttons on one tight line */
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-row {
+        gap: 0.25em;
+        padding: 0.375em 0 0.625em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-name {
+        padding: 0.125em 0.25em !important;
+        min-height: 0 !important;
+        font-size: 1rem;
+        line-height: 1.3;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-section-lock-icon {
+        opacity: 0.35 !important;
+    }
+
+    /* Quests: diamond, text, lock and tick on one line, as on desktop */
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item {
+        flex-direction: row !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="optional"] .rpg-quest-actions {
+        width: auto !important;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-title {
+        padding: 0.125em 0.25em !important;
+        min-height: 0 !important;
+    }
+
     /* Inventory and quest filters as a wrapping row of pills, not a stacked list */
     .rpg-panel[data-theme="forge"] .rpg-inventory-subtabs,
     .rpg-panel[data-theme="forge"] .rpg-quests-subtabs {
