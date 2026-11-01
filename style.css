@@ -12191,8 +12191,14 @@ body.documentstyle .rpg-inline-thoughts {
 }
 
 /* Feature toggles: clear tiles with a proper checkbox; ticked ones glow ember */
+/* All feature toggles on a single row that scrolls sideways */
 .rpg-panel[data-theme="forge"] .rpg-features-row {
+    grid-template-rows: auto;
+    grid-auto-flow: column;
     gap: 0.375em;
+    padding-bottom: 0.375em;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rpg-border) transparent;
 }
 
 .rpg-panel[data-theme="forge"] .rpg-feature-col .rpg-toggle-label {
