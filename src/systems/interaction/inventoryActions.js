@@ -574,7 +574,14 @@ export function initInventoryEventListeners() {
     $(document).on('click', '.rpg-inventory-subtab', function(e) {
         e.preventDefault();
         const tab = $(this).data('tab');
+        // The bar is rebuilt on every switch; tell the new one where the highlight was, so the
+        // Forge theme can slide it across instead of jumping
+        const $bar = $(this).closest('.rpg-inventory-subtabs');
+        const from = $bar.children('.rpg-inventory-subtab').index($bar.children('.active'));
         switchInventoryTab(tab);
+        if (from >= 0) {
+            document.querySelectorAll('.rpg-inventory-subtabs').forEach(bar => bar.style.setProperty('--from', String(from)));
+        }
     });
 
     // View mode switching

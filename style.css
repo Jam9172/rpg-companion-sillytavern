@@ -14287,14 +14287,12 @@ body.documentstyle .rpg-inline-thoughts {
     }
 
     /* Inventory and quest filters as a wrapping row of pills, not a stacked list */
-    .rpg-panel[data-theme="forge"] .rpg-inventory-subtabs,
     .rpg-panel[data-theme="forge"] .rpg-quests-subtabs {
         flex-direction: row !important;
         flex-wrap: wrap !important;
         justify-content: center;
     }
 
-    .rpg-panel[data-theme="forge"] .rpg-inventory-subtab,
     .rpg-panel[data-theme="forge"] .rpg-quests-subtab {
         width: auto !important;
         flex: 0 0 auto !important;
@@ -14382,4 +14380,81 @@ body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-stat-value {
     color: #D9A35B;
     font-family: 'Cinzel', serif;
     font-weight: 700;
+}
+
+/* ===== Arcane Forge: inventory filters as a sliding segmented bar =====
+   Five equal segments in one track. The highlight is one shape that sits under the active segment;
+   the bar is rebuilt on each switch, so it plays a slide from the old segment (--from, set by the click
+   handler) to the new one (--i). */
+.rpg-panel[data-theme="forge"] .rpg-inventory-subtabs {
+    --i: 1;
+    position: relative;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    width: 100%;
+    box-sizing: border-box;
+    /* Labels size themselves to the bar (cqi), so all five fit on narrow panels and phones */
+    container-type: inline-size;
+    gap: 0 !important;
+    padding: 3px !important;
+    margin-bottom: 0.75em;
+    background: var(--forge-inset);
+    border: 1px solid var(--rpg-border);
+    border-radius: 999px;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-inventory-subtabs:has(> [data-tab="all"].active) { --i: 0; }
+.rpg-panel[data-theme="forge"] .rpg-inventory-subtabs:has(> [data-tab="onPerson"].active) { --i: 1; }
+.rpg-panel[data-theme="forge"] .rpg-inventory-subtabs:has(> [data-tab="clothing"].active) { --i: 2; }
+.rpg-panel[data-theme="forge"] .rpg-inventory-subtabs:has(> [data-tab="stored"].active) { --i: 3; }
+.rpg-panel[data-theme="forge"] .rpg-inventory-subtabs:has(> [data-tab="assets"].active) { --i: 4; }
+
+.rpg-panel[data-theme="forge"] .rpg-inventory-subtabs::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc((100% - 6px) / 5);
+    box-sizing: border-box;
+    border: 1px solid var(--rpg-highlight);
+    border-radius: 999px;
+    background: #2C1511;
+    box-shadow: 0 0 10px color-mix(in srgb, var(--rpg-highlight) 25%, transparent);
+    transform: translateX(calc(var(--i) * 100%));
+    animation: forge-subtab-slide 0.28s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+@keyframes forge-subtab-slide {
+    from { transform: translateX(calc(var(--from, var(--i)) * 100%)); }
+}
+
+.rpg-panel[data-theme="forge"] .rpg-inventory-subtabs > .rpg-inventory-subtab {
+    position: relative;
+    z-index: 1;
+    width: auto !important;
+    min-width: 0;
+    min-height: 2.25rem;
+    padding: 0 !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 999px;
+    color: var(--forge-muted);
+    font-size: clamp(0.625rem, 4.8cqi, 0.8125rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease;
+}
+
+/* Colour marks the active segment, not bold, so "On Person" keeps fitting its segment */
+.rpg-panel[data-theme="forge"] .rpg-inventory-subtabs > .rpg-inventory-subtab.active {
+    color: var(--rpg-text);
+    font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rpg-panel[data-theme="forge"] .rpg-inventory-subtabs::before {
+        animation: none;
+    }
 }
