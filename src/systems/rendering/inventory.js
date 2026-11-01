@@ -136,14 +136,6 @@ export function renderOnPersonView(onPersonItems, viewMode = 'list') {
             <div class="rpg-inventory-header">
                 <h4>${i18n.getTranslation('inventory.onPerson.title') || 'Items Currently Carried'}</h4>
                 <div class="rpg-inventory-header-actions">
-                    <div class="rpg-view-toggle">
-                        <button class="rpg-view-btn ${viewMode === 'list' ? 'active' : ''}" data-action="switch-view" data-field="onPerson" data-view="list" title="${i18n.getTranslation('global.listView') || 'List view'}">
-                            <i class="fa-solid fa-list"></i>
-                        </button>
-                        <button class="rpg-view-btn ${viewMode === 'grid' ? 'active' : ''}" data-action="switch-view" data-field="onPerson" data-view="grid" title="${i18n.getTranslation('global.gridView') || 'Grid view'}">
-                            <i class="fa-solid fa-th"></i>
-                        </button>
-                    </div>
                     <button class="rpg-inventory-add-btn" data-action="add-item" data-field="onPerson" title="${i18n.getTranslation('inventory.onPerson.addItemTitle') || 'Add new item'}">
                         <i class="fa-solid fa-plus"></i> ${i18n.getTranslation('inventory.onPerson.addItemButton') || 'Add Item'}
                     </button>
@@ -235,14 +227,6 @@ export function renderClothingView(clothingItems, viewMode = 'list') {
             <div class="rpg-inventory-header">
                 <h4>${i18n.getTranslation('inventory.clothing.title') || 'Clothing & Armor'}</h4>
                 <div class="rpg-inventory-header-actions">
-                    <div class="rpg-view-toggle">
-                        <button class="rpg-view-btn ${viewMode === 'list' ? 'active' : ''}" data-action="switch-view" data-field="clothing" data-view="list" title="${i18n.getTranslation('global.listView') || 'List view'}">
-                            <i class="fa-solid fa-list"></i>
-                        </button>
-                        <button class="rpg-view-btn ${viewMode === 'grid' ? 'active' : ''}" data-action="switch-view" data-field="clothing" data-view="grid" title="${i18n.getTranslation('global.gridView') || 'Grid view'}">
-                            <i class="fa-solid fa-th"></i>
-                        </button>
-                    </div>
                     <button class="rpg-inventory-add-btn" data-action="add-item" data-field="clothing" title="${i18n.getTranslation('inventory.clothing.addItemTitle') || 'Add new clothing item'}">
                         <i class="fa-solid fa-plus"></i> ${i18n.getTranslation('inventory.clothing.addItemButton') || 'Add Clothing'}
                     </button>
@@ -284,14 +268,6 @@ export function renderStoredView(stored, collapsedLocations = [], viewMode = 'li
             <div class="rpg-inventory-header">
                 <h4>${i18n.getTranslation('inventory.stored.title') || 'Storage Locations'}</h4>
                 <div class="rpg-inventory-header-actions">
-                    <div class="rpg-view-toggle">
-                        <button class="rpg-view-btn ${viewMode === 'list' ? 'active' : ''}" data-action="switch-view" data-field="stored" data-view="list" title="${i18n.getTranslation('global.listView') || 'List view'}">
-                            <i class="fa-solid fa-list"></i>
-                        </button>
-                        <button class="rpg-view-btn ${viewMode === 'grid' ? 'active' : ''}" data-action="switch-view" data-field="stored" data-view="grid" title="${i18n.getTranslation('global.gridView') || 'Grid view'}">
-                            <i class="fa-solid fa-th"></i>
-                        </button>
-                    </div>
                     <button class="rpg-inventory-add-btn" data-action="add-location" title="${i18n.getTranslation('inventory.stored.addLocationTitle') || 'Add new storage location'}">
                         <i class="fa-solid fa-plus"></i> ${i18n.getTranslation('inventory.stored.addLocationButton') || 'Add Location'}
                     </button>
@@ -499,14 +475,6 @@ export function renderAssetsView(assets, viewMode = 'list') {
             <div class="rpg-inventory-header">
                 <h4>${i18n.getTranslation('inventory.assets.title') || 'Vehicles, Property & Major Possessions'}</h4>
                 <div class="rpg-inventory-header-actions">
-                    <div class="rpg-view-toggle">
-                        <button class="rpg-view-btn ${viewMode === 'list' ? 'active' : ''}" data-action="switch-view" data-field="assets" data-view="list" title="${i18n.getTranslation('global.listView') || 'List view'}">
-                            <i class="fa-solid fa-list"></i>
-                        </button>
-                        <button class="rpg-view-btn ${viewMode === 'grid' ? 'active' : ''}" data-action="switch-view" data-field="assets" data-view="grid" title="${i18n.getTranslation('global.gridView') || 'Grid view'}">
-                            <i class="fa-solid fa-th"></i>
-                        </button>
-                    </div>
                     <button class="rpg-inventory-add-btn" data-action="add-item" data-field="assets" title="${i18n.getTranslation('inventory.assets.addItemTitle') || 'Add new asset'}">
                         <i class="fa-solid fa-plus"></i> ${i18n.getTranslation('inventory.assets.addAssetButton') || 'Add Asset'}
                     </button>
@@ -589,8 +557,8 @@ function generateInventoryHTML(inventory, options = {}) {
             <div class="rpg-inventory-views">
     `;
 
-    // Get view modes from settings (default to 'list')
-    const viewModes = extensionSettings.inventoryViewModes || {
+    // Inventory always uses the list view (the grid view was removed)
+    const viewModes = {
         onPerson: 'list',
         clothing: 'list',
         stored: 'list',

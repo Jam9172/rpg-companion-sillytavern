@@ -12951,23 +12951,28 @@ body.documentstyle .rpg-inline-thoughts {
     .rpg-panel[data-theme="forge"] .rpg-inventory-subtabs {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.375em;
+        gap: 0.25em;
         border: none;
         background: none;
         padding: 0;
         margin-bottom: 0.75em;
     }
 
+    /* All four pills share one row */
     .rpg-panel[data-theme="forge"] .rpg-inventory-subtab {
-        flex: none;
+        flex: 1 0 auto;
+        min-width: 0;
         min-height: 2.25rem;
-        padding: 0 0.875em;
+        padding: 0 0.375em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         border-radius: 999px;
         background: none;
         border: 1px solid var(--rpg-border);
         color: var(--forge-muted);
         font-family: 'Alegreya Sans', system-ui, sans-serif;
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
         font-weight: 400;
         box-shadow: none;
     }
@@ -13325,13 +13330,27 @@ body.documentstyle .rpg-inline-thoughts {
         order: 1;
     }
 
+    /* Edit and complete buttons centred under the title; lock in the card's corner */
     .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="main"] .rpg-quest-actions {
         order: 2;
+        flex: 1 1 100%;
+        justify-content: center;
+        gap: 0.5em;
     }
 
     .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="main"] .rpg-section-lock-icon {
-        order: 3;
-        align-self: center;
+        position: absolute;
+        top: -0.25em;
+        right: 0;
+    }
+
+    /* Side quests: the complete button sits level with the middle of its line */
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="optional"] {
+        align-items: center;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-item[data-field="optional"]::before {
+        align-self: flex-start;
     }
 
     /* Main quest title: large engraved text */
