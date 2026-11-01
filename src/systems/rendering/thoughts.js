@@ -2299,6 +2299,16 @@ export function createThoughtPanel($message, thoughtsArray) {
         } else {
             $thoughtPanel.css('max-width', '350px');
         }
+
+        // Whisper pills sit just inside the chat column instead of the window edge, so a docked
+        // SillyTavern panel (such as AI Response on the left) can never slide over them.
+        if (sheld && $thoughtPanel.hasClass('rpg-whisper') && window.innerWidth > 1000) {
+            const sheldRect = sheld.getBoundingClientRect();
+            $thoughtPanel.css(isRightPanel
+                ? { left: `${sheldRect.left + margin}px`, right: 'auto' }
+                : { left: 'auto', right: `${window.innerWidth - sheldRect.right + margin}px` });
+            $thoughtPanel.css('max-width', `${Math.min(352, sheldRect.width - (margin * 2))}px`);
+        }
     };
 
     // Set initial position and width (will be updated by updateBubblePosition)
