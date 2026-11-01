@@ -352,7 +352,7 @@ export function renderUserStats() {
         // Wedge meter data for themes that draw stats as rings
         html += `
             <div class="rpg-stat-row" ${statMeterAttributes(stat.id, percentage)}>
-                <span class="rpg-stat-label rpg-editable-stat-name" contenteditable="true" data-field="${stat.id}" title="${i18n.getTranslation('userStats.clickToEditStatName') || 'Click to edit stat name'}">${stat.name}:</span>
+                <span class="rpg-stat-label rpg-editable-stat-name" contenteditable="true" data-field="${stat.id}" title="${i18n.getTranslation('userStats.clickToEditStatName') || 'Click to edit stat name'}">${stat.name}${extensionSettings.theme === 'forge' ? '' : ':'}</span>
                 <div class="rpg-stat-bar" style="background: ${gradient}">
                     <div class="rpg-stat-fill" style="width: ${100 - percentage}%"></div>
                 </div>

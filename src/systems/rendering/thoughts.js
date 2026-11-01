@@ -448,7 +448,7 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
                         );
                         html += `
                                 <div class="rpg-character-stat" ${statMeterAttributes(stat.name, statValue)}>
-                                    <span class="rpg-stat-name">${stat.name}: </span><span class="rpg-editable" contenteditable="true" data-character="${char.name}" data-field="${stat.name}" style="color: ${statColor}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}">${statValue}%</span>
+                                    <span class="rpg-stat-name">${stat.name}${extensionSettings.theme === 'forge' ? '' : ': '}</span><span class="rpg-editable" contenteditable="true" data-character="${char.name}" data-field="${stat.name}" style="color: ${statColor}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}">${statValue}%</span>
                                 </div>
                         `;
                     }
