@@ -136,6 +136,8 @@ async function getCharacterCardsInfo() {
 
                 characterInfo += `</character${characterIndex}>\n\n`;
             });
+
+            characterInfo += 'Each card above describes only the character it is named for. Other people in the story are separate characters with their own looks and personalities.\n\n';
         }
     } else if (this_chid !== undefined && characters && characters[this_chid]) {
         // Single character chat
@@ -153,9 +155,36 @@ async function getCharacterCardsInfo() {
         }
 
         characterInfo += `</character>\n\n`;
+        characterInfo += `This card describes ${character.name} only. Other people in the story (NPCs) are separate characters with their own looks and personalities.\n\n`;
     }
 
     return characterInfo;
+}
+
+/**
+ * Rule that keeps each Present Characters entry to its own character, so an NPC
+ * never borrows the character card's appearance or personality.
+ * @returns {string} Instruction text
+ */
+function buildCharacterIdentityRule() {
+    let cardNames = [];
+    if (selected_group) {
+        const group = groups.find(g => g.id === selected_group);
+        const disabledMembers = group?.disabled_members || [];
+        cardNames = (getGroupMembers(selected_group) || [])
+            .filter(m => m?.name && !(m.avatar && disabledMembers.includes(m.avatar)))
+            .map(m => m.name);
+    } else if (this_chid !== undefined && characters?.[this_chid]?.name) {
+        cardNames = [characters[this_chid].name];
+    }
+
+    let rule = 'CHARACTER DETAILS: Each entry in "characters" describes only the character named in it. Take each character\'s appearance, clothing, body, mood and thoughts from what the story says about that specific character. Never copy one character\'s physical or mental traits onto another.';
+    if (cardNames.length > 0 && !extensionSettings.narratorMode) {
+        const names = cardNames.join(', ');
+        rule += ` Use the character card for ${names} only in the entry for ${names}. When ${names} ${cardNames.length > 1 ? 'are' : 'is'} not in the scene, no entry should use that card's description.`;
+    }
+    rule += ' If the story has not described a character\'s looks yet, keep those details short and based only on what has been shown.';
+    return rule;
 }
 
 /**
@@ -393,6 +422,10 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
             }
 
             instructions += '\n}\n```\n\nDo NOT output multiple separate JSON objects. Everything must be in ONE unified object with the keys shown above.';
+
+            if (isPresentCharactersEnabled()) {
+                instructions += '\n\n' + buildCharacterIdentityRule();
+            }
         }
 
         // Only add continuation instruction if includeContinuation is true
