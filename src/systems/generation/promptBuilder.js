@@ -718,6 +718,12 @@ function formatTrackerDataForContext(jsonData, trackerType, userName) {
                 }
             }
         } else if (trackerType === 'characters') {
+            // Only send stats the user has enabled in Tracker Settings, matching what the panel displays
+            const characterStatsConfig = extensionSettings.trackerConfig?.presentCharacters?.characterStats;
+            const enabledCharStatNames = characterStatsConfig?.enabled
+                ? (characterStatsConfig.customStats || []).filter(s => s && s.enabled && s.name).map(s => s.name)
+                : [];
+
             if (Array.isArray(data)) {
                 formatted += `Present Characters:\n`;
                 for (const char of data) {
@@ -763,9 +769,13 @@ function formatTrackerDataForContext(jsonData, trackerType, userName) {
                         if (thoughtValue) formatted += `  Thoughts: ${thoughtValue}\n`;
                     }
 
-                    // Stats
-                    if (char.stats && typeof char.stats === 'object' && !Array.isArray(char.stats)) {
-                        const statsList = Object.entries(char.stats)
+                    // Stats - handle both array format [{name, value}] (current) and object format {Name: value} (legacy)
+                    if (char.stats && typeof char.stats === 'object' && enabledCharStatNames.length > 0) {
+                        const statEntries = Array.isArray(char.stats)
+                            ? char.stats.filter(s => s && s.name).map(s => [s.name, s.value])
+                            : Object.entries(char.stats);
+                        const statsList = statEntries
+                            .filter(([name]) => enabledCharStatNames.includes(name))
                             .map(([name, val]) => {
                                 const statValue = getValue(val);
                                 return statValue ? `${name}: ${statValue}` : null;
