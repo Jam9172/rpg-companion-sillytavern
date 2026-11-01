@@ -14,6 +14,7 @@
     "template.settingsModal.themeOptions.sciFi": "Sci-Fi (Synthwave)",
     "template.settingsModal.themeOptions.fantasy": "Fantasy (Rustic Parchment)",
     "template.settingsModal.themeOptions.cyberpunk": "Cyberpunk (Neon Grid)",
+    "template.settingsModal.themeOptions.forge": "Arcane Forge (Ember & Brass)",
     "template.settingsModal.themeOptions.custom": "Custom",
     "template.settingsModal.themeOptions.custom.background": "Background:",
     "template.settingsModal.themeOptions.custom.accent": "Accent:",

@@ -319,8 +319,13 @@ export function renderUserStats() {
             displayValue = `${value}%`;
         }
 
+        // Wedge meter data for themes that draw stats as rings (8 wedges, 12.5% each)
+        const clampedPercentage = Math.max(0, Math.min(100, Number(percentage) || 0));
+        const wedges = Math.ceil(clampedPercentage / 12.5);
+        const tier = wedges >= 7 ? 'full' : wedges >= 5 ? 'good' : wedges >= 3 ? 'hurt' : wedges >= 1 ? 'danger' : 'empty';
+
         html += `
-            <div class="rpg-stat-row">
+            <div class="rpg-stat-row" data-tier="${tier}" style="--rpg-pct: ${clampedPercentage}; --rpg-wedges: ${wedges}">
                 <span class="rpg-stat-label rpg-editable-stat-name" contenteditable="true" data-field="${stat.id}" title="${i18n.getTranslation('userStats.clickToEditStatName') || 'Click to edit stat name'}">${stat.name}:</span>
                 <div class="rpg-stat-bar" style="background: ${gradient}">
                     <div class="rpg-stat-fill" style="width: ${100 - percentage}%"></div>

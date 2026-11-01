@@ -38,6 +38,18 @@ export function getStatBarColors() {
 }
 
 /**
+ * Loads the Arcane Forge theme's fonts from Google Fonts, once, only when that theme is chosen.
+ */
+function loadForgeFonts() {
+    if (document.getElementById('rpg-forge-fonts')) return;
+    const link = document.createElement('link');
+    link.id = 'rpg-forge-fonts';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap';
+    document.head.appendChild(link);
+}
+
+/**
  * Applies the selected theme to the panel.
  */
 export function applyTheme() {
@@ -65,6 +77,9 @@ export function applyTheme() {
         // For non-default themes, set the data-theme attribute
         // which will trigger the CSS theme rules
         $panelContainer.attr('data-theme', theme);
+    }
+    if (theme === 'forge') {
+        loadForgeFonts();
     }
     // For 'default', we do nothing - it will use the CSS variables from .rpg-panel class
     // which fall back to SillyTavern's theme variables

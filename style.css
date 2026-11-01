@@ -12053,3 +12053,353 @@ body.documentstyle .rpg-inline-thoughts {
         aspect-ratio: auto;
     }
 }
+
+/* ==========================================================================
+   Arcane Forge theme (Ember & Brass)
+   Deep red forge palette, Cinzel headings over Alegreya Sans, stats drawn as
+   8-wedge rings coloured by how many wedges are left, attribute tiles with
+   − value + in a row, and portrait-first character cards.
+   ========================================================================== */
+.rpg-panel[data-theme="forge"],
+#rpg-thought-panel[data-theme="forge"],
+#rpg-thought-icon[data-theme="forge"],
+#rpg-alt-present-characters[data-theme="forge"],
+.rpg-mobile-toggle[data-theme="forge"] {
+    --rpg-bg: #120908;
+    --rpg-accent: #1E100D;
+    --rpg-text: #F1E3D6;
+    --rpg-highlight: #E8622C;
+    --rpg-border: #4A2219;
+    --rpg-shadow: rgba(0, 0, 0, 0.7);
+    --forge-card: #1E100D;
+    --forge-inset: #170C0A;
+    --forge-track: #3A1B15;
+    --forge-crimson: #A61E1A;
+    --forge-brass: #D9A35B;
+    --forge-muted: #B79A88;
+    --forge-soft: #D8C3B3;
+    --forge-full: #4A8FE7;
+    --forge-good: #4CC46A;
+    --forge-hurt: #F2D23C;
+    --forge-danger: #E5432F;
+}
+
+.rpg-panel[data-theme="forge"] {
+    background: var(--rpg-bg);
+    color: var(--rpg-text);
+    font-family: 'Alegreya Sans', system-ui, sans-serif;
+    font-size: 15px;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-panel-header h3,
+.rpg-panel[data-theme="forge"] #rpg-panel-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--forge-brass);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-content-box {
+    background: var(--rpg-bg);
+    border: 1px solid var(--rpg-border);
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+/* Tabs: engraved labels with an ember underline */
+.rpg-panel[data-theme="forge"] .rpg-tabs-nav {
+    border-bottom: 1px solid var(--rpg-border);
+    background: none;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    color: var(--forge-muted);
+    font-family: 'Cinzel', serif;
+    font-size: 0.8125rem;
+    letter-spacing: 0;
+    gap: 0.25em;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-tab-btn.active {
+    color: var(--rpg-text);
+    border-bottom-color: var(--rpg-highlight);
+    background: none;
+    font-weight: 700;
+}
+
+/* Section cards */
+.rpg-panel[data-theme="forge"] #rpg-user-stats,
+.rpg-panel[data-theme="forge"] .rpg-info-section,
+.rpg-panel[data-theme="forge"] .rpg-thoughts-content {
+    background: var(--forge-card);
+    border: 1px solid var(--rpg-border);
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+.rpg-panel[data-theme="forge"] #rpg-user-stats {
+    border-top: 2px solid var(--forge-crimson);
+    padding: 0.75em;
+}
+
+/* Mood and status: a margin-note quote */
+.rpg-panel[data-theme="forge"] .rpg-mood {
+    background: var(--forge-inset);
+    border: none;
+    border-left: 2px solid var(--rpg-highlight);
+    border-radius: 0;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-mood-conditions {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--forge-soft);
+}
+
+/* Info widgets */
+.rpg-panel[data-theme="forge"] .rpg-dashboard-widget {
+    background: var(--forge-inset);
+    border: 1px solid var(--rpg-border);
+    border-radius: 6px;
+}
+
+/* Buttons */
+.rpg-panel[data-theme="forge"] .rpg-btn-primary,
+.rpg-panel[data-theme="forge"] #rpg-manual-update {
+    background: var(--forge-crimson);
+    color: #FCEBDD;
+    border: 1px solid #D2402F;
+    border-radius: 6px;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-btn-settings {
+    background: none;
+    color: var(--rpg-text);
+    border: 1px solid var(--rpg-border);
+    border-radius: 6px;
+}
+
+/* Layout pieces for the side panel at desktop widths (the phone layout keeps its own) */
+@media (min-width: 1001px) {
+    /* Stats as 8-wedge rings: 5 across, wrapping to fewer on narrow panels */
+    .rpg-panel[data-theme="forge"] .rpg-stats-grid {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75em 0.375em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-stat-row {
+        --forge-tier: var(--forge-muted);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25em;
+        flex: 0 0 3.375rem;
+        width: 3.375rem;
+        min-width: 0;
+        min-height: 0;
+        padding: 0;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="full"] { --forge-tier: var(--forge-full); }
+    .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="good"] { --forge-tier: var(--forge-good); }
+    .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="hurt"] { --forge-tier: var(--forge-hurt); }
+    .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="danger"] { --forge-tier: var(--forge-danger); }
+
+    /* The ring: thin gaps between wedges on top, filled wedges underneath */
+    .rpg-panel[data-theme="forge"] .rpg-stat-bar {
+        order: 1;
+        position: relative;
+        flex: none;
+        width: 3.25rem !important;
+        min-width: 0;
+        max-width: none !important;
+        height: 3.25rem;
+        min-height: 0;
+        border: none;
+        border-radius: 50%;
+        box-shadow: none;
+        background:
+            repeating-conic-gradient(transparent 0deg 41deg, var(--forge-card) 41deg 45deg),
+            conic-gradient(var(--forge-tier) calc(var(--rpg-wedges, 0) * 45deg), var(--forge-track) 0) !important;
+    }
+
+    /* Reuse the fill element as the ring's hole */
+    .rpg-panel[data-theme="forge"] .rpg-stat-fill {
+        inset: 0.4375rem;
+        width: auto !important;
+        border-radius: 50%;
+        background: var(--forge-card);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-stat-value {
+        position: absolute;
+        top: 1.625rem;
+        left: 50%;
+        right: auto;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+        min-width: 0;
+        font-family: 'Cinzel', serif;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--rpg-text);
+        text-shadow: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-stat-label {
+        order: 2;
+        position: static;
+        transform: none;
+        max-width: none;
+        min-width: 0;
+        overflow: visible;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: none;
+        text-align: center;
+        color: var(--forge-soft);
+        text-shadow: none;
+    }
+
+    /* Status word under each ring, so colour is never the only signal */
+    .rpg-panel[data-theme="forge"] .rpg-stat-row::after {
+        order: 3;
+        content: attr(data-tier);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--forge-tier);
+    }
+
+    /* Attribute tiles: label on top, − value + in a row; 3 across, 2 on narrow panels */
+    .rpg-panel[data-theme="forge"] .rpg-classic-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-classic-stat {
+        background: var(--forge-card);
+        border: 1px solid var(--rpg-border);
+        border-radius: 12px;
+        padding: 0.625em 0.25em;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.375em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-classic-stat-label {
+        font-family: 'Cinzel', serif;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        color: var(--forge-brass);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-classic-stat-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-classic-stat-value {
+        font-family: 'Cinzel', serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--rpg-text);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-classic-stat-btn {
+        flex: none;
+        width: 1.5rem;
+        height: 1.5rem;
+        padding: 0;
+        border-radius: 50%;
+        background: #2C1511;
+        border: 1px solid var(--rpg-border);
+        color: var(--forge-soft);
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    /* Portrait-first character cards */
+    .rpg-panel[data-theme="forge"] .rpg-character-card {
+        padding: 0;
+        overflow: hidden;
+        background: var(--forge-card);
+        border: 1px solid var(--rpg-border);
+        border-radius: 6px;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-header-row {
+        position: relative;
+        display: block;
+        border-bottom: 2px solid var(--forge-crimson);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-avatar {
+        width: 100%;
+        height: 10rem;
+        background: #2C1511;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-avatar img {
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 0;
+        object-fit: cover;
+        object-position: top center;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-avatar-upload:hover {
+        transform: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-relationship-badge {
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 1.75rem;
+        height: 1.75rem;
+        font-size: 0.875rem;
+        background: rgba(18, 9, 8, 0.82);
+        border-color: var(--forge-brass);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-header {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 0.625em 0.75em;
+        background: rgba(18, 9, 8, 0.82);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-name {
+        font-family: 'Cinzel', serif;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        color: var(--rpg-text);
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-content {
+        padding: 0.75em;
+        gap: 0.5em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-field {
+        font-size: 0.9375rem;
+        line-height: 1.45;
+    }
+}
