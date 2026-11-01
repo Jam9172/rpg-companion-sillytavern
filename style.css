@@ -12768,6 +12768,22 @@ body.documentstyle .rpg-inline-thoughts {
         grid-column: 1 / -1;
     }
 
+    /* All four labels share one top line: the weather grid packs to the top instead of spreading
+       its rows over the full widget height */
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-row-1 {
+        align-items: start;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-weather-widget {
+        align-content: start;
+    }
+
+    /* Values line up with their labels: the edit highlight's side padding no longer indents them */
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-widget .rpg-editable {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     .rpg-panel[data-theme="forge"] .rpg-weather-icon {
         display: block;
         width: auto;
