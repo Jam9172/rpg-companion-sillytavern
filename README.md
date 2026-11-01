@@ -1,272 +1,90 @@
-# RPG Companion Extension for SillyTavern
+# RPG Companion (Arcane Forge fork)
 
-> **About this fork.** This is a modified version of [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern) by Marysia (marinara_spaghetti), maintained by [Jam9172](https://github.com/Jam9172). It is not the official extension and is not endorsed by the original author.
+An RPG extension for SillyTavern and TauriTavern. It tracks your stats, the scene, the characters around you and what they're thinking, and shows it all in a side panel. It updates automatically and works with any preset.
+
+> **About this fork.** This is a modified version of [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern) by Marysia (marinara_spaghetti), maintained by [Jam9172](https://github.com/Jam9172) since October 2026. It is not the official extension and is not endorsed by the original author. Please report problems with this fork here, not to the original author.
 >
-> Changes since October 2026 include:
+> Main changes:
 > - the Arcane Forge theme, now the default (stat rings, portrait cards, ledger inventory, journal quests, Whisper thoughts and an original icon set),
 > - Arcane Forge on phones and in TauriTavern,
 > - a full-size portrait crop picker,
-> - character stats sent to the main model, and
+> - character stats sent to the main model, and NPCs that keep their own looks,
 > - the deprecation popup removed.
 >
-> Every change is listed with its date in [CHANGELOG.md](CHANGELOG.md). For the Arcane Forge look across the rest of SillyTavern, pair it with [Arcane Forge UI](https://github.com/Jam9172/arcane-forge-ui).
->
-> Like the original, this fork is licensed under the GNU AGPL v3 or later; see [License](#-license) and the full text in [LICENSE](LICENSE).
-
-An immersive RPG extension for browsers that tracks character stats, scene information, and character thoughts in a beautiful, customizable UI panel. All automated! Works with any preset. Choose between Together or Separate generation modes for context and generation control.
-
-[![My Discord](https://img.shields.io/badge/Discord-Join%20Server-7289da)](https://discord.com/invite/KdAkTg94ME)
-[![Support Me](https://img.shields.io/badge/Ko--fi-Support%20Creator-ff5e5b)](https://ko-fi.com/marinara_spaghetti)
-
-## 🆕 What's New
-
-### DEPRECATED
-
-Moving on to developing the Marinara Engine frontend, the extension will now be maintained by the community!
-
-<https://github.com/Pasta-Devs/Marinara-Engine>
+> Every change is listed with its date in [CHANGELOG.md](CHANGELOG.md).
 
 ## 📥 Installation
 
-1. Open SillyTavern
+1. Open SillyTavern or TauriTavern.
+2. Open the Extensions tab (cubes icon at the top).
+3. Click **Install extension**.
+4. Paste this link and install:
 
-2. Go to the Extensions tab (cubes icon at the top)
+   ```
+   https://github.com/Jam9172/rpg-companion-sillytavern
+   ```
 
-3. Go to Install extension
-
-4. Copy-paste this link: <https://github.com/Jam9172/rpg-companion-sillytavern>
-   (the original, unmodified extension is at <https://github.com/SpicyMarinara/rpg-companion-sillytavern>)
-
-5. Press Install for all users/Install just for me
-
-![png](https://i.imgur.com/DYuIMWt.png)
-
-![png](https://i.imgur.com/IJyIEMF.png)
+For the Arcane Forge look across the rest of the app, also install [Arcane Forge UI](https://github.com/Jam9172/arcane-forge-ui) the same way.
 
 ## ✨ Features
 
-![png](https://i.imgur.com/cVCAby0.png)
-
-### Core Functionality
-
-- **📊 User Stats Tracker**: Fully customizable stats with visual progress bars, custom status fields, skills section, and dynamic inventory management
-- **🌍 Info Box Dashboard**: Configurable widgets for date, weather, temperature, time, location, and recent events
-- **💭 Present Characters Panel**: Track multiple characters with custom fields, relationship badges, character-specific stats, and internal thoughts
-- **🎭 Floating Thought Bubbles**: Optional thought bubbles positioned next to character avatars in chat
-- **🎲 Classic RPG Stats**: STR, DEX, CON, INT, WIS, CHA attributes with dice roll support
-- **📦 Advanced Inventory System**: Multi-location storage (On Person, Stored locations, Assets) with v2 format
-- **🎯 Character Stats**: Track health, energy, or any custom stats for each present character with color interpolation
-- **📜 Immersive HTML**: Enhance the immersion by including creative HTML/CSS/JS elements in your roleplay
-- **➡️ Plot Progression**: Progress the plot with randomized events or natural progression with a click of a button
-- **🎨 Multiple Themes**: Cyberpunk, Fantasy, Minimal, Dark, Light, and Custom themes
-- **✏️ Live Editing**: Edit all tracker fields directly in the panels with auto-save
-- **💾 Per-Swipe Data Storage**: Each swipe preserves its own tracker data
-- **🎛️ Tracker Configuration**: Customize every aspect of trackers - add/remove stats, fields, widgets, and more
-
-### Smart Features
-
-- **🔄 Swipe Detection**: Automatically handles swipes and maintains correct tracker context
-- **📝 Context-Aware**: Weather, stats, and character states naturally influence the narrative
-- **🎭 Multiple Characters**: Tracks thoughts, relationships, and stats for all present characters
-- **📍 Thought Bubbles in Chat**: Optional floating thought bubbles positioned next to character avatars
-- **🌈 Customizable Colors**: Create your own theme with custom color schemes
-- **📱 Mobile Support**: Responsive design with horizontal scrolling for stats
-- **🔧 Advanced Configuration**: Add custom stats, fields, and widgets through Tracker Settings
-- **🎨 Color Interpolation**: Stats smoothly transition from low to high colors based on values
-- **💬 Multi-line Format**: Clean, structured format for AI generation and parsing
-- **🧹 Auto-cleanup**: Automatically removes placeholder brackets from AI responses
-
-### To-Do
-
-1. Allow users to use a different model for the separate trackers generation
-
-## ⚙️ Settings
-
-### Main Panel Controls
-
-- **Panel Position**: Left or Right side of the chat
-- **Theme**: Choose from 6 built-in themes or create a custom
-- **Auto-update after messages**: Automatically refresh RPG data after each message
-- **Context Messages**: How many recent messages to include when generating updates (only for Separate generation mode)
-
-### Display Options
-
-- **Show User Stats**: Display the character stats panel
-- **Show Info Box**: Display the scene information panel
-- **Show Character Thoughts**: Display the AI character's internal thoughts
-
-### Generation Modes
-
-#### Together Mode
-
-Tracker data is generated within the main AI response and automatically extracted:
-
-Example:
-User: walks into the tavern
-
-AI: Trackers + Full roleplay response
-
-↓ Extension extracts tracker data from the response
-
-↓ Displays in sidebar panels
-
-↓ Main chat shows clean roleplay text
-
-Pros:
-
-- Single API call
-- Faster response
-- Simpler setup
-
-Cons:
-
-- Tracker formatting mixed in AI response
-- May affect roleplay quality slightly
-
-#### Separate Mode
-
-Tracker data is generated in a separate API call after the main response:
-
-Example:
-User: walks into the tavern
-
-AI: Pure roleplay response - no tracker data
-
-AI: Separate call with just the tracker data
-
-↓ Extension sends a separate request with context
-
-↓ AI generates only tracker data
-
-↓ Displays in sidebar panels
-
-↓ Context summary injected into the next generation
-
-Pros:
-
-- Clean roleplay responses
-- Better roleplay quality
-- Contextual summary enhances immersion
-
-Cons:
-
-- Extra API call
-- Slightly slower
-
-### Model Selection
-
-- **Use main chat model**: Use the same model as your chat (recommended)
-- Custom model selection (coming soon)
-
-## 📝 How to Use
-
-### Quick Start
-
-1. Enable the extension in the Extensions tab
-2. Choose your generation mode: Together or Separate
-3. Select which panels to display (User Stats, Info Box, Character Thoughts)
-4. Start chatting! The tracker updates automatically
-
-### Editing Tracker Data
-
-You can edit most fields by clicking on them:
-
-- **User Stats**: Click on stat percentages, mood emoji, status fields, skills, inventory items, or quests
-- **Info Box**: Click on date fields, weather, temperature, time, location, or recent events
-- **Present Characters**: Click on character emoji, name, custom fields, relationship badge, or stats
-- **Thought Bubbles**: Click on thought text to edit (bubble will refresh to maintain positioning)
-
-### Tracker Configuration
-
-Access comprehensive customization through the Tracker Settings button:
-
-**User Stats Configuration:**
-
-- Add/remove custom stats with unique names
-- Configure Status section (mood emoji + custom fields)
-- Configure Skills section with custom skill fields
-- Toggle RPG attributes display
-
-**Info Box Configuration:**
-
-- Enable/disable individual widgets (Date, Weather, Temperature, Time, Location, Recent Events)
-- Choose temperature unit (Celsius/Fahrenheit)
-
-**Present Characters Configuration:**
-
-- Add custom character fields (appearance, action, demeanor, etc.)
-- Configure relationship status options
-- Enable character-specific stats tracking
-- Customize thought bubble label and description
-- All fields are dynamically generated in prompts
-
-### Swipe Support
-
-The extension fully supports swipes:
-
-- Each swipe stores its own tracker data
-- Swiping loads the data for that specific swipe
-- New swipe generation uses the committed data from before the swipe
-- User edits are preserved across swipes
-
-### Manual Update
-
-You can click the "Refresh RPG Info" button in the settings to refresh the RPG data at any time in separate generation mode.
-
-### Compatibility with Guided Generations
-
-This extension detects when a "guided generation" prompt is submitted (for example, via the GuidedGenerations extension which injects an ephemeral `instruct` prompt), and will avoid adding its tracker injection instructions (requests for stats, info box, and context prompts) to the generation context. This prevents conflicting instructions and ensures guided generations behave as the user expects.
-
-If you want tracker prompts to apply during a guided generation, run the update via separate generation or temporarily disable guided generation in the other extension.
-
-There is a new setting "Skip Tracker & HTML Injections during Guided Generations" in the RPG Companion settings (Advanced section). It now supports three modes:
-
-- none: never skip (always inject the tracker prompts as usual, default)
-- impersonation: only skip when an impersonation-style guided generation is detected
-- guided: skip whenever a guided `instruct` or `quiet_prompt` generation is detected
+- **📊 User stats**: customizable stats (shown as rings in Arcane Forge), mood, status fields, skills and classic RPG attributes with dice rolls.
+- **🌍 Info box**: date, weather, temperature, time, location and recent events.
+- **💭 Present Characters**: everyone in the scene, with portraits, custom fields, relationship badges, their own stats and their inner thoughts.
+- **📦 Inventory**: what you carry, what you wear, what's stored where, and your assets.
+- **📜 Quests**: a main quest and optional ones.
+- **✏️ Live editing**: click almost any value to change it.
+- **💾 Swipe-aware**: each swipe keeps its own tracker data.
+- **🎛️ Tracker editor**: add or remove stats, fields and widgets, and edit the prompts.
+- **➡️ Plot progression**: push the story along with a random event or a natural next step.
+- **📜 Immersive HTML**: optional HTML/CSS elements inside the roleplay.
+- **📱 Phones**: a tabbed layout and floating widgets on small screens.
 
 ## 🎨 Themes
 
-Choose from 7 beautiful themes:
+- **Arcane Forge** (default): ember and brass, with stat rings, portrait cards, a ledger inventory, a quest journal and Whisper-style thoughts.
+- **Default**: the original look.
+- **Sci-Fi**, **Fantasy** and **Cyberpunk**.
+- **Custom**: pick your own colours.
 
-- **Arcane Forge** (this fork's default): Ember and brass, with stat rings, portrait cards, a ledger inventory and a quest journal. Works on phones too
-- **Cyberpunk**: Neon pink and cyan with futuristic vibes
-- **Fantasy**: Purple and gold with mystical aesthetics
-- **Minimal**: Clean monochrome design
-- **Dark**: Deep blacks and subtle accents
-- **Light**: Bright and airy interface
-- **Custom**: Create your own with custom colors
+Change it under RPG Companion → Settings → Theme.
 
-## 🛠️ Technical Details
+## ⚙️ Generation modes
 
-If you ever have an awesome idea to do your own SillyTavern extension, don't.
+- **Together**: the trackers come back inside the main reply and are removed from the chat text. One request, but the tracker format can slightly affect the roleplay.
+- **Separate**: after each reply, a second request updates the trackers. Cleaner roleplay, one extra request.
+- **External**: like Separate, but the trackers use their own OpenAI-compatible connection (base URL, model and key). Handy for a cheaper, faster model while the story keeps your main one.
+
+In Separate and External mode, **Refresh RPG Info** updates the trackers at any time.
+
+## 📝 How to use
+
+1. Turn the extension on in the Extensions tab.
+2. Pick a generation mode and which sections to show.
+3. Start chatting. The trackers update by themselves.
+
+**Editing:** click a stat, field, item, quest, character detail or thought to edit it. Edits are kept across swipes.
+
+**Locking:** lock an item or field and the AI won't change it.
+
+**Tracker editor:** Edit Trackers lets you change user stats, info box widgets, Present Characters fields, relationship options, character stats and the thoughts label. Everything you add is included in the prompts automatically.
+
+**Guided Generations:** RPG Companion can skip its tracker prompts during guided generations (Settings → Advanced): never, only for impersonation, or for every guided generation.
 
 ## 🐛 Troubleshooting
 
-### Extension doesn't appear
+- **Extension doesn't appear:** reload the page or app, and check it's enabled in the Extensions tab.
+- **Trackers not updating:** check auto-update is on, try Refresh RPG Info, and check your API is answering. The browser console shows errors.
+- **Looks wrong:** reload, then try turning other UI extensions off to find a conflict.
 
-- Refresh your browser
-- Restart SillyTavern
-- Ensure it's enabled in the Extensions tab
+## 📋 Compatibility
 
-### Stats not updating
+- SillyTavern 1.11.0 or newer (tested on 1.19.0) and TauriTavern (tested on 2.4.0).
+- Any chat backend.
 
-- Check that "Auto-update" is enabled
-- Try clicking "Manual Update" to test
-- Verify your AI backend is responding correctly
-- Check console for error messages
+## 🙏 Credits
 
-### Display issues
-
-- Try refreshing the page
-- Check if other extensions are conflicting
-- Verify CSS is loading correctly
-
-### Thought bubble positioning
-
-- Bubbles use a fixed 350px width for consistent positioning
-- Bubbles refresh after edits to maintain alignment
-- If issues persist, try toggling the Character Thoughts display
+Based on [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern) by Marysia (SpicyMarinara) and its contributors: Paperboygold, Munimunigamer, Subarashimo, Lilminzyu, Claude, IDeathByte, Chungchandev, Joenunezb, Amauragis, Tomt610 and Jakstein.
 
 ## 📜 License
 
@@ -278,33 +96,4 @@ Copyright (C) 2024 marinara_spaghetti
 
 Modifications copyright (C) 2026 Jam9172
 
-## 💖 Support
-
-If you enjoy this extension, consider supporting development:
-
-- [Join our Discord community](https://discord.com/invite/KdAkTg94ME)
-- [Support on Ko-fi](https://ko-fi.com/marinara_spaghetti)
-
-## 🙏 Credits
-
-**Contributors:**
-SpicyMarinara, Paperboygold, Munimunigamer, Subarashimo, Lilminzyu, Claude, IDeathByte, Chungchandev, Joenunezb, Amauragis, Tomt610, and Jakstein.
-
-## 🚀 Planned Features
-
-- Support for selecting a different model for RPG updates
-
-## 💡 Tips
-
-1. **Context Messages**: Start with 4 messages and adjust based on your needs. More messages = better context, but slower updates
-2. **Performance**: If updates are slow, consider reducing the context depth or using a faster model
-3. **Customization**: You can modify the prompts in index.js to add your own stat categories or change the format
-
-## 📋 Compatibility
-
-- Requires SillyTavern 1.11.0 or higher
-- Works with all AI backends (OpenAI, Claude, KoboldAI, etc.)
-
----
-
-Made with ❤️ by Marinara
+The full licence text is in [LICENSE](LICENSE).
