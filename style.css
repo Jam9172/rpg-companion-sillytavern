@@ -13116,11 +13116,12 @@ body.documentstyle .rpg-inline-thoughts {
         align-items: center;
         justify-content: space-between;
         gap: 0.25em 0.5em;
-        padding: 0 0 0.5em;
+        padding: 0 0 0.875em;
         margin: 0;
         border: none;
-        border-bottom: 1px solid var(--rpg-border);
-        background: none;
+        background:
+            var(--forge-divider-gem) center bottom / 12px 12px no-repeat,
+            var(--forge-divider-line) center calc(100% - 5.5px) / 100% 1px no-repeat;
     }
 
     .rpg-panel[data-theme="forge"] .rpg-inventory-header h4 {
@@ -13185,17 +13186,29 @@ body.documentstyle .rpg-inline-thoughts {
     }
 
     /* Item rows: ×qty, name, remove */
+    /* Forge divider: a brass line fading at both ends with an ember diamond in the middle */
+    .rpg-panel[data-theme="forge"] {
+        --forge-divider-gem: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 1l5 5-5 5-5-5z' fill='%231E100D' stroke='%23E8622C' stroke-width='1.4'/%3E%3C/svg%3E");
+        --forge-divider-line: linear-gradient(90deg, rgba(217, 163, 91, 0), rgba(217, 163, 91, 0.55) 18%, rgba(217, 163, 91, 0.55) 82%, rgba(217, 163, 91, 0));
+    }
+
     .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-row {
         display: flex;
         align-items: center;
         gap: 0.375em;
-        padding: 0.5625em 0;
+        padding: 0.625em 0 0.875em;
         margin: 0;
-        background: none;
         border: none;
-        border-bottom: 1px solid #2A1410;
         border-radius: 0;
         box-shadow: none;
+        background:
+            var(--forge-divider-gem) center bottom / 10px 10px no-repeat,
+            var(--forge-divider-line) center calc(100% - 4.5px) / 100% 1px no-repeat;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-row:last-child {
+        background: none;
+        padding-bottom: 0.625em;
     }
 
     .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-row::before {
@@ -13203,7 +13216,7 @@ body.documentstyle .rpg-inline-thoughts {
         order: 1;
         margin-right: -0.375em;
         font-family: 'Cinzel', serif;
-        font-size: 0.8125rem;
+        font-size: 0.9375rem;
         font-weight: 700;
         color: var(--rpg-highlight);
     }
@@ -13219,7 +13232,7 @@ body.documentstyle .rpg-inline-thoughts {
         border-radius: 0 !important;
         color: var(--rpg-highlight);
         font-family: 'Cinzel', serif;
-        font-size: 0.8125rem;
+        font-size: 0.9375rem;
         font-weight: 700;
         text-align: left;
         -moz-appearance: textfield;
@@ -13242,7 +13255,7 @@ body.documentstyle .rpg-inline-thoughts {
         order: 3;
         flex: 1;
         min-width: 0;
-        font-size: 0.9375rem;
+        font-size: 1.0625rem;
         line-height: 1.35;
         color: var(--rpg-text);
         text-align: left;
@@ -13720,9 +13733,49 @@ body.documentstyle .rpg-inline-thoughts {
     display: none;
 }
 
+/* Opening grows the card out of the pill's corner; closing shrinks it back in */
 #rpg-thought-panel.rpg-whisper .rpg-whisper-item.is-open .rpg-whisper-body {
     display: block;
-    animation: thoughtPanelFadeIn 0.25s ease-out;
+    transform-origin: top left;
+    animation: whisperExpand 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-item.is-closing .rpg-whisper-body {
+    pointer-events: none;
+    animation: whisperMinimize 0.24s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-item:not(.is-open) .rpg-whisper-pill {
+    transform-origin: left center;
+    animation: whisperPillIn 0.22s ease-out;
+}
+
+/* The panel itself should not replay its entrance animation */
+#rpg-thought-panel.rpg-whisper {
+    animation: none;
+    transform: none;
+}
+
+@keyframes whisperExpand {
+    from { opacity: 0; transform: scale(0.6); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes whisperMinimize {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: scale(0.25); }
+}
+
+@keyframes whisperPillIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #rpg-thought-panel.rpg-whisper .rpg-whisper-body,
+    #rpg-thought-panel.rpg-whisper .rpg-whisper-pill {
+        animation: none !important;
+    }
 }
 
 #rpg-thought-panel.rpg-whisper .rpg-whisper-portrait {
@@ -13769,7 +13822,6 @@ body.documentstyle .rpg-inline-thoughts {
     border: 1px solid var(--forge-brass, #D9A35B);
     background: rgba(18, 9, 8, 0.82);
     color: var(--forge-brass, #D9A35B);
-    font-size: 1.125rem;
     line-height: 1;
     cursor: pointer;
 }

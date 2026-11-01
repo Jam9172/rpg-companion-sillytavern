@@ -2078,7 +2078,7 @@ function buildWhisperItem(thought) {
                 <div class="rpg-whisper-portrait">
                     <img src="${fullPortrait}" alt="${name}" style="${focusStyle}" onerror="this.style.opacity='0.5';this.onerror=null;" />
                     <span class="rpg-whisper-portrait-name">${name}</span>
-                    <button type="button" class="rpg-whisper-collapse" title="${hideText}" aria-label="${hideText}">×</button>
+                    <button type="button" class="rpg-whisper-collapse" title="${hideText}" aria-label="${hideText}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6 M20 10h-6V4 M14 10l7-7 M3 21l7-7"/></svg></button>
                 </div>
                 <div class="rpg-thought-content rpg-editable" contenteditable="true" data-character="${name}" data-field="thoughts" title="Click to edit thoughts">${thought.thought}</div>
             </div>
@@ -2093,8 +2093,6 @@ function buildWhisperItem(thought) {
  */
 function setWhisperOpen($item, open) {
     const characterName = $item.data('character');
-    $item.toggleClass('is-open', open);
-    $item.find('.rpg-whisper-pill').attr('aria-expanded', String(open));
 
     if (!extensionSettings.whisperOpen) {
         extensionSettings.whisperOpen = {};
@@ -2102,7 +2100,35 @@ function setWhisperOpen($item, open) {
     extensionSettings.whisperOpen[characterName] = open;
     saveSettings();
 
-    $item.find(open ? '.rpg-whisper-collapse' : '.rpg-whisper-pill').trigger('focus');
+    $item.find('.rpg-whisper-pill').attr('aria-expanded', String(open));
+
+    if (open) {
+        $item.removeClass('is-closing').addClass('is-open');
+        $item.find('.rpg-whisper-collapse').trigger('focus');
+        return;
+    }
+
+    // Play the minimize animation, then swap back to the pill
+    const finish = () => {
+        $item.removeClass('is-open is-closing');
+        $item.find('.rpg-whisper-pill').trigger('focus');
+    };
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion || !$item.hasClass('is-open')) {
+        finish();
+        return;
+    }
+    $item.addClass('is-closing');
+    const body = $item.find('.rpg-whisper-body').get(0);
+    let done = false;
+    const onEnd = () => {
+        if (done) return;
+        done = true;
+        body?.removeEventListener('animationend', onEnd);
+        finish();
+    };
+    body?.addEventListener('animationend', onEnd);
+    setTimeout(onEnd, 400); // Fallback if the animation event never fires
 }
 
 export function createThoughtPanel($message, thoughtsArray) {
