@@ -22,6 +22,7 @@ import {
 } from '../../utils/presentCharacters.js';
 import { isItemLocked, setItemLock } from '../generation/lockManager.js';
 import { statMeterAttributes } from '../../utils/statMeter.js';
+import { downscaleImageDataUrl } from '../../utils/avatars.js';
 import { getPortraitFocus, portraitFocusStyle, openPortraitFocusPicker } from '../ui/portraitFocus.js';
 import { renderAlternatePresentCharacters } from '../ui/alternatePresentCharacters.js';
 import { queueThoughtBasedExpressionsUpdate } from '../integration/thoughtBasedExpressions.js';
@@ -579,8 +580,9 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
 
             // Read file as data URL
             const reader = new FileReader();
-            reader.onload = function (e) {
-                const imageUrl = e.target.result;
+            reader.onload = async function (e) {
+                // Shrink large photos before saving them into the settings file
+                const imageUrl = await downscaleImageDataUrl(e.target.result);
 
                 // Store in npcAvatars
                 if (!extensionSettings.npcAvatars) {

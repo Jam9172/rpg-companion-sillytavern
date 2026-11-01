@@ -44,3 +44,39 @@ export function getSafeThumbnailUrl(type, filename) {
         return null;
     }
 }
+
+/**
+ * Shrinks an uploaded image so its longest side is at most maxSize pixels, so large
+ * photos don't bloat the settings file they are saved in. Smaller images are returned
+ * unchanged. Falls back to the original data URL if the image can't be processed.
+ *
+ * @param {string} dataUrl - Image as a data: URL (from FileReader.readAsDataURL)
+ * @param {number} [maxSize=768] - Longest side in pixels
+ * @returns {Promise<string>} Data URL of the (possibly) resized image
+ */
+export function downscaleImageDataUrl(dataUrl, maxSize = 768) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const longest = Math.max(img.naturalWidth, img.naturalHeight);
+            if (!longest || longest <= maxSize) {
+                resolve(dataUrl);
+                return;
+            }
+            try {
+                const scale = maxSize / longest;
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(img.naturalWidth * scale);
+                canvas.height = Math.round(img.naturalHeight * scale);
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                // WebP keeps transparency and is much smaller than PNG
+                resolve(canvas.toDataURL('image/webp', 0.88));
+            } catch (error) {
+                console.warn('[RPG Companion] Could not resize uploaded avatar, keeping original:', error);
+                resolve(dataUrl);
+            }
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+    });
+}
