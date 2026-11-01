@@ -266,6 +266,7 @@ export let extensionSettings = {
     },
     npcAvatars: {}, // Store custom avatar images for NPCs (key: character name, value: base64 data URI)
     portraitFocus: {}, // Where large portraits centre and how far they zoom (key: character name, value: {x, y, zoom})
+    whisperOpen: {}, // Which characters' thoughts are opened in the Whisper thought style (key: character name)
     // Combat encounter settings
     encounterSettings: {
         enabled: true, // Show Start Encounter button above chat input

@@ -2052,6 +2052,59 @@ function constrainIconToViewport($icon) {
  * @param {jQuery} $message - Message element to position the panel relative to
  * @param {Array} thoughtsArray - Array of thought objects {name, emoji, thought}
  */
+/**
+ * Builds one Whisper item: a collapsed pill (portrait circle + "is thinking…") and the
+ * opened card (full portrait, name, thought). The thought is only shown when opened.
+ * @param {{name: string, emoji: string, thought: string}} thought
+ * @returns {string}
+ */
+function buildWhisperItem(thought) {
+    const name = escapeInlineThoughtHtml(thought.name);
+    const isOpen = !!extensionSettings.whisperOpen?.[thought.name];
+    const thumbnail = resolvePresentCharacterPortrait(thought.name);
+    const fullPortrait = resolvePresentCharacterPortrait(thought.name, { fullSize: true });
+    const focusStyle = portraitFocusStyle(getPortraitFocus(thought.name));
+    const thinkingText = i18n.getTranslation('thoughts.isThinking') || 'is thinking…';
+    const showText = i18n.getTranslation('thoughts.showThought') || 'Show thought';
+    const hideText = i18n.getTranslation('thoughts.hideThought') || 'Hide thought';
+
+    return `
+        <div class="rpg-whisper-item${isOpen ? ' is-open' : ''}" data-character="${name}">
+            <button type="button" class="rpg-whisper-pill" aria-expanded="${isOpen}" title="${showText}">
+                <img class="rpg-whisper-avatar" src="${thumbnail}" alt="" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                <span class="rpg-whisper-label"><span class="rpg-whisper-name">${name}</span> <span class="rpg-whisper-thinking">${thinkingText}</span></span>
+            </button>
+            <div class="rpg-whisper-body">
+                <div class="rpg-whisper-portrait">
+                    <img src="${fullPortrait}" alt="${name}" style="${focusStyle}" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                    <span class="rpg-whisper-portrait-name">${name}</span>
+                    <button type="button" class="rpg-whisper-collapse" title="${hideText}" aria-label="${hideText}">×</button>
+                </div>
+                <div class="rpg-thought-content rpg-editable" contenteditable="true" data-character="${name}" data-field="thoughts" title="Click to edit thoughts">${thought.thought}</div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Opens or folds a Whisper item and remembers the choice per character.
+ * @param {jQuery} $item
+ * @param {boolean} open
+ */
+function setWhisperOpen($item, open) {
+    const characterName = $item.data('character');
+    $item.toggleClass('is-open', open);
+    $item.find('.rpg-whisper-pill').attr('aria-expanded', String(open));
+
+    if (!extensionSettings.whisperOpen) {
+        extensionSettings.whisperOpen = {};
+    }
+    extensionSettings.whisperOpen[characterName] = open;
+    saveSettings();
+
+    $item.find(open ? '.rpg-whisper-collapse' : '.rpg-whisper-pill').trigger('focus');
+}
+
 export function createThoughtPanel($message, thoughtsArray) {
     // Initialize drag handlers once
     initThoughtIconDragHandlers();
@@ -2089,8 +2142,15 @@ export function createThoughtPanel($message, thoughtsArray) {
         }
     });
 
+    // Whisper style (Arcane Forge, desktop): one collapsible pill per character instead of a bubble
+    const useWhisper = theme === 'forge' && window.innerWidth > 1000;
+
     // Create the floating thought panel with theme
-    const $thoughtPanel = $(`
+    const $thoughtPanel = $(useWhisper ? `
+        <div id="rpg-thought-panel" class="rpg-thought-panel rpg-whisper" data-theme="${theme}">
+            ${thoughtsArray.map(buildWhisperItem).join('')}
+        </div>
+    ` : `
         <div id="rpg-thought-panel" class="rpg-thought-panel" data-theme="${theme}">
             <button class="rpg-thought-close" title="Hide thoughts">×</button>
             <div class="rpg-thought-circles">
@@ -2445,6 +2505,16 @@ export function createThoughtPanel($message, thoughtsArray) {
 
     // Support both click and touch events for mobile
     $thoughtIcon.on('click touchend', handleThoughtIconTap);
+
+    // Whisper: the pill opens a character's thought, the × folds it back to the pill
+    $thoughtPanel.find('.rpg-whisper-pill').on('click', function (e) {
+        e.preventDefault();
+        setWhisperOpen($(this).closest('.rpg-whisper-item'), true);
+    });
+    $thoughtPanel.find('.rpg-whisper-collapse').on('click', function (e) {
+        e.preventDefault();
+        setWhisperOpen($(this).closest('.rpg-whisper-item'), false);
+    });
 
     // Add event handlers for editable thoughts in the bubble
     $thoughtPanel.find('.rpg-editable').on('blur', function () {

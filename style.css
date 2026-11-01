@@ -13625,3 +13625,166 @@ body.documentstyle .rpg-inline-thoughts {
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.75%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%2011h12v9H6z%20M8.5%2011V7.5a3.5%203.5%200%200%201%207%200V11%20M12%2014.5v2.5%22%2F%3E%3C%2Fsvg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.75%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%2011h12v9H6z%20M8.5%2011V7.5a3.5%203.5%200%200%201%207%200V11%20M12%2014.5v2.5%22%2F%3E%3C%2Fsvg%3E");
 }
+
+/* ==========================================================================
+   Arcane Forge: Whisper thoughts (desktop)
+   Each character is a pill ("Name is thinking…") until clicked; opened, it
+   shows the full portrait and the thought. The thought never shows collapsed.
+   ========================================================================== */
+#rpg-thought-panel.rpg-whisper {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    width: 22rem;
+    max-width: 22rem;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    font-family: 'Alegreya Sans', system-ui, sans-serif;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-item {
+    width: 100%;
+}
+
+/* Collapsed pill */
+#rpg-thought-panel.rpg-whisper .rpg-whisper-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 2.75rem;
+    max-width: 100%;
+    padding: 0.375rem 1rem 0.375rem 0.375rem;
+    border-radius: 999px;
+    background: var(--forge-card, #1E100D);
+    border: 1px solid var(--rpg-border, #4A2219);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    color: var(--rpg-text, #F1E3D6);
+    font-family: inherit;
+    font-size: 0.9375rem;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-pill:hover,
+#rpg-thought-panel.rpg-whisper .rpg-whisper-pill:focus-visible {
+    border-color: var(--forge-brass, #D9A35B);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(232, 98, 44, 0.25);
+    outline: none;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-avatar {
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 2px solid var(--forge-brass, #D9A35B);
+    object-fit: cover;
+    object-position: top center;
+    background: #2C1511;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--forge-brass, #D9A35B);
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-thinking {
+    font-style: italic;
+    color: var(--forge-muted, #B79A88);
+}
+
+/* Opened card: hidden until the pill is clicked */
+#rpg-thought-panel.rpg-whisper .rpg-whisper-body {
+    display: none;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--forge-card, #1E100D);
+    border: 1px solid var(--rpg-border, #4A2219);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-item.is-open .rpg-whisper-pill {
+    display: none;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-item.is-open .rpg-whisper-body {
+    display: block;
+    animation: thoughtPanelFadeIn 0.25s ease-out;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-portrait {
+    position: relative;
+    height: 9rem;
+    overflow: hidden;
+    background: #2C1511;
+    border-bottom: 2px solid var(--forge-crimson, #A61E1A);
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-portrait img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-portrait-name {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0.5rem 0.875rem;
+    background: rgba(18, 9, 8, 0.82);
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--rpg-text, #F1E3D6);
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-collapse {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid var(--forge-brass, #D9A35B);
+    background: rgba(18, 9, 8, 0.82);
+    color: var(--forge-brass, #D9A35B);
+    font-size: 1.125rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-whisper-collapse:hover,
+#rpg-thought-panel.rpg-whisper .rpg-whisper-collapse:focus-visible {
+    background: var(--forge-crimson, #A61E1A);
+    color: #FCEBDD;
+    outline: none;
+}
+
+#rpg-thought-panel.rpg-whisper .rpg-thought-content {
+    padding: 0.75rem 1rem 0.875rem;
+    font-style: italic;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--rpg-text, #F1E3D6);
+}
