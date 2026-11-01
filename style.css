@@ -12261,8 +12261,125 @@ body.documentstyle .rpg-inline-thoughts {
     outline-offset: 2px;
 }
 
+.rpg-panel[data-theme="forge"] .rpg-feature-col .rpg-toggle-label {
+    justify-content: center;
+    gap: 0.625em;
+    min-height: 2.75rem;
+}
+
 .rpg-panel[data-theme="forge"] .rpg-feature-col .rpg-toggle-label i {
+    font-size: 1.375rem;
+    line-height: 1;
+}
+
+/* User portrait banner: bleeds to the stats card's edges, name and level over the bottom */
+.rpg-panel[data-theme="forge"] .rpg-user-banner {
+    position: relative;
+    display: block;
+    margin: -0.75em -0.75em 0.875em;
+    padding: 0;
     font-size: 1rem;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-user-banner-image {
+    position: relative;
+    height: 9rem;
+    overflow: hidden;
+    background: #2C1511;
+    border-bottom: 2px solid var(--forge-crimson);
+    border-radius: 5px 5px 0 0;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-user-banner .rpg-user-portrait {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    object-fit: cover;
+    box-shadow: none;
+    transition: transform 0.2s ease, object-position 0.2s ease;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-user-banner-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 2px;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5em;
+    padding: 0.625em 0.875em;
+    background: rgba(18, 9, 8, 0.82);
+    color: var(--rpg-text);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-user-banner .rpg-user-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-user-banner .rpg-level-label {
+    font-size: 0.875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--forge-muted);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-user-banner .rpg-level-value {
+    font-family: 'Cinzel', serif;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: var(--forge-brass);
+}
+
+/* The crop button sits in the banner's top-right corner, so the stats lock moves to the top-left */
+.rpg-panel[data-theme="forge"] #rpg-user-stats .rpg-stats-left > .rpg-section-lock-icon {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    right: auto;
+    z-index: 3;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: rgba(18, 9, 8, 0.82);
+}
+
+.rpg-panel[data-theme="forge"] #rpg-user-stats .rpg-stats-left {
+    position: relative;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-user-banner .rpg-portrait-focus-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 3;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid var(--forge-brass);
+    background: rgba(18, 9, 8, 0.82);
+    color: var(--forge-brass);
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-user-banner .rpg-portrait-focus-btn:hover,
+.rpg-panel[data-theme="forge"] .rpg-user-banner .rpg-portrait-focus-btn:focus-visible {
+    background: var(--forge-crimson);
+    color: #FCEBDD;
+    outline: none;
 }
 
 /* Layout pieces for the side panel at desktop widths (the phone layout keeps its own) */

@@ -8,6 +8,9 @@ import { getContext } from '../../../../../../extensions.js';
 import { getWeatherKeywordsAsPromptString } from '../ui/weatherEffects.js';
 import { i18n } from '../../core/i18n.js';
 
+// Most conditions the AI may list at once in a status or appearance field
+const MAX_CONDITIONS = 5;
+
 /**
  * Converts a field name to snake_case for use as JSON key
  * Example: "Test Tracker" -> "test_tracker"
@@ -78,7 +81,7 @@ export function buildUserStatsJSONInstruction() {
                 if (i === 0 && userStatsConfig.statusSection.showMoodEmoji) {
                     instruction += ',\n';
                 }
-                instruction += `    "${fieldKey}": "[${fieldName}]"${comma}`;
+                instruction += `    "${fieldKey}": "[${fieldName}: at most ${MAX_CONDITIONS} short items, comma-separated]"${comma}`;
             }
         }
         if (!userStatsConfig.statusSection.showMoodEmoji && customFields.length > 0) {
@@ -204,7 +207,7 @@ export function buildCharactersJSONInstruction() {
             const field = enabledFields[i];
             const fieldKey = toSnakeCase(field.name);
             const comma = i < enabledFields.length - 1 ? ',' : '';
-            instruction += `      "${fieldKey}": "${field.description}"${comma}\n`;
+            instruction += `      "${fieldKey}": "${field.description} (at most ${MAX_CONDITIONS} short items, comma-separated)"${comma}\n`;
         }
         instruction += '    }';
     }

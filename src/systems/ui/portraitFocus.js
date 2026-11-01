@@ -42,12 +42,13 @@ export function portraitFocusStyle(focus) {
  * Opens the picker for one character.
  * @param {Object} options
  * @param {string} options.name - Character name (the key the focus is saved under)
+ * @param {string} [options.label] - Name shown in the picker's title, if different from the key
  * @param {string} options.imageUrl - Full-size portrait URL
  * @param {number} options.aspect - Banner width / height, for the live preview
  * @param {HTMLElement} [options.returnFocusTo] - Element to focus again when the picker closes
  * @param {(focus: {x: number, y: number, zoom: number}) => void} options.onSave
  */
-export function openPortraitFocusPicker({ name, imageUrl, aspect, returnFocusTo, onSave }) {
+export function openPortraitFocusPicker({ name, label, imageUrl, aspect, returnFocusTo, onSave }) {
     document.getElementById('rpg-portrait-focus-modal')?.remove();
 
     let focus = getPortraitFocus(name);
@@ -67,7 +68,7 @@ export function openPortraitFocusPicker({ name, imageUrl, aspect, returnFocusTo,
     const title = document.createElement('h3');
     title.id = 'rpg-focus-title';
     title.className = 'rpg-focus-title';
-    title.textContent = `${t('portraitFocus.title', 'Portrait focus')}: ${name}`;
+    title.textContent = `${t('portraitFocus.title', 'Portrait focus')}: ${label || name}`;
 
     const hint = document.createElement('p');
     hint.className = 'rpg-focus-hint';
@@ -82,7 +83,7 @@ export function openPortraitFocusPicker({ name, imageUrl, aspect, returnFocusTo,
 
     const stageImg = document.createElement('img');
     stageImg.src = imageUrl;
-    stageImg.alt = name;
+    stageImg.alt = label || name;
     stageImg.draggable = false;
 
     const marker = document.createElement('div');

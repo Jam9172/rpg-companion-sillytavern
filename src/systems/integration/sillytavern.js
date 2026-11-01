@@ -821,6 +821,12 @@ export function updatePersonaAvatar() {
         return;
     }
 
+    // Portrait banners use the full-size image and a per-persona focus point, so re-render instead
+    if (portraitImg.closest('.rpg-user-banner')) {
+        renderUserStats();
+        return;
+    }
+
     // Get current user_avatar from context instead of using imported value
     const context = getContext();
     const currentUserAvatar = context.user_avatar || user_avatar;

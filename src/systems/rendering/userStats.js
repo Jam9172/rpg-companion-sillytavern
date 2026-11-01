@@ -20,6 +20,15 @@ import {
 } from '../../core/persistence.js';
 import { getSafeThumbnailUrl } from '../../utils/avatars.js';
 import { statMeterAttributes } from '../../utils/statMeter.js';
+import { getPortraitFocus, portraitFocusStyle, openPortraitFocusPicker } from '../ui/portraitFocus.js';
+
+/**
+ * Key the user's portrait focus is saved under (per persona image, so it can't clash with a character name)
+ * @returns {string}
+ */
+function getUserPortraitFocusKey() {
+    return `persona:${user_avatar}`;
+}
 import { buildInventorySummary } from '../generation/promptBuilder.js';
 import { isItemLocked, setItemLock } from '../generation/lockManager.js';
 import { updateFabWidgets } from '../ui/mobile.js';
@@ -283,15 +292,35 @@ export function renderUserStats() {
 
     // User info row
     const showLevel = extensionSettings.trackerConfig?.userStats?.showLevel !== false;
-    html += `
+    const levelHtml = showLevel ? `<span style="opacity: 0.5;">|</span>
+            <span class="rpg-level-label">${i18n.getTranslation('userStats.level') || 'Level'}</span>
+            <span class="rpg-level-value rpg-editable" contenteditable="true" data-field="level" title="${i18n.getTranslation('userStats.clickToEditLevel') || 'Click to edit level'}">${extensionSettings.level}</span>` : '';
+
+    if (extensionSettings.theme === 'forge' && user_avatar) {
+        // Portrait banner: full-size persona image cropped around a saved focus point, name and level over it
+        const focusKey = getUserPortraitFocusKey();
+        const focusLabel = i18n.getTranslation('portraitFocus.open') || 'Adjust portrait focus';
+        html += `
+        <div class="rpg-user-info-row rpg-user-banner">
+            <div class="rpg-user-banner-image">
+                <img src="/User Avatars/${encodeURIComponent(user_avatar)}" alt="${userName}" class="rpg-user-portrait" style="${portraitFocusStyle(getPortraitFocus(focusKey))}" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                <button type="button" class="rpg-portrait-focus-btn rpg-user-focus-btn" title="${focusLabel}" aria-label="${focusLabel}"><i class="fa-solid fa-crop-simple" aria-hidden="true"></i></button>
+            </div>
+            <div class="rpg-user-banner-caption">
+                <span class="rpg-user-name">${userName}</span>
+                ${levelHtml}
+            </div>
+        </div>
+    `;
+    } else {
+        html += `
         <div class="rpg-user-info-row">
             <img src="${userPortrait}" alt="${userName}" class="rpg-user-portrait" onerror="this.style.opacity='0.5';this.onerror=null;" />
             <span class="rpg-user-name">${userName}</span>
-            ${showLevel ? `<span style="opacity: 0.5;">|</span>
-            <span class="rpg-level-label">${i18n.getTranslation('userStats.level') || 'Level'}</span>
-            <span class="rpg-level-value rpg-editable" contenteditable="true" data-field="level" title="${i18n.getTranslation('userStats.clickToEditLevel') || 'Click to edit level'}">${extensionSettings.level}</span>` : ''}
+            ${levelHtml}
         </div>
     `;
+    }
 
     // Dynamic stats grid - only show enabled stats
     const showLockIcons = extensionSettings.showLockIcons ?? true;
@@ -449,6 +478,24 @@ export function renderUserStats() {
     // Always render to the #rpg-user-stats container (mobile layout just moves it around in DOM)
     $userStatsContainer.html(html);
     // console.log('[RPG UserStats Render] ✓ HTML rendered to #rpg-user-stats container');
+
+    // Portrait focus button on the user banner
+    $userStatsContainer.find('.rpg-user-focus-btn').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const button = this;
+        const $image = $(button).closest('.rpg-user-banner-image');
+        const img = $image.find('img').get(0);
+        const rect = $image.get(0).getBoundingClientRect();
+        openPortraitFocusPicker({
+            name: getUserPortraitFocusKey(),
+            label: getContext().name1,
+            imageUrl: img?.getAttribute('src'),
+            aspect: rect.height ? rect.width / rect.height : 2,
+            returnFocusTo: button,
+            onSave: (focus) => $image.find('img').attr('style', portraitFocusStyle(focus))
+        });
+    });
 
     // Add event listeners for editable stat values
     $('.rpg-editable-stat').on('blur', function () {
