@@ -12184,6 +12184,84 @@ body.documentstyle .rpg-inline-thoughts {
     color: var(--rpg-text);
     border: 1px solid var(--rpg-border);
     border-radius: 6px;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+/* Feature toggles: clear tiles with a proper checkbox; ticked ones glow ember */
+.rpg-panel[data-theme="forge"] .rpg-features-row {
+    gap: 0.375em;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-feature-col .rpg-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    min-height: 2.25rem;
+    padding: 0.25em 0.625em;
+    background: var(--forge-card);
+    border: 1px solid var(--rpg-border);
+    border-radius: 6px;
+    color: var(--forge-muted);
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-feature-col .rpg-toggle-label:hover {
+    border-color: var(--forge-brass);
+    color: var(--rpg-text);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-feature-col .rpg-toggle-label:has(input:checked) {
+    background: #2C1511;
+    border-color: var(--rpg-highlight);
+    color: var(--rpg-text);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-feature-col input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin: 0;
+    border: 2px solid var(--forge-brass);
+    border-radius: 4px;
+    background: var(--rpg-bg);
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+    box-shadow: none;
+    filter: none;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-feature-col input[type="checkbox"]::before {
+    content: '';
+    width: 0.625rem;
+    height: 0.625rem;
+    background: var(--rpg-bg);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    transform: scale(0);
+    transition: transform 0.12s ease;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-feature-col input[type="checkbox"]:checked {
+    background: var(--rpg-highlight);
+    border-color: var(--rpg-highlight);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-feature-col input[type="checkbox"]:checked::before {
+    transform: scale(1);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-feature-col input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--forge-brass);
+    outline-offset: 2px;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-feature-col .rpg-toggle-label i {
+    font-size: 1rem;
 }
 
 /* Layout pieces for the side panel at desktop widths (the phone layout keeps its own) */
@@ -12211,12 +12289,12 @@ body.documentstyle .rpg-inline-thoughts {
         padding: 0;
     }
 
-    .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="full"] { --forge-tier: var(--forge-full); }
-    .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="good"] { --forge-tier: var(--forge-good); }
-    .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="hurt"] { --forge-tier: var(--forge-hurt); }
-    .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tier="danger"] { --forge-tier: var(--forge-danger); }
+    .rpg-panel[data-theme="forge"] [data-tier="full"] { --forge-tier: var(--forge-full); }
+    .rpg-panel[data-theme="forge"] [data-tier="good"] { --forge-tier: var(--forge-good); }
+    .rpg-panel[data-theme="forge"] [data-tier="hurt"] { --forge-tier: var(--forge-hurt); }
+    .rpg-panel[data-theme="forge"] [data-tier="danger"] { --forge-tier: var(--forge-danger); }
     /* Stats where low is not bad (like arousal) stay brass instead of warning colours */
-    .rpg-panel[data-theme="forge"] .rpg-stat-row[data-tone="neutral"] { --forge-tier: var(--forge-brass); }
+    .rpg-panel[data-theme="forge"] [data-tone="neutral"] { --forge-tier: var(--forge-brass); }
 
     /* The ring: thin gaps between wedges on top, filled wedges underneath */
     .rpg-panel[data-theme="forge"] .rpg-stat-bar {
@@ -12273,15 +12351,6 @@ body.documentstyle .rpg-inline-thoughts {
         text-align: center;
         color: var(--forge-soft);
         text-shadow: none;
-    }
-
-    /* Status word under each ring, so colour is never the only signal */
-    .rpg-panel[data-theme="forge"] .rpg-stat-row::after {
-        order: 3;
-        content: attr(data-word);
-        font-size: 0.8125rem;
-        font-weight: 700;
-        color: var(--forge-tier);
     }
 
     /* Attribute tiles: label on top, − value + in a row; 3 across, 2 on narrow panels */
@@ -12403,6 +12472,72 @@ body.documentstyle .rpg-inline-thoughts {
     .rpg-panel[data-theme="forge"] .rpg-character-field {
         font-size: 0.9375rem;
         line-height: 1.45;
+    }
+
+    /* Character stats as the same 8-wedge rings, the ring drawn behind each stat */
+    .rpg-panel[data-theme="forge"] .rpg-character-stats {
+        background: none;
+        border: none;
+        padding: 0.25em 0 0;
+        overflow: visible;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-stats-inner {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75em 0.5em;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-stat {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25em;
+        width: 3.375rem;
+        padding: 0;
+        background: none;
+        border: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-stat::before {
+        content: '';
+        display: block;
+        width: 3.25rem;
+        height: 3.25rem;
+        border-radius: 50%;
+        background:
+            repeating-conic-gradient(transparent 0deg 41deg, var(--forge-card) 41deg 45deg),
+            conic-gradient(var(--forge-tier, var(--forge-muted)) calc(var(--rpg-wedges, 0) * 45deg), var(--forge-track) 0);
+        -webkit-mask: radial-gradient(circle, transparent 1.1875rem, #000 1.25rem);
+        mask: radial-gradient(circle, transparent 1.1875rem, #000 1.25rem);
+    }
+
+    /* Value sits in the middle of the ring, name underneath */
+    .rpg-panel[data-theme="forge"] .rpg-character-stat .rpg-editable {
+        position: absolute;
+        top: 1.625rem;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: 'Cinzel', serif;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--rpg-text) !important;
+        background: none;
+        border: none;
+        padding: 0;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-character-stat .rpg-stat-name {
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--forge-soft);
+        background: none;
+        border: none;
+        padding: 0;
+        white-space: nowrap;
     }
 
     /* Info section as labelled text: date, time, weather, temperature, then location and events */

@@ -19,6 +19,7 @@ import {
     updateMessageSwipeData
 } from '../../core/persistence.js';
 import { getSafeThumbnailUrl } from '../../utils/avatars.js';
+import { statMeterAttributes } from '../../utils/statMeter.js';
 import { buildInventorySummary } from '../generation/promptBuilder.js';
 import { isItemLocked, setItemLock } from '../generation/lockManager.js';
 import { updateFabWidgets } from '../ui/mobile.js';
@@ -301,22 +302,6 @@ export function renderUserStats() {
     const enabledStats = config.customStats.filter(stat => stat && stat.enabled && stat.name && stat.id);
     const displayMode = config.statsDisplayMode || 'percentage';
 
-    // Status words per stat for each wedge tier: [full, good, hurt, danger, empty].
-    // Neutral stats (where low is not bad) keep one colour instead of warning colours.
-    const statusWords = {
-        health: ['Healthy', 'Scratched', 'Wounded', 'Critical', 'Down'],
-        satiety: ['Full', 'Fed', 'Hungry', 'Starving', 'Famished'],
-        hunger: ['Full', 'Fed', 'Hungry', 'Starving', 'Famished'],
-        energy: ['Rested', 'Awake', 'Tired', 'Exhausted', 'Spent'],
-        stamina: ['Fresh', 'Steady', 'Winded', 'Exhausted', 'Spent'],
-        hygiene: ['Clean', 'Tidy', 'Grubby', 'Filthy', 'Rank'],
-        mana: ['Brimming', 'Steady', 'Waning', 'Drained', 'Empty'],
-        arousal: ['Burning', 'Warm', 'Stirred', 'Faint', 'Calm']
-    };
-    const neutralStats = ['arousal'];
-    const defaultWords = ['Full', 'Good', 'Low', 'Very low', 'Empty'];
-    const tierOrder = ['full', 'good', 'hurt', 'danger', 'empty'];
-
     for (const stat of enabledStats) {
         const value = stats[stat.id] !== undefined ? stats[stat.id] : 100;
         const maxValue = stat.maxValue || 100;
@@ -335,16 +320,9 @@ export function renderUserStats() {
             displayValue = `${value}%`;
         }
 
-        // Wedge meter data for themes that draw stats as rings (8 wedges, 12.5% each)
-        const clampedPercentage = Math.max(0, Math.min(100, Number(percentage) || 0));
-        const wedges = Math.ceil(clampedPercentage / 12.5);
-        const tier = wedges >= 7 ? 'full' : wedges >= 5 ? 'good' : wedges >= 3 ? 'hurt' : wedges >= 1 ? 'danger' : 'empty';
-        const statKey = String(stat.id).toLowerCase();
-        const statusWord = (statusWords[statKey] || defaultWords)[tierOrder.indexOf(tier)];
-        const tone = neutralStats.includes(statKey) ? 'neutral' : 'meter';
-
+        // Wedge meter data for themes that draw stats as rings
         html += `
-            <div class="rpg-stat-row" data-tier="${tier}" data-tone="${tone}" data-word="${statusWord}" style="--rpg-pct: ${clampedPercentage}; --rpg-wedges: ${wedges}">
+            <div class="rpg-stat-row" ${statMeterAttributes(stat.id, percentage)}>
                 <span class="rpg-stat-label rpg-editable-stat-name" contenteditable="true" data-field="${stat.id}" title="${i18n.getTranslation('userStats.clickToEditStatName') || 'Click to edit stat name'}">${stat.name}:</span>
                 <div class="rpg-stat-bar" style="background: ${gradient}">
                     <div class="rpg-stat-fill" style="width: ${100 - percentage}%"></div>

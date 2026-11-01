@@ -21,6 +21,7 @@ import {
     resolvePresentCharacterPortrait
 } from '../../utils/presentCharacters.js';
 import { isItemLocked, setItemLock } from '../generation/lockManager.js';
+import { statMeterAttributes } from '../../utils/statMeter.js';
 import { renderAlternatePresentCharacters } from '../ui/alternatePresentCharacters.js';
 import { queueThoughtBasedExpressionsUpdate } from '../integration/thoughtBasedExpressions.js';
 
@@ -441,7 +442,7 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
                             extensionSettings.statBarColorHighOpacity ?? 100
                         );
                         html += `
-                                <div class="rpg-character-stat">
+                                <div class="rpg-character-stat" ${statMeterAttributes(stat.name, statValue)}>
                                     <span class="rpg-stat-name">${stat.name}: </span><span class="rpg-editable" contenteditable="true" data-character="${char.name}" data-field="${stat.name}" style="color: ${statColor}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}">${statValue}%</span>
                                 </div>
                         `;

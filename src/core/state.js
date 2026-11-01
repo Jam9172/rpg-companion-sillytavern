@@ -257,7 +257,7 @@ export let extensionSettings = {
         cha: 10
     },
     lastDiceRoll: null, // Store last dice roll result
-    showDiceDisplay: true, // Show the "Last Roll" display in the panel
+    showDiceDisplay: false, // Show the "Last Roll" display in the panel (off by default)
     collapsedInventoryLocations: [], // Array of collapsed storage location names
     inventoryViewModes: {
         onPerson: 'list', // 'list' or 'grid' view mode for On Person section
