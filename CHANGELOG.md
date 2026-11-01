@@ -2,7 +2,7 @@
 
 Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern), newest first. Each entry is one update published to GitHub. The original extension's history before the fork is in the git log.
 
-## Not published yet
+## 2026-11-01: NPCs keep their own looks
 
 - Present Characters: NPCs no longer borrow the character card's looks or personality. The tracker prompt now says each card belongs only to its own character, and each entry must be described from what the story says about that character.
 
