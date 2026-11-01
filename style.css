@@ -14101,4 +14101,10 @@ body.documentstyle .rpg-inline-thoughts {
     .rpg-panel[data-theme="forge"] .rpg-tabs-nav .rpg-tab-btn i {
         display: none;
     }
+
+    .rpg-panel[data-theme="forge"] .rpg-tabs-nav .rpg-tab-btn {
+        padding-left: 0.125em;
+        padding-right: 0.125em;
+        font-size: 0.75rem;
+    }
 }
