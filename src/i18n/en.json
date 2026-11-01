@@ -218,6 +218,7 @@
     "inventory.section.clothing": "Clothing",
     "inventory.section.stored": "Stored",
     "inventory.section.assets": "Assets",
+    "inventory.section.all": "All",
     "inventory.onPerson.empty": "No items carried",
     "inventory.onPerson.title": "Items Currently Carried",
     "inventory.onPerson.addItemButton": "Add Item",

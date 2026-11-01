@@ -52,9 +52,13 @@ export function renderInventorySubTabs(activeTab = 'onPerson') {
     const clothingText = i18n.getTranslation('inventory.section.clothing') || 'Clothing';
     const storedText = i18n.getTranslation('inventory.section.stored') || 'Stored';
     const assetsText = i18n.getTranslation('inventory.section.assets') || 'Assets';
+    const allText = i18n.getTranslation('inventory.section.all') || 'All';
 
     return `
         <div class="rpg-inventory-subtabs">
+            <button class="rpg-inventory-subtab ${activeTab === 'all' ? 'active' : ''}" data-tab="all">
+                ${allText}
+            </button>
             <button class="rpg-inventory-subtab ${activeTab === 'onPerson' ? 'active' : ''}" data-tab="onPerson">
                 ${onPersonText}
             </button>
@@ -567,6 +571,12 @@ function generateInventoryHTML(inventory, options = {}) {
 
     // Render the active view
     switch (activeSubTab) {
+        case 'all':
+            html += renderOnPersonView(v2Inventory.onPerson, viewModes.onPerson);
+            html += renderClothingView(v2Inventory.clothing, viewModes.clothing);
+            html += renderStoredView(v2Inventory.stored, collapsedLocations, viewModes.stored);
+            html += renderAssetsView(v2Inventory.assets, viewModes.assets);
+            break;
         case 'onPerson':
             html += renderOnPersonView(v2Inventory.onPerson, viewModes.onPerson);
             break;

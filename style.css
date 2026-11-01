@@ -12751,9 +12751,20 @@ body.documentstyle .rpg-inline-thoughts {
     .rpg-panel[data-theme="forge"] .rpg-thermometer,
     .rpg-panel[data-theme="forge"] .rpg-clock,
     .rpg-panel[data-theme="forge"] .rpg-map-bg,
-    .rpg-panel[data-theme="forge"] .rpg-notebook-header,
-    .rpg-panel[data-theme="forge"] .rpg-weather-icon {
+    .rpg-panel[data-theme="forge"] .rpg-notebook-header {
         display: none;
+    }
+
+    /* Weather keeps its (editable) emoji, small and inline above the forecast */
+    .rpg-panel[data-theme="forge"] .rpg-weather-icon {
+        display: block;
+        width: auto;
+        height: auto;
+        margin: 0.125em 0 0;
+        font-size: 1.25rem;
+        line-height: 1.1;
+        background: none;
+        border: none;
     }
 
     /* Shared value style */
@@ -13859,5 +13870,27 @@ body.documentstyle .rpg-inline-thoughts {
         padding: 0.875rem 0.875rem 1rem;
         -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 0.75rem, #000 calc(100% - 0.75rem), transparent 100%);
         mask-image: linear-gradient(to bottom, transparent 0, #000 0.75rem, #000 calc(100% - 0.75rem), transparent 100%);
+    }
+}
+
+/* ==========================================================================
+   Arcane Forge: toggle labels and narrow tab bars
+   ========================================================================== */
+/* Feature toggles show their name next to the icon (the row scrolls, so there is room) */
+.rpg-panel[data-theme="forge"] .rpg-feature-col .rpg-toggle-text {
+    display: inline;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    color: inherit;
+}
+
+/* When the tab bar is too narrow for icons and words, keep the words */
+.rpg-panel[data-theme="forge"] .rpg-tabs-nav {
+    container-type: inline-size;
+}
+
+@container (max-width: 250px) {
+    .rpg-panel[data-theme="forge"] .rpg-tabs-nav .rpg-tab-btn i {
+        display: none;
     }
 }
