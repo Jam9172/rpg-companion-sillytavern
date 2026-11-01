@@ -12390,7 +12390,7 @@ body.documentstyle .rpg-inline-thoughts {
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 0.75em 0.375em;
+        gap: 0.75em 0.25em;
     }
 
     .rpg-panel[data-theme="forge"] .rpg-stat-row {
@@ -12400,8 +12400,8 @@ body.documentstyle .rpg-inline-thoughts {
         flex-direction: column;
         align-items: center;
         gap: 0.25em;
-        flex: 0 0 3.375rem;
-        width: 3.375rem;
+        flex: 0 0 3.125rem;
+        width: 3.125rem;
         min-width: 0;
         min-height: 0;
         padding: 0;
@@ -12419,10 +12419,10 @@ body.documentstyle .rpg-inline-thoughts {
         order: 1;
         position: relative;
         flex: none;
-        width: 3.25rem !important;
+        width: 3rem !important;
         min-width: 0;
         max-width: none !important;
-        height: 3.25rem;
+        height: 3rem;
         min-height: 0;
         border: none;
         border-radius: 50%;
@@ -12434,7 +12434,7 @@ body.documentstyle .rpg-inline-thoughts {
 
     /* Reuse the fill element as the ring's hole */
     .rpg-panel[data-theme="forge"] .rpg-stat-fill {
-        inset: 0.4375rem;
+        inset: 0.40625rem;
         width: auto !important;
         border-radius: 50%;
         background: var(--forge-card);
@@ -12442,7 +12442,7 @@ body.documentstyle .rpg-inline-thoughts {
 
     .rpg-panel[data-theme="forge"] .rpg-stat-value {
         position: absolute;
-        top: 1.625rem;
+        top: 1.5rem;
         left: 50%;
         right: auto;
         transform: translate(-50%, -50%);
