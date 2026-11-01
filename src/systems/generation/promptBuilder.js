@@ -15,6 +15,7 @@ import {
 } from './jsonPromptHelpers.js';
 import { applyLocks } from './lockManager.js';
 import { isPresentCharactersEnabled } from '../../utils/presentCharacters.js';
+import { getCurrentMessageSwipeTrackerData } from '../../core/persistence.js';
 
 // Type imports
 /** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
@@ -472,6 +473,45 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
  * @param {string} userName - User's name for personalization
  * @returns {string} Formatted text summary
  */
+/**
+ * Reads the user stats array ([{id, name, value}]) out of a stored tracker payload.
+ * @param {Object|null} payload - A message's tracker snapshot
+ * @returns {Array|null}
+ */
+function readUserStatsArray(payload) {
+    try {
+        const raw = payload?.userStats;
+        const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        return Array.isArray(data?.stats) ? data.stats : null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * The user's stat values from the turn before the data being sent now, keyed by stat id,
+ * so the context can say "Health: 40 (was 100)". Null when there is no earlier turn.
+ * @returns {Map<string, *>|null}
+ */
+function getPreviousUserStatValues() {
+    const currentStats = readUserStatsArray(committedTrackerData);
+    if (!currentStats || !Array.isArray(chat)) return null;
+
+    // Collect stat snapshots from assistant messages, newest first
+    const snapshots = [];
+    for (let i = chat.length - 1; i >= 0 && snapshots.length < 2; i--) {
+        const stats = readUserStatsArray(getCurrentMessageSwipeTrackerData(chat[i]));
+        if (stats) snapshots.push(stats);
+    }
+
+    // The newest snapshot is usually the data being sent now; the one before it is the previous turn
+    const sameValues = (a, b) => JSON.stringify(a.map(s => [s.id, s.value])) === JSON.stringify(b.map(s => [s.id, s.value]));
+    const previous = snapshots[0] && !sameValues(snapshots[0], currentStats) ? snapshots[0] : snapshots[1];
+    if (!previous) return null;
+
+    return new Map(previous.filter(s => s && s.id !== undefined).map(s => [s.id, s.value]));
+}
+
 function formatTrackerDataForContext(jsonData, trackerType, userName) {
     if (!jsonData) return '';
 
@@ -583,11 +623,15 @@ function formatTrackerDataForContext(jsonData, trackerType, userName) {
 
             // Handle stats array format: [{id, name, value}, ...]
             if (data.stats && Array.isArray(data.stats)) {
+                // Previous turn's values, so the model can see what changed ("Health: 40 (was 100)")
+                const previousValues = getPreviousUserStatValues();
                 for (const stat of data.stats) {
                     if (stat && stat.value !== undefined) {
                         const statName = stat.name || (stat.id ? stat.id.charAt(0).toUpperCase() + stat.id.slice(1) : 'Unknown');
                         const statId = stat.id || statName.toLowerCase();
-                        formatted += `${statName}: ${formatStatValue(stat.value, statId)}\n`;
+                        const previous = previousValues?.get(stat.id);
+                        const changed = previous !== undefined && String(previous) !== String(stat.value);
+                        formatted += `${statName}: ${formatStatValue(stat.value, statId)}${changed ? ` (was ${formatStatValue(previous, statId)})` : ''}\n`;
                     }
                 }
             } else {
@@ -1019,6 +1063,21 @@ export function formatHistoricalTrackerData(trackerData, trackerConfig, userName
                         ? getValue(char.thoughts.content)
                         : getValue(char.thoughts);
                     if (thoughts) charFormatted += `Thinking: ${thoughts}, `;
+                }
+
+                // Character stats - array format [{name, value}] (current) or object format {Name: value} (legacy)
+                const charStatsConfig = charsConfig.characterStats;
+                if (charStatsConfig?.enabled && char.stats && typeof char.stats === 'object') {
+                    const statEntries = Array.isArray(char.stats)
+                        ? char.stats.filter(s => s && s.name).map(s => [s.name, s.value])
+                        : Object.entries(char.stats);
+                    for (const [statName, statValue] of statEntries) {
+                        const statConfig = (charStatsConfig.customStats || []).find(s => s && s.name === statName);
+                        if (statConfig && statConfig.enabled && shouldIncludeStat(statConfig)) {
+                            const value = getValue(statValue);
+                            if (value) charFormatted += `${statName}: ${value}, `;
+                        }
+                    }
                 }
 
                 if (charFormatted) {
