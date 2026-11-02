@@ -2170,12 +2170,15 @@ export function createThoughtPanel($message, thoughtsArray) {
         }
     });
 
-    // Whisper style (Arcane Forge, desktop): one collapsible pill per character instead of a bubble
-    const useWhisper = theme === 'forge' && window.innerWidth > 1000;
+    // Whisper style (Arcane Forge): one collapsible pill per character instead of a bubble. On phones
+    // the pills open from the thought icon and have a close button; on desktop they always show.
+    const useWhisper = theme === 'forge';
+    const hideThoughtsText = i18n.getTranslation('thoughts.hide') || 'Hide thoughts';
 
     // Create the floating thought panel with theme
     const $thoughtPanel = $(useWhisper ? `
         <div id="rpg-thought-panel" class="rpg-thought-panel rpg-whisper" data-theme="${theme}">
+            <button type="button" class="rpg-thought-close rpg-whisper-close" title="${hideThoughtsText}" aria-label="${hideThoughtsText}">×</button>
             ${thoughtsArray.map(buildWhisperItem).join('')}
         </div>
     ` : `
@@ -2193,9 +2196,13 @@ export function createThoughtPanel($message, thoughtsArray) {
     `);
 
     // Create the collapsed thought icon
+    // Arcane Forge draws its own whisper glyph (a speech mark with three dots) instead of the emoji
+    const thoughtGlyph = theme === 'forge'
+        ? '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5c0-4 3.6-7 8-7s8 3 8 7-3.6 7-8 7c-1 0-2-.1-2.9-.4L5 20l1-3.4c-1.3-1.3-2-3-2-5.1z M8.5 11.5h.01 M12 11.5h.01 M15.5 11.5h.01"/></svg>'
+        : '💭';
     const $thoughtIcon = $(`
         <div id="rpg-thought-icon" class="rpg-thought-icon" data-theme="${theme}" title="Show thoughts">
-            💭
+            ${thoughtGlyph}
         </div>
     `);
 

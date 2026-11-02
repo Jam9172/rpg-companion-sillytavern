@@ -70,12 +70,13 @@ LOCK_OPEN = 'M6 11h12v9H6z M8.5 11V7.5a3.5 3.5 0 0 1 6.8-1.2 M12 14.5v2.5'
 LOCK_CLOSED = 'M6 11h12v9H6z M8.5 11V7.5a3.5 3.5 0 0 1 7 0V11 M12 14.5v2.5'
 
 SCOPE = '.rpg-panel[data-theme="forge"]'
-# Icons also apply inside these popups when they carry the Forge theme
+# Icons also apply inside these popups (and the phone panel toggle) when they carry the Forge theme
 ICON_SCOPES = [
     SCOPE,
     '.rpg-settings-popup[data-theme="forge"]',
     '#rpg-tracker-editor-popup[data-theme="forge"]',
     '#rpg-prompts-editor-popup[data-theme="forge"]',
+    '.rpg-mobile-toggle[data-theme="forge"]',
 ]
 
 
