@@ -449,7 +449,7 @@ function resetToDefaults() {
     extensionSettings.historyPersistence = {
         enabled: false,
         messageCount: 5,
-        injectionPosition: 'assistant_message_end',
+        injectionPosition: 'user_message_end',
         contextPreamble: '',
         sendAllEnabledOnRefresh: false
     };
@@ -1494,7 +1494,7 @@ function renderHistoryPersistenceTab() {
     const historyPersistence = extensionSettings.historyPersistence || {
         enabled: false,
         messageCount: 5,
-        injectionPosition: 'assistant_message_end',
+        injectionPosition: 'user_message_end',
         contextPreamble: '',
         sendAllEnabledOnRefresh: false
     };
@@ -1669,7 +1669,7 @@ function setupHistoryPersistenceListeners() {
         extensionSettings.historyPersistence = {
             enabled: false,
             messageCount: 5,
-            injectionPosition: 'assistant_message_end',
+            injectionPosition: 'user_message_end',
             contextPreamble: '',
             externalApiOnly: false
         };

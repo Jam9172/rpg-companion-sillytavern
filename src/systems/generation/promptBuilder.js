@@ -69,6 +69,13 @@ export const DEFAULT_NARRATOR_PROMPT = `Infer the identity and details of charac
  */
 export const DEFAULT_CONTEXT_INSTRUCTIONS_PROMPT = `The context above is information about the current scene, and what follows is the last message in the chat history. Ensure these details naturally reflect and influence the narrative. Character behavior, dialogue, and story events should acknowledge these conditions when relevant, such as fatigue affecting performance, low hygiene influencing social interactions, environmental factors shaping the scene, or a character's emotional state coloring their responses.`;
 
+// Always sent with the tracker context for the main reply (not editable, so a custom
+// instructions prompt cannot drop it): the model must never print the context itself.
+export const NO_ECHO_RULE = `This context is private background for you only. Never repeat, list or summarize it in your reply, and never write a "Context", "Scene context" or tracker section. Show it only through the story itself.`;
+
+// First line of each past message's tracker notes
+export const HIDDEN_NOTES_LABEL = '(Hidden tracker notes, not part of the message above. Never write notes like these in a reply.)';
+
 /**
  * Gets character card information for current chat (handles both single and group chats)
  * @returns {string} Formatted character information
@@ -1335,7 +1342,7 @@ export async function generateSeparateUpdatePrompt() {
     // Add chat history as separate user/assistant messages with per-message historical context
     const recentMessages = chat.slice(-depth);
     const startIndex = chat.length - depth;
-    const position = historyPersistence?.injectionPosition || 'assistant_message_end';
+    const position = historyPersistence?.injectionPosition || 'user_message_end';
 
     // Build a map of which messages should get context based on position setting
     // Key: message index in recentMessages, Value: context string

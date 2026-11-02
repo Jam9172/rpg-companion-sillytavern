@@ -10,7 +10,7 @@
  * Extension settings - persisted to SillyTavern settings
  */
 export let extensionSettings = {
-    settingsVersion: 6, // Version number for settings migrations
+    settingsVersion: 7, // Version number for settings migrations
     enabled: true,
     autoUpdate: false,
     updateDepth: 4, // How many messages to include in the context
@@ -62,7 +62,7 @@ export let extensionSettings = {
     historyPersistence: {
         enabled: false, // Master toggle for history persistence feature
         messageCount: 5, // Number of messages to include (0 = all available)
-        injectionPosition: 'assistant_message_end', // 'user_message_end', 'assistant_message_end', 'extra_user_message', 'extra_assistant_message'
+        injectionPosition: 'user_message_end', // 'user_message_end', 'assistant_message_end', 'extra_user_message', 'extra_assistant_message'
         contextPreamble: '', // Optional custom preamble text (empty = use default short one)
         sendAllEnabledOnRefresh: false // If true, sends all enabled stats from preset instead of only persistInHistory-enabled stats on Refresh RPG Info
     },

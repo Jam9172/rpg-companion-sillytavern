@@ -23,7 +23,7 @@ import { validateStoredInventory, cleanItemString } from '../utils/security.js';
 import { migrateToV3JSON } from '../utils/jsonMigration.js';
 
 const extensionName = 'third-party/rpg-companion-sillytavern';
-const CURRENT_SETTINGS_VERSION = 6;
+const CURRENT_SETTINGS_VERSION = 7;
 
 const DEFAULT_USER_STATS = {
     health: 100,
@@ -622,6 +622,18 @@ export function loadSettings() {
                     extensionSettings.theme = 'forge';
                 }
                 extensionSettings.settingsVersion = 6;
+                settingsChanged = true;
+            }
+
+            // Migration to version 7: past tracker notes go on the user's messages. On the AI's own
+            // messages the model copied them into new replies ("Context for the scene: ...").
+            if (currentVersion < 7) {
+                const moveToUser = (hp) => {
+                    if (hp && hp.injectionPosition === 'assistant_message_end') hp.injectionPosition = 'user_message_end';
+                };
+                moveToUser(extensionSettings.historyPersistence);
+                Object.values(extensionSettings.presetManager?.presets || {}).forEach((p) => moveToUser(p?.historyPersistence));
+                extensionSettings.settingsVersion = 7;
                 settingsChanged = true;
             }
 
@@ -1592,7 +1604,7 @@ export function loadPreset(presetId) {
             extensionSettings.historyPersistence = {
                 enabled: false,
                 messageCount: 5,
-                injectionPosition: 'assistant_message_end',
+                injectionPosition: 'user_message_end',
                 contextPreamble: ''
             };
         }

@@ -2,6 +2,10 @@
 
 Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern), newest first. Each entry is one update published to GitHub. The original extension's history before the fork is in the git log.
 
+## Unreleased (next release: RPG Companion Arcane 1.0.0)
+
+- The main reply no longer starts printing "Context for the scene:" with the tracker data. History Persistence's notes now go on your messages instead of the AI's own, so the AI stops copying them. Existing settings and tracker presets are moved over once. The notes are also tagged as hidden, and the scene context always tells the model never to repeat it, even with a custom instructions prompt.
+
 ## 3.9.0 (2026-11-02)
 
 - The What's New popup is rewritten for this fork (shown once after updating).

@@ -27,6 +27,8 @@ import {
     DEFAULT_SPOTIFY_PROMPT,
     DEFAULT_NARRATOR_PROMPT,
     DEFAULT_CONTEXT_INSTRUCTIONS_PROMPT,
+    HIDDEN_NOTES_LABEL,
+    NO_ECHO_RULE,
     SPOTIFY_FORMAT_INSTRUCTION
 } from './promptBuilder.js';
 import { restoreCheckpointOnLoad } from '../features/chapterCheckpoint.js';
@@ -69,7 +71,7 @@ function buildHistoricalContextMap() {
 
     const trackerConfig = extensionSettings.trackerConfig;
     const userName = context.name1;
-    const position = historyPersistence.injectionPosition || 'assistant_message_end';
+    const position = historyPersistence.injectionPosition || 'user_message_end';
     const contextMap = new Map();
 
     // Determine how many messages to include (0 = all available)
@@ -136,8 +138,10 @@ function buildHistoricalContextMap() {
         }
 
         // Build the context wrapper
+        // Tagged and labelled as hidden notes, so the model does not take them for part of the
+        // message and copy them into its own replies
         const preamble = historyPersistence.contextPreamble || 'Context for that moment:';
-        const wrappedContext = `\n${preamble}\n${formattedContext}`;
+        const wrappedContext = `\n<tracker_notes>\n${HIDDEN_NOTES_LABEL}\n${preamble}\n${formattedContext}\n</tracker_notes>`;
 
         // Determine which message index to store based on injection position
         let targetIndex = i; // Default: the assistant message itself
@@ -768,6 +772,7 @@ export async function onGenerationStarted(type, data, dryRun) {
 <context>
 ${contextSummary}
 ${contextInstructionsText}
+${NO_ECHO_RULE}
 </context>`;
 
             // Inject context at depth 1 (before last user message) as SYSTEM
