@@ -14429,6 +14429,14 @@ body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-stat-value {
     from { transform: translateX(calc(var(--from, var(--i)) * 100%)); }
 }
 
+/* Keyboard focus in the Forge panel: a clear ring on whatever Tab lands on. Arcane Forge UI's
+   "Keyboard" setting turns it off (body.forge-no-focus-ring). */
+body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, summary, select, [tabindex], [contenteditable="true"], input[type="checkbox"], input[type="radio"], input[type="range"], .rpg-btn, .rpg-inventory-subtab, .rpg-mobile-tab):focus-visible {
+    outline: 2px solid var(--rpg-highlight);
+    outline-offset: 2px;
+}
+
+
 .rpg-panel[data-theme="forge"] .rpg-inventory-subtabs > .rpg-inventory-subtab {
     position: relative;
     z-index: 1;
