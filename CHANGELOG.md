@@ -2,6 +2,13 @@
 
 Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern), newest first. Each entry is one update published to GitHub. The original extension's history before the fork is in the git log.
 
+## 3.9.0 (not published yet)
+
+- Arcane Forge follows Arcane Forge UI's colour pickers when that extension is on, floating widgets included.
+- Phones: Whisper thoughts open from a Forge whisper icon and close with their own button; the panel toggle gets the Forge d20.
+- Keyboard focus ring in the Forge panel.
+- Fonts are bundled, so the Forge theme works offline and nothing loads from Google.
+
 ## 3.8.0 (2026-11-01)
 
 First release of this fork. It includes every change listed below. The Arcane Forge UI is an early, slow-moving beta.
