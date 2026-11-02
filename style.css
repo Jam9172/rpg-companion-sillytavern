@@ -14875,3 +14875,306 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
         animation: none;
     }
 }
+
+/* ==========================================================================
+   Cast tab (character persistence): one folding card per character
+   ========================================================================== */
+.rpg-cast-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.rpg-cast-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.rpg-cast-title {
+    margin: 0;
+}
+
+.rpg-cast-count,
+.rpg-cast-empty {
+    opacity: 0.75;
+    font-size: 0.85em;
+}
+
+.rpg-cast-empty {
+    margin: 0.5rem 0;
+    font-style: italic;
+    text-align: center;
+}
+
+.rpg-cast-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.rpg-cast-card {
+    border: 1px solid var(--rpg-border, rgba(255, 255, 255, 0.15));
+    border-radius: 8px;
+    background: var(--rpg-accent, rgba(255, 255, 255, 0.04));
+    overflow: hidden;
+}
+
+.rpg-cast-card[data-status="away"] {
+    opacity: 0.85;
+}
+
+.rpg-cast-card[data-status="dead"] {
+    opacity: 0.6;
+}
+
+.rpg-cast-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.625rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.rpg-cast-head::-webkit-details-marker {
+    display: none;
+}
+
+.rpg-cast-name {
+    font-weight: 700;
+    color: var(--rpg-text, inherit);
+}
+
+.rpg-cast-role {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    opacity: 0.75;
+    font-size: 0.85em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rpg-cast-status {
+    margin-left: auto;
+    padding: 0.05rem 0.45rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.75em;
+    opacity: 0.8;
+}
+
+.rpg-cast-card[data-status="present"] .rpg-cast-status {
+    color: var(--rpg-highlight, #e94560);
+    opacity: 1;
+}
+
+.rpg-cast-lock {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: none;
+    color: inherit;
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+.rpg-cast-lock:hover,
+.rpg-cast-lock[aria-pressed="true"] {
+    opacity: 1;
+    border-color: var(--rpg-border, rgba(255, 255, 255, 0.2));
+}
+
+.rpg-cast-lock[aria-pressed="true"] {
+    color: var(--rpg-highlight, #e94560);
+}
+
+.rpg-cast-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.25rem 0.75rem 0.75rem;
+    border-top: 1px solid var(--rpg-border, rgba(255, 255, 255, 0.1));
+}
+
+.rpg-cast-field {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.rpg-cast-label {
+    font-size: 0.75em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.rpg-cast-value {
+    min-height: 1.4em;
+    margin: 0;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    outline: none;
+}
+
+.rpg-cast-value:hover,
+.rpg-cast-value:focus {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.rpg-cast-value:empty::before {
+    content: attr(data-placeholder);
+    opacity: 0.4;
+}
+
+.rpg-cast-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-top: 0.25rem;
+}
+
+.rpg-cast-bio,
+.rpg-cast-steps {
+    line-height: 1.45;
+}
+
+.rpg-cast-steps {
+    margin: 0;
+    font-style: italic;
+}
+
+.rpg-cast-events {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rpg-cast-event {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    line-height: 1.4;
+}
+
+.rpg-cast-event::before {
+    content: "•";
+    opacity: 0.6;
+}
+
+.rpg-cast-event span {
+    flex: 1 1 auto;
+}
+
+.rpg-cast-event-remove {
+    margin: 0;
+    padding: 0 0.3rem;
+    border: none;
+    background: none;
+    color: inherit;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.rpg-cast-event:hover .rpg-cast-event-remove,
+.rpg-cast-event-remove:focus-visible {
+    opacity: 0.7;
+}
+
+.rpg-cast-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+}
+
+.rpg-cast-delete {
+    margin: 0;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid var(--rpg-border, rgba(255, 255, 255, 0.2));
+    border-radius: 6px;
+    background: none;
+    color: inherit;
+    font-size: 0.8em;
+    opacity: 0.75;
+    cursor: pointer;
+}
+
+.rpg-cast-delete:hover {
+    opacity: 1;
+    border-color: var(--forge-danger, #e5432f);
+    color: var(--forge-danger, #e5432f);
+}
+
+/* Arcane Forge: brass headings, ember for who is here */
+.rpg-panel[data-theme="forge"] .rpg-cast-title,
+.rpg-panel[data-theme="forge"] .rpg-cast-name {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.05em;
+    color: var(--forge-brass, #D9A35B);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-cast-card {
+    background: var(--forge-card, #1E100D);
+    border-color: var(--rpg-border, #4A2219);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-cast-card[open] {
+    box-shadow: inset 3px 0 0 var(--forge-crimson, #A61E1A);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-cast-card[data-status="present"][open] {
+    box-shadow: inset 3px 0 0 var(--rpg-highlight, #E8622C);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-cast-label {
+    color: var(--forge-muted, #B79A88);
+    opacity: 1;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-cast-value:hover,
+.rpg-panel[data-theme="forge"] .rpg-cast-value:focus {
+    background: var(--forge-inset, #170C0A);
+}
+
+/* With the Cast tab there are four tabs: drop the icons sooner so every word fits */
+@container (max-width: 400px) {
+    .rpg-panel[data-theme="forge"] .rpg-tabs-nav:has(> .rpg-tab-btn:nth-child(4)) .rpg-tab-btn i {
+        display: none;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-tabs-nav:has(> .rpg-tab-btn:nth-child(4)) .rpg-tab-btn {
+        min-width: 0;
+        padding-left: 0.25em;
+        padding-right: 0.25em;
+    }
+}
+
+/* Cast card header: the name stays on one line; the role gives way */
+.rpg-cast-name {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* The role gives way first (it is also listed inside an open card) */
+.rpg-cast-head .rpg-cast-role {
+    flex: 1 1 0;
+}
+
+.rpg-cast-card[open] .rpg-cast-role {
+    display: none;
+}

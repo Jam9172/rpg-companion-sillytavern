@@ -607,6 +607,7 @@ export function setupMobileTabs() {
     const $thoughts = $('#rpg-thoughts');
     const $inventory = $('#rpg-inventory');
     const $quests = $('#rpg-quests');
+    const $cast = $('#rpg-cast');
 
     // If no sections exist, nothing to organize
     if ($userStats.length === 0 && $infoBox.length === 0 && $thoughts.length === 0 && $inventory.length === 0 && $quests.length === 0) {
@@ -619,6 +620,7 @@ export function setupMobileTabs() {
     const hasInfo = $infoBox.length > 0 || $thoughts.length > 0;
     const hasInventory = $inventory.length > 0 && extensionSettings.showInventory;
     const hasQuests = $quests.length > 0 && extensionSettings.showQuests;
+    const hasCast = $cast.length > 0 && extensionSettings.castEnabled !== false;
 
     // Tab 1: Stats (User Stats only)
     if (hasStats) {
@@ -637,6 +639,11 @@ export function setupMobileTabs() {
         tabs.push('<button class="rpg-mobile-tab ' + (tabs.length === 0 ? 'active' : '') + '" data-tab="quests"><i class="fa-solid fa-scroll"></i><span>' + (i18n.getTranslation('global.quests') || 'Quests') + '</span></button>');
     }
 
+    // Tab 5: Cast (character persistence)
+    if (hasCast) {
+        tabs.push('<button class="rpg-mobile-tab ' + (tabs.length === 0 ? 'active' : '') + '" data-tab="cast"><i class="fa-solid fa-users"></i><span>' + (i18n.getTranslation('global.cast') || 'Cast') + '</span></button>');
+    }
+
     const $tabNav = $('<div class="rpg-mobile-tabs">' + tabs.join('') + '</div>');
 
     // Determine which tab should be active
@@ -651,6 +658,7 @@ export function setupMobileTabs() {
     const $infoTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'info' ? 'active' : '') + '" data-tab-content="info"></div>');
     const $inventoryTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'inventory' ? 'active' : '') + '" data-tab-content="inventory"></div>');
     const $questsTab = $('<div class="rpg-mobile-tab-content ' + (firstTab === 'quests' ? 'active' : '') + '" data-tab-content="quests"></div>');
+    const $castTab = $('<div class="rpg-mobile-tab-content" data-tab-content="cast"></div>');
 
     // Move sections into their respective tabs (detach to preserve event handlers)
     // Stats tab: User Stats only
@@ -683,6 +691,12 @@ export function setupMobileTabs() {
         $quests.show();
     }
 
+    // Cast tab
+    if ($cast.length > 0) {
+        $castTab.append($cast.detach());
+        if (hasCast) $cast.show();
+    }
+
     // Hide dividers on mobile
     $('.rpg-divider').hide();
 
@@ -696,6 +710,7 @@ export function setupMobileTabs() {
     $mobileContainer.append($infoTab);
     $mobileContainer.append($inventoryTab);
     $mobileContainer.append($questsTab);
+    $mobileContainer.append($castTab);
 
     // Insert mobile tab structure at the beginning of content box
     $contentBox.prepend($mobileContainer);
@@ -724,6 +739,7 @@ export function removeMobileTabs() {
     const $thoughts = $('#rpg-thoughts').detach();
     const $inventory = $('#rpg-inventory').detach();
     const $quests = $('#rpg-quests').detach();
+    const $cast = $('#rpg-cast').detach();
 
     // Remove mobile tab container
     $('.rpg-mobile-container').remove();
@@ -743,8 +759,10 @@ export function removeMobileTabs() {
         $dividerThoughts.before($thoughts);
         $contentBox.append($inventory);
         $contentBox.append($quests);
+        $contentBox.append($cast);
     } else {
         // Fallback if dividers don't exist
+        $contentBox.prepend($cast);
         $contentBox.prepend($quests);
         $contentBox.prepend($inventory);
         $contentBox.prepend($thoughts);

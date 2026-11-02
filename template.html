@@ -104,6 +104,11 @@
                 <!-- Divider after Quests -->
                 <div id="rpg-divider-quests" class="rpg-divider"></div>
 
+                <!-- Cast Section (character persistence) -->
+                <div id="rpg-cast" class="rpg-section rpg-cast-section">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+
                 <!-- Music Player Section -->
                 <div id="rpg-music-player" class="rpg-section rpg-music-section">
                     <!-- Content will be populated by JavaScript -->
@@ -412,6 +417,15 @@
                 <small style="display: block; margin-left: 24px; margin-top: -8px; color: #888; font-size: 11px;"
                     data-i18n-key="template.settingsModal.display.thoughtsOverlayNote">
                     On desktop, one Thoughts button at the top left of the chat opens every thought in an overlay. Off: a column of thought cards beside the chat.
+                </small>
+
+                <label class="checkbox_label">
+                    <input type="checkbox" id="rpg-toggle-cast" />
+                    <span data-i18n-key="template.settingsModal.display.cast">Cast (Character Memory)</span>
+                </label>
+                <small style="display: block; margin-left: 24px; margin-top: -8px; color: #888; font-size: 11px;"
+                    data-i18n-key="template.settingsModal.display.castNote">
+                    After each reply, a background request (on your tracker model) remembers every character's looks, relationship, whereabouts and what they did, for the whole story, and feeds the ones in the scene to the chat. Adds one request per reply. See them in the Cast tab.
                 </small>
 
                 <label class="checkbox_label">

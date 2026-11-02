@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- **Cast (character memory)**, on by default. After each reply, a background request on your tracker model (External API, or the main API in Separate and Together modes) keeps a lasting record of every character the story meets: role, looks, personality, how they feel about you, where they were last seen, and what they did. Memory stays short in three levels: steps for what a character is doing now, events once an activity is over ("went to the store and got 10 eggs"), and a short background once events pile up. Before each reply, characters in the scene or mentioned in the last two messages are sent to the main model in full, and everyone else as a one-line roster. Each update is tied to its message, so deleting or swiping that message undoes it. A new **Cast** tab lists everyone: edit any field in place, remove events, lock a character so the background model leaves them alone, or forget them. Turn it off with "Cast (Character Memory)" in the settings. Adds one request per reply.
 - Dialogue that opens with “ and closes with " (common at the end of a reply), or the other way round, is now coloured. New replies get the marks paired (“…”) before they are shown and saved, so the line no longer stays plain, and narration between two such lines is no longer coloured by mistake. On by default; "Fix Mismatched Quotes" in the settings turns it off. Earlier messages are not changed.
 
 ## 1.0.0 (2026-11-02): RPG Companion Arcane

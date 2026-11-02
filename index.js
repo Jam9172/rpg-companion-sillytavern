@@ -156,6 +156,8 @@ import { ensureHtmlCleaningRegex, detectConflictingRegexScripts, ensureTrackerCl
 import { ensureJsonCleaningRegex, removeJsonCleaningRegex } from './src/systems/features/jsonCleaning.js';
 import { parseAndStoreSpotifyUrl } from './src/systems/features/musicPlayer.js';
 import { initQuoteFix } from './src/systems/features/quoteFix.js';
+import { initCast, refreshCastPrompt } from './src/systems/features/cast.js';
+import { initCastTab, renderCast } from './src/systems/rendering/cast.js';
 import { DEFAULT_HTML_PROMPT } from './src/systems/generation/promptBuilder.js';
 import { openEncounterModal } from './src/systems/ui/encounterUI.js';
 
@@ -417,6 +419,21 @@ async function initUI() {
         extensionSettings.thoughtsInChatStyle = $(this).prop('checked') ? 'inline' : 'corner';
         saveSettings();
         updateChatThoughts();
+    });
+
+    $('#rpg-toggle-cast').on('change', function() {
+        extensionSettings.castEnabled = $(this).prop('checked');
+        saveSettings();
+        refreshCastPrompt();
+        // Rebuild the panel tabs so the Cast tab appears or goes
+        if (window.innerWidth > 1000) {
+            removeDesktopTabs();
+            setupDesktopTabs();
+        } else {
+            removeMobileTabs();
+            setupMobileTabs();
+        }
+        renderCast();
     });
 
     $('#rpg-toggle-fix-quotes').on('change', function() {
@@ -1141,6 +1158,7 @@ async function initUI() {
     $('#rpg-toggle-inline-thoughts').prop('checked', (extensionSettings.thoughtsInChatStyle || 'corner') === 'inline');
     $('#rpg-toggle-thoughts-overlay').prop('checked', extensionSettings.thoughtsOverlay !== false);
     $('#rpg-toggle-fix-quotes').prop('checked', extensionSettings.fixMismatchedQuotes !== false);
+    $('#rpg-toggle-cast').prop('checked', extensionSettings.castEnabled !== false);
     $('#rpg-toggle-html-prompt').prop('checked', extensionSettings.enableHtmlPrompt);
     $('#rpg-toggle-dialogue-coloring').prop('checked', extensionSettings.enableDialogueColoring);
     $('#rpg-toggle-deception').prop('checked', extensionSettings.enableDeceptionSystem ?? false);
@@ -1459,6 +1477,8 @@ jQuery(async () => {
 
             // After onMessageReceived (registered above), so tracker blocks are already handled
             initQuoteFix();
+            initCast();
+            initCastTab();
 
             eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (messageId) => {
                 if (!extensionSettings.enabled) {

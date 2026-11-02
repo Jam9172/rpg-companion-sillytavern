@@ -293,6 +293,7 @@ export function setupDesktopTabs() {
     const $thoughts = $('#rpg-thoughts');
     const $inventory = $('#rpg-inventory');
     const $quests = $('#rpg-quests');
+    const $cast = $('#rpg-cast');
 
     // If no sections exist, nothing to organize
     if ($userStats.length === 0 && $infoBox.length === 0 && $thoughts.length === 0 && $inventory.length === 0 && $quests.length === 0) {
@@ -303,6 +304,7 @@ export function setupDesktopTabs() {
     const tabButtons = [];
     const hasInventory = $inventory.length > 0 && extensionSettings.showInventory;
     const hasQuests = $quests.length > 0 && extensionSettings.showQuests;
+    const hasCast = $cast.length > 0 && extensionSettings.castEnabled !== false;
 
     // Status tab (always present if any status content exists)
     tabButtons.push(`
@@ -332,12 +334,23 @@ export function setupDesktopTabs() {
         `);
     }
 
+    // Cast tab (character persistence)
+    if (hasCast) {
+        tabButtons.push(`
+            <button class="rpg-tab-btn" data-tab="cast">
+                <i class="fa-solid fa-users"></i>
+                <span data-i18n-key="global.cast">Cast</span>
+            </button>
+        `);
+    }
+
     const $tabNav = $(`<div class="rpg-tabs-nav">${tabButtons.join('')}</div>`);
 
     // Create tab content containers
     const $statusTab = $('<div class="rpg-tab-content active" data-tab-content="status"></div>');
     const $inventoryTab = $('<div class="rpg-tab-content" data-tab-content="inventory"></div>');
     const $questsTab = $('<div class="rpg-tab-content" data-tab-content="quests"></div>');
+    const $castTab = $('<div class="rpg-tab-content" data-tab-content="cast"></div>');
 
     // Move sections into their respective tabs (detach to preserve event handlers)
     if ($userStats.length > 0) {
@@ -366,6 +379,10 @@ export function setupDesktopTabs() {
         // Only show if enabled (will be part of tab structure)
         if (hasQuests) $quests.show();
     }
+    if ($cast.length > 0) {
+        $castTab.append($cast.detach());
+        if (hasCast) $cast.show();
+    }
 
     // Hide dividers on desktop tabs (tabs separate content naturally)
     $('.rpg-divider').hide();
@@ -379,6 +396,7 @@ export function setupDesktopTabs() {
     // But they'll only show if enabled (via tab button visibility)
     $tabsContainer.append($inventoryTab);
     $tabsContainer.append($questsTab);
+    $tabsContainer.append($castTab);
 
     // Replace content box with tabs container
     $contentBox.html('').append($tabsContainer);
@@ -411,6 +429,7 @@ export function removeDesktopTabs() {
     const $thoughts = $('#rpg-thoughts').detach();
     const $inventory = $('#rpg-inventory').detach();
     const $quests = $('#rpg-quests').detach();
+    const $cast = $('#rpg-cast').detach();
 
     // Remove tabs container
     $('.rpg-tabs-container').remove();
@@ -430,6 +449,7 @@ export function removeDesktopTabs() {
         $dividerThoughts.before($thoughts);
         $contentBox.append($inventory);
         $contentBox.append($quests);
+        $contentBox.append($cast);
     } else {
         // Fallback if dividers don't exist
         $contentBox.append($userStats);
@@ -437,6 +457,7 @@ export function removeDesktopTabs() {
         $contentBox.append($thoughts);
         $contentBox.append($inventory);
         $contentBox.append($quests);
+        $contentBox.append($cast);
     }
 
     // Show/hide sections based on settings (respect visibility settings)
