@@ -155,6 +155,7 @@ import { setupClassicStatsButtons } from './src/systems/features/classicStats.js
 import { ensureHtmlCleaningRegex, detectConflictingRegexScripts, ensureTrackerCleaningRegex } from './src/systems/features/htmlCleaning.js';
 import { ensureJsonCleaningRegex, removeJsonCleaningRegex } from './src/systems/features/jsonCleaning.js';
 import { parseAndStoreSpotifyUrl } from './src/systems/features/musicPlayer.js';
+import { initQuoteFix } from './src/systems/features/quoteFix.js';
 import { DEFAULT_HTML_PROMPT } from './src/systems/generation/promptBuilder.js';
 import { openEncounterModal } from './src/systems/ui/encounterUI.js';
 
@@ -416,6 +417,11 @@ async function initUI() {
         extensionSettings.thoughtsInChatStyle = $(this).prop('checked') ? 'inline' : 'corner';
         saveSettings();
         updateChatThoughts();
+    });
+
+    $('#rpg-toggle-fix-quotes').on('change', function() {
+        extensionSettings.fixMismatchedQuotes = $(this).prop('checked');
+        saveSettings();
     });
 
     $('#rpg-toggle-thoughts-overlay').on('change', function() {
@@ -1134,6 +1140,7 @@ async function initUI() {
     $('#rpg-toggle-thoughts-in-chat').prop('checked', extensionSettings.showThoughtsInChat);
     $('#rpg-toggle-inline-thoughts').prop('checked', (extensionSettings.thoughtsInChatStyle || 'corner') === 'inline');
     $('#rpg-toggle-thoughts-overlay').prop('checked', extensionSettings.thoughtsOverlay !== false);
+    $('#rpg-toggle-fix-quotes').prop('checked', extensionSettings.fixMismatchedQuotes !== false);
     $('#rpg-toggle-html-prompt').prop('checked', extensionSettings.enableHtmlPrompt);
     $('#rpg-toggle-dialogue-coloring').prop('checked', extensionSettings.enableDialogueColoring);
     $('#rpg-toggle-deception').prop('checked', extensionSettings.enableDeceptionSystem ?? false);
@@ -1449,6 +1456,9 @@ jQuery(async () => {
                 [event_types.USER_MESSAGE_RENDERED]: updatePersonaAvatar,
                 [event_types.SETTINGS_UPDATED]: updatePersonaAvatar
             });
+
+            // After onMessageReceived (registered above), so tracker blocks are already handled
+            initQuoteFix();
 
             eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (messageId) => {
                 if (!extensionSettings.enabled) {

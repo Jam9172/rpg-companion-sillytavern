@@ -26,6 +26,7 @@ export let extensionSettings = {
     showThoughtsInChat: true, // Show thoughts overlay in chat
     thoughtsInChatStyle: 'corner', // 'corner' or 'inline'
     thoughtsOverlay: true, // Arcane Forge on desktop: a Thoughts button opens every thought in an overlay
+    fixMismatchedQuotes: true, // Pair “…" quote marks in new replies so the dialogue gets coloured
     narratorMode: false, // Use character card as narrator instead of fixed character references
     customNarratorPrompt: '', // Custom narrator mode prompt text (empty = use default)
     customContextInstructionsPrompt: '', // Custom context instructions prompt text (empty = use default)

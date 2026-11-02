@@ -4,7 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
-Nothing yet.
+- Dialogue that opens with “ and closes with " (common at the end of a reply), or the other way round, is now coloured. New replies get the marks paired (“…”) before they are shown and saved, so the line no longer stays plain, and narration between two such lines is no longer coloured by mistake. On by default; "Fix Mismatched Quotes" in the settings turns it off. Earlier messages are not changed.
 
 ## 1.0.0 (2026-11-02): RPG Companion Arcane
 

@@ -38,6 +38,7 @@ export const defaultSettings = {
     showThoughtsInChat: true, // Show thoughts overlay in chat
     thoughtsInChatStyle: 'corner', // 'corner' or 'inline'
     thoughtsOverlay: true, // Arcane Forge on desktop: a Thoughts button opens every thought in an overlay
+    fixMismatchedQuotes: true, // Pair “…" quote marks in new replies so the dialogue gets coloured
     enableHtmlPrompt: false, // Enable immersive HTML prompt injection
     enableSpotifyMusic: false, // Enable Spotify music integration (asks AI for Spotify URLs)
     customSpotifyPrompt: '', // Custom Spotify prompt text (empty = use default)
