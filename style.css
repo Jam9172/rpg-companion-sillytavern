@@ -12065,24 +12065,31 @@ body.documentstyle .rpg-inline-thoughts {
 #rpg-thought-icon[data-theme="forge"],
 #rpg-alt-present-characters[data-theme="forge"],
 .rpg-mobile-toggle[data-theme="forge"],
-.rpg-focus-modal[data-theme="forge"] {
-    --rpg-bg: #120908;
-    --rpg-accent: #1E100D;
-    --rpg-text: #F1E3D6;
-    --rpg-highlight: #E8622C;
-    --rpg-border: #4A2219;
+.rpg-focus-modal[data-theme="forge"],
+body:has(.rpg-panel[data-theme="forge"]) #rpg-fab-widget-container {
+    /* With Arcane Forge UI on, its colour pickers (--forge-ui-*) drive this palette; the hex values
+       are the Forge defaults used without it. */
+    --rpg-bg: var(--forge-ui-bg, #120908);
+    --rpg-accent: var(--forge-ui-card, #1E100D);
+    --rpg-text: var(--forge-ui-text, #F1E3D6);
+    --rpg-highlight: var(--forge-ui-ember, #E8622C);
+    --rpg-border: var(--forge-ui-border, #4A2219);
     --rpg-shadow: rgba(0, 0, 0, 0.7);
-    --forge-card: #1E100D;
-    --forge-inset: #170C0A;
-    --forge-track: #3A1B15;
-    --forge-crimson: #A61E1A;
-    --forge-brass: #D9A35B;
-    --forge-muted: #B79A88;
-    --forge-soft: #D8C3B3;
+    --forge-card: var(--forge-ui-card, #1E100D);
+    --forge-inset: var(--forge-ui-inset, #170C0A);
+    --forge-track: var(--forge-ui-track, #3A1B15);
+    --forge-active: var(--forge-ui-active, #2C1511);
+    --forge-crimson: var(--forge-ui-crimson, #A61E1A);
+    --forge-brass: var(--forge-ui-brass, #D9A35B);
+    --forge-muted: var(--forge-ui-muted, #B79A88);
+    --forge-dim: var(--forge-ui-dim, #8A6E62);
+    --forge-soft: var(--forge-ui-soft, #D8C3B3);
+    --forge-bright: var(--forge-ui-bright, #FCEBDD);
+    --forge-primary-edge: var(--forge-ui-primary-edge, #D2402F);
     --forge-full: #4A8FE7;
     --forge-good: #4CC46A;
     --forge-hurt: #F2D23C;
-    --forge-danger: #E5432F;
+    --forge-danger: var(--forge-ui-danger, #E5432F);
 }
 
 .rpg-panel[data-theme="forge"] {
@@ -12172,8 +12179,8 @@ body.documentstyle .rpg-inline-thoughts {
 .rpg-panel[data-theme="forge"] .rpg-btn-primary,
 .rpg-panel[data-theme="forge"] #rpg-manual-update {
     background: var(--forge-crimson);
-    color: #FCEBDD;
-    border: 1px solid #D2402F;
+    color: var(--forge-bright);
+    border: 1px solid var(--forge-primary-edge);
     border-radius: 6px;
     font-family: 'Cinzel', serif;
     font-weight: 700;
@@ -12221,7 +12228,7 @@ body.documentstyle .rpg-inline-thoughts {
 }
 
 .rpg-panel[data-theme="forge"] .rpg-feature-col .rpg-toggle-label:has(input:checked) {
-    background: #2C1511;
+    background: var(--forge-active);
     border-color: var(--rpg-highlight);
     color: var(--rpg-text);
 }
@@ -12291,7 +12298,7 @@ body.documentstyle .rpg-inline-thoughts {
     position: relative;
     height: 9rem;
     overflow: hidden;
-    background: #2C1511;
+    background: var(--forge-active);
     border-bottom: 2px solid var(--forge-crimson);
     border-radius: 5px 5px 0 0;
 }
@@ -12384,7 +12391,7 @@ body.documentstyle .rpg-inline-thoughts {
 .rpg-panel[data-theme="forge"] .rpg-user-banner .rpg-portrait-focus-btn:hover,
 .rpg-panel[data-theme="forge"] .rpg-user-banner .rpg-portrait-focus-btn:focus-visible {
     background: var(--forge-crimson);
-    color: #FCEBDD;
+    color: var(--forge-bright);
     outline: none;
 }
 
@@ -12521,7 +12528,7 @@ body.documentstyle .rpg-inline-thoughts {
         height: 1.5rem;
         padding: 0;
         border-radius: 50%;
-        background: #2C1511;
+        background: var(--forge-active);
         border: 1px solid var(--rpg-border);
         color: var(--forge-soft);
         font-size: 1rem;
@@ -12546,7 +12553,7 @@ body.documentstyle .rpg-inline-thoughts {
     .rpg-panel[data-theme="forge"] .rpg-character-avatar {
         width: 100%;
         height: 10rem;
-        background: #2C1511;
+        background: var(--forge-active);
     }
 
     .rpg-panel[data-theme="forge"] .rpg-character-avatar img {
@@ -12585,7 +12592,7 @@ body.documentstyle .rpg-inline-thoughts {
     .rpg-panel[data-theme="forge"] .rpg-portrait-focus-btn:hover,
     .rpg-panel[data-theme="forge"] .rpg-portrait-focus-btn:focus-visible {
         background: var(--forge-crimson);
-        color: #FCEBDD;
+        color: var(--forge-bright);
         outline: none;
     }
 
@@ -13154,7 +13161,7 @@ body.documentstyle .rpg-inline-thoughts {
     }
 
     .rpg-panel[data-theme="forge"] .rpg-inventory-subtab.active {
-        background: #2C1511;
+        background: var(--forge-active);
         border-color: var(--rpg-highlight);
         color: var(--rpg-text);
         font-weight: 700;
@@ -13218,13 +13225,13 @@ body.documentstyle .rpg-inline-thoughts {
         border-radius: 4px;
         background: none;
         border: none;
-        color: #8A6E62;
+        color: var(--forge-dim);
         box-shadow: none;
     }
 
     .rpg-panel[data-theme="forge"] .rpg-view-btn.active {
         color: var(--rpg-highlight);
-        background: #2C1511;
+        background: var(--forge-active);
     }
 
     /* Quiet text buttons for "Add item" and "Add location" */
@@ -13349,7 +13356,7 @@ body.documentstyle .rpg-inline-thoughts {
         background: none;
         border: none;
         box-shadow: none;
-        color: #8A6E62;
+        color: var(--forge-dim);
     }
 
     .rpg-panel[data-theme="forge"] .rpg-item-list-view .rpg-item-remove:hover {
@@ -13388,7 +13395,7 @@ body.documentstyle .rpg-inline-thoughts {
         background: none;
         border: none;
         box-shadow: none;
-        color: #8A6E62;
+        color: var(--forge-dim);
     }
 
     .rpg-panel[data-theme="forge"] .rpg-storage-content {
@@ -13600,7 +13607,7 @@ body.documentstyle .rpg-inline-thoughts {
 
     .rpg-panel[data-theme="forge"] .rpg-quests-journal .rpg-quest-empty {
         font-style: italic;
-        color: #8A6E62;
+        color: var(--forge-dim);
         background: none;
         border: none;
         padding: 0.25em 0;
@@ -14348,36 +14355,29 @@ body.documentstyle .rpg-inline-thoughts {
 /* ===== Arcane Forge: floating widgets (FAB) =====
    They live outside the panel, so they don't inherit its theme. When the panel uses Forge, they take
    the same palette: dark card, brass trim, ember accents, Forge fonts. */
-body:has(.rpg-panel[data-theme="forge"]) #rpg-fab-widget-container {
-    --rpg-text: #F1E3D6;
-    --rpg-accent: #1E100D;
-    --rpg-border: #4A2219;
-    --rpg-highlight: #E8622C;
-}
-
 body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget {
-    background: rgba(30, 16, 13, 0.95);
-    border: 1px solid #4A2219;
+    background: color-mix(in srgb, var(--forge-card) 95%, transparent);
+    border: 1px solid var(--rpg-border);
     border-radius: 10px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
-    color: #F1E3D6;
+    color: var(--rpg-text);
     font-family: 'Alegreya Sans', system-ui, sans-serif;
 }
 
 body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget:hover {
-    border-color: #E8622C;
+    border-color: var(--rpg-highlight);
 }
 
 body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-attr-name,
 body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-stat-name {
-    color: #B79A88;
+    color: var(--forge-muted);
     font-family: 'Cinzel', serif;
     letter-spacing: 0.04em;
 }
 
 body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-attr-value,
 body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-stat-value {
-    color: #D9A35B;
+    color: var(--forge-brass);
     font-family: 'Cinzel', serif;
     font-weight: 700;
 }
@@ -14419,7 +14419,7 @@ body:has(.rpg-panel[data-theme="forge"]) .rpg-fab-widget-stat-value {
     box-sizing: border-box;
     border: 1px solid var(--rpg-highlight);
     border-radius: 999px;
-    background: #2C1511;
+    background: var(--forge-active);
     box-shadow: 0 0 10px color-mix(in srgb, var(--rpg-highlight) 25%, transparent);
     transform: translateX(calc(var(--i) * 100%));
     animation: forge-subtab-slide 0.28s cubic-bezier(0.3, 0.7, 0.4, 1);
