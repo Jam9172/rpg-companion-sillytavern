@@ -1,11 +1,12 @@
 
-/* Ensure chat stays centered when panel is visible */
+/* Ensure chat stays centered when panel is visible. Not !important: SillyTavern's MovingUI drags the chat
+   by setting margin: unset inline, and a forced margin pinned it in place. */
 body:has(.rpg-panel.rpg-position-right) #sheld {
-    margin: auto !important;
+    margin: auto;
 }
 
 body:has(.rpg-panel.rpg-position-left) #sheld {
-    margin: auto !important;
+    margin: auto;
 }
 /* ============================================
    RPG COMPANION - GAME-LIKE UI - RESPONSIVE

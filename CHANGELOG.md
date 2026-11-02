@@ -6,6 +6,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 - Arcane Forge follows Arcane Forge UI's colour pickers when that extension is on, floating widgets included.
 - Phones: Whisper thoughts open from a Forge whisper icon and close with their own button; the panel toggle gets the Forge d20.
+- The chat window can be moved again with SillyTavern's MovingUI (a forced margin from the original extension pinned it).
 - Keyboard focus ring in the Forge panel.
 - Fonts are bundled, so the Forge theme works offline and nothing loads from Google.
 
