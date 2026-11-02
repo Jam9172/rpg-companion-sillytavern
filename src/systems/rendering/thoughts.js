@@ -2111,6 +2111,7 @@ function setWhisperOpen($item, open) {
         // Slide the opened card into view once it has finished growing
         const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
         setTimeout(() => {
+            whisperRelayout?.();
             $item.get(0)?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
             updateWhisperScrollEdges(panel);
         }, reduce ? 0 : 300);
@@ -2121,6 +2122,7 @@ function setWhisperOpen($item, open) {
     const finish = () => {
         $item.removeClass('is-open is-closing');
         $item.find('.rpg-whisper-pill').trigger('focus');
+        whisperRelayout?.();
         updateWhisperScrollEdges(panel);
     };
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -2141,8 +2143,13 @@ function setWhisperOpen($item, open) {
     setTimeout(onEnd, 400); // Fallback if the animation event never fires
 }
 
-// Watches the message box, so the Whisper column shrinks when the box grows
+// Watches the message box and the chat, so the Whisper column follows the box growing and bars
+// (such as Top Info Bar) appearing above the chat
 let whisperFormObserver = null;
+// Re-lays out the Whisper column (set while a Whisper panel exists)
+let whisperRelayout = null;
+// Room kept between the Whisper column and the bars above and below it
+const WHISPER_GAP = 16;
 
 /**
  * Whisper fades its top or bottom edge while there is more to scroll that way.
@@ -2164,6 +2171,7 @@ export function createThoughtPanel($message, thoughtsArray) {
     $(window).off('resize.rpgThoughtBubble');
     whisperFormObserver?.disconnect();
     whisperFormObserver = null;
+    whisperRelayout = null;
 
     // Get the avatar position from the message
     const $avatar = $message.find('.avatar img');
@@ -2341,10 +2349,16 @@ export function createThoughtPanel($message, thoughtsArray) {
                 : { left: 'auto', right: `${window.innerWidth - sheldRect.right + margin}px` });
             $thoughtPanel.css('max-width', `${Math.min(352, sheldRect.width - (margin * 2))}px`);
 
-            // The column ends above the message box (and anything stacked on it); past that it scrolls
+            // The column starts below anything above the messages (Top Info Bar, connection profiles)
+            // and ends above the message box, with room at both ends. It is about one open card tall;
+            // the rest scrolls.
+            const chat = document.getElementById('chat');
             const form = document.getElementById('form_sheld');
-            const bottom = form ? form.getBoundingClientRect().top - topMargin : window.innerHeight - margin;
-            $thoughtPanel.css('max-height', `${Math.max(120, bottom - topPosition)}px`);
+            const top = Math.max(topPosition, chat ? chat.getBoundingClientRect().top + WHISPER_GAP : 0);
+            const bottom = form ? form.getBoundingClientRect().top - WHISPER_GAP : window.innerHeight - margin;
+            const openCards = [...$thoughtPanel[0].querySelectorAll('.rpg-whisper-item.is-open')];
+            const oneCard = openCards.length ? Math.max(...openCards.map((card) => card.offsetHeight)) + 14 : Infinity;
+            $thoughtPanel.css({ top: `${top}px`, 'max-height': `${Math.max(120, Math.min(bottom - top, oneCard))}px` });
             updateWhisperScrollEdges($thoughtPanel[0]);
         }
     };
@@ -2382,7 +2396,10 @@ export function createThoughtPanel($message, thoughtsArray) {
         if (form && window.ResizeObserver) {
             whisperFormObserver = new ResizeObserver(() => updateBubblePosition());
             whisperFormObserver.observe(form);
+            const chat = document.getElementById('chat');
+            if (chat) whisperFormObserver.observe(chat);
         }
+        whisperRelayout = updateBubblePosition;
         $thoughtPanel.on('scroll', () => updateWhisperScrollEdges($thoughtPanel[0]));
     }
 
