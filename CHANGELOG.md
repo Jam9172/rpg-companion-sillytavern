@@ -2,8 +2,9 @@
 
 Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern), newest first. Each entry is one update published to GitHub. The original extension's history before the fork is in the git log.
 
-## 3.9.0 (not published yet)
+## 3.9.0 (2026-11-02)
 
+- The What's New popup is rewritten for this fork (shown once after updating).
 - Arcane Forge follows Arcane Forge UI's colour pickers when that extension is on, floating widgets included.
 - Phones: Whisper thoughts open from a Forge whisper icon and close with their own button; the panel toggle gets the Forge d20.
 - The chat window can be moved again with SillyTavern's MovingUI (a forced margin from the original extension pinned it).

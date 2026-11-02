@@ -597,13 +597,13 @@ export function getSettingsModal() {
  * Checks if user has already seen this version's welcome screen
  */
 export function showWelcomeModalIfNeeded() {
-    const WELCOME_VERSION = '3.0.1';
+    const WELCOME_VERSION = '3.9.0';
     const STORAGE_KEY = 'rpg_companion_welcome_seen';
 
     try {
         const seenVersion = localStorage.getItem(STORAGE_KEY);
 
-        // If user hasn't seen v3.0.0 welcome yet, show it
+        // Show the What's New popup once for each new WELCOME_VERSION
         if (seenVersion !== WELCOME_VERSION) {
             showWelcomeModal(WELCOME_VERSION, STORAGE_KEY);
         }
