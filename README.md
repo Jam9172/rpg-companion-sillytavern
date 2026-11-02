@@ -100,3 +100,5 @@ Copyright (C) 2024 marinara_spaghetti
 Modifications copyright (C) 2026 Jam9172
 
 The full licence text is in [LICENSE](LICENSE).
+
+The Cinzel and Alegreya Sans fonts in `fonts/` are under the SIL Open Font License 1.1 (see the OFL files there).

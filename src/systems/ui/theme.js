@@ -38,14 +38,15 @@ export function getStatBarColors() {
 }
 
 /**
- * Loads the Arcane Forge theme's fonts from Google Fonts, once, only when that theme is chosen.
+ * Loads the Arcane Forge theme's fonts (bundled in fonts/, so they work offline), once, only when
+ * that theme is chosen.
  */
 function loadForgeFonts() {
     if (document.getElementById('rpg-forge-fonts')) return;
     const link = document.createElement('link');
     link.id = 'rpg-forge-fonts';
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap';
+    link.href = new URL('../../../fonts/fonts.css', import.meta.url).href;
     document.head.appendChild(link);
 }
 
