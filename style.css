@@ -15212,3 +15212,61 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     line-height: 1.4;
     opacity: 0.75;
 }
+
+/* Cast: last update state and the Refresh button */
+.rpg-cast-status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.rpg-cast-state {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.8em;
+    opacity: 0.75;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rpg-cast-state.is-running {
+    color: var(--rpg-highlight, #e94560);
+    opacity: 1;
+}
+
+.rpg-cast-state.is-error {
+    color: var(--forge-danger, #e5432f);
+    opacity: 1;
+}
+
+.rpg-cast-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: none;
+    margin: 0;
+    padding: 0.25rem 0.65rem;
+    border: 1px solid var(--rpg-border, rgba(255, 255, 255, 0.2));
+    border-radius: 999px;
+    background: none;
+    color: inherit;
+    font-size: 0.8em;
+    cursor: pointer;
+}
+
+.rpg-cast-refresh:hover:not(:disabled) {
+    border-color: var(--rpg-highlight, #e94560);
+    color: var(--rpg-highlight, #e94560);
+}
+
+.rpg-cast-refresh:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-cast-refresh {
+    border-color: var(--forge-brass, #D9A35B);
+    color: var(--forge-brass, #D9A35B);
+}

@@ -7,7 +7,7 @@
 import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
-import { listCharacters, editCharacter, deleteCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange } from '../features/cast.js';
+import { listCharacters, editCharacter, deleteCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus } from '../features/cast.js';
 import { saveSettings } from '../../core/persistence.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
@@ -19,6 +19,34 @@ function rangeLabel(value) {
     return value === 0
         ? t('cast.range.whole', 'Whole story')
         : `${t('cast.range.last', 'Last')} ${value} ${t('cast.range.messages', 'messages')}`;
+}
+
+function timeAgo(time) {
+    const seconds = Math.round((Date.now() - time) / 1000);
+    if (seconds < 45) return t('cast.time.now', 'just now');
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return `${minutes} ${t('cast.time.minutes', 'min ago')}`;
+    const hours = Math.round(minutes / 60);
+    return `${hours} ${t('cast.time.hours', 'h ago')}`;
+}
+
+/** The Refresh button and a line saying how the last background update went. */
+function statusBar() {
+    const status = getCastStatus();
+    const refreshHelp = t('cast.refresh.help', 'Redo the cast update for the latest message: undo what it changed, then read it again.');
+    let line;
+    if (status.running) line = `<span class="rpg-cast-state is-running">${escapeHtml(t('cast.state.running', 'Updating…'))}</span>`;
+    else if (status.lastError) line = `<span class="rpg-cast-state is-error" title="${escapeHtml(status.lastError)}">${escapeHtml(t('cast.state.failed', 'Last update failed'))}: ${escapeHtml(status.lastError)}</span>`;
+    else if (status.lastOk) line = `<span class="rpg-cast-state">${escapeHtml(t('cast.state.ok', 'Updated'))} ${escapeHtml(timeAgo(status.lastOk))}</span>`;
+    else line = `<span class="rpg-cast-state">${escapeHtml(t('cast.state.idle', 'Updates after each reply'))}</span>`;
+    return `
+        <div class="rpg-cast-status-bar">
+            ${line}
+            <button type="button" class="rpg-cast-refresh" title="${escapeHtml(refreshHelp)}"${status.running ? ' disabled' : ''}>
+                <i class="fa-solid fa-rotate${status.running ? ' fa-spin' : ''}" aria-hidden="true"></i>
+                <span>${escapeHtml(t('cast.refresh', 'Refresh'))}</span>
+            </button>
+        </div>`;
 }
 
 /** The picker for how much of the story the background model reads per update. */
@@ -117,6 +145,12 @@ export function renderCast() {
         return;
     }
 
+    // Mid-edit: only refresh the status bar, so the field being typed in is kept
+    if ($cast[0].contains(document.activeElement) && document.activeElement?.isContentEditable) {
+        $cast.find('.rpg-cast-status-bar').replaceWith(statusBar());
+        return;
+    }
+
     const characters = listCharacters();
     const here = characters.filter((c) => c.status === 'present').length;
     const summary = characters.length
@@ -128,6 +162,7 @@ export function renderCast() {
             <h4 class="rpg-cast-title">${escapeHtml(t('global.cast', 'Cast'))}</h4>
             <span class="rpg-cast-count">${escapeHtml(summary)}</span>
         </div>
+        ${statusBar()}
         ${rangePicker()}
         ${characters.length
             ? `<div class="rpg-cast-list">${characters.map(card).join('')}</div>`
@@ -157,6 +192,10 @@ export function initCastTab() {
         e.stopPropagation();
         const locked = $(this).attr('aria-pressed') !== 'true';
         editCharacter(nameOf(this), { locked });
+    });
+    $doc.on('click', '#rpg-cast .rpg-cast-refresh', function () {
+        if (this.disabled) return;
+        refreshCast();
     });
     $doc.on('change', '#rpg-cast .rpg-cast-range-select', async function () {
         let value = this.value;

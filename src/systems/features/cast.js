@@ -42,6 +42,20 @@ const MAX_JOURNAL = 200;      // undo entries kept (older ones can no longer be 
 const listeners = [];
 let updateQueue = Promise.resolve();
 
+// The background update's state, shown in the Cast tab
+const castStatus = { running: false, lastOk: null, lastError: null };
+
+/** @returns {{running: boolean, lastOk: number|null, lastError: string|null}} */
+export function getCastStatus() {
+    return { ...castStatus };
+}
+
+function notify() {
+    listeners.forEach((fn) => {
+        try { fn(); } catch (e) { console.error('[RPG Companion] Cast listener failed:', e); }
+    });
+}
+
 /* ---------- Ledger ---------- */
 
 /**
@@ -109,9 +123,7 @@ export function listCharacters() {
 
 function saveCast() {
     saveChatDebounced();
-    listeners.forEach((fn) => {
-        try { fn(); } catch (e) { console.error('[RPG Companion] Cast listener failed:', e); }
-    });
+    notify();
 }
 
 /** Calls fn whenever the cast changes (used by the Cast tab). */
@@ -228,6 +240,35 @@ function sceneInfo() {
     return String(info).replace(/\s+/g, ' ').slice(0, 500);
 }
 
+/**
+ * The characters on RPG Companion's Status tab (Present Characters), as short lines: who the tracker
+ * says is in the scene now, with their details, relationship and thoughts.
+ */
+export function statusPanelCharacters() {
+    const raw = lastGeneratedData?.characterThoughts || committedTrackerData?.characterThoughts;
+    if (!raw) return '';
+    try {
+        const parsed = JSON.parse(raw);
+        const list = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.characters) ? parsed.characters : null);
+        if (list) {
+            return list.filter((c) => c?.name).map((c) => {
+                const parts = [];
+                for (const [key, value] of Object.entries(c.details || {})) {
+                    if (value) parts.push(`${key.replace(/_/g, ' ')}: ${value}`);
+                }
+                const relationship = c.relationship?.status || c.relationship;
+                if (relationship && typeof relationship === 'string') parts.push(`relationship: ${relationship}`);
+                const thoughts = c.thoughts?.content || (typeof c.thoughts === 'string' ? c.thoughts : '');
+                if (thoughts) parts.push(`thinking: ${thoughts}`);
+                return `- ${c.name}${parts.length ? `: ${parts.join('; ')}` : ''}`;
+            }).join('\n').slice(0, 3000);
+        }
+    } catch {
+        // Older text format: pass it on as it is
+    }
+    return String(raw).slice(0, 3000);
+}
+
 /** A mid-size entry for a character who is away: enough to move them along off-screen. */
 function awayEntry(character, messageIndex) {
     const out = { name: character.name };
@@ -263,6 +304,7 @@ function buildUpdatePrompt(messageIndex) {
     const away = characters.filter((c) => !inScene.includes(c) && c.status !== 'dead');
     const needsBio = characters.filter((c) => (c.events?.length || 0) > MAX_EVENTS).map((c) => c.name);
     const scene = sceneInfo();
+    const statusPanel = statusPanelCharacters();
 
     const system = `You keep the cast ledger for an ongoing roleplay story: the lasting memory of its major characters (everyone except ${userName}). It is kept for the whole story, so it must stay short and only hold what matters. You never write story text, only the requested JSON.
 
@@ -276,7 +318,9 @@ What to write for a character:
 - "step": a few words for a NEW development in what they are doing right now ("gets in the car", "shopping in the aisles"). Do not repeat a step that is still true: ten turns of shopping is one step.
 - "finish": when an activity is over (they left, the scene moved on, or it reached its result), one short past-tense sentence of the outcome that matters ("went to the store and got 10 eggs"). It replaces their steps. If they have ${MAX_STEPS} or more steps, finish now.
 ${needsBio.length ? `- "bio": for ${needsBio.join(', ')}, two or three sentences of who they are now and what still matters, merging their current bio with their ${EVENTS_TO_FOLD} oldest events.\n` : ''}
-Off-screen lives (characters under "away"):
+${statusPanel ? `The status panel (Present Characters tracker) lists who is in the scene right now, with their current details. Treat its major characters as present, use it to fill in or correct their looks, relationship and situation, and add any major character from it who is missing from the ledger.
+
+` : ''}Off-screen lives (characters under "away"):
 - Their lives go on while ${userName} is elsewhere. When the new messages show real story time passing (hours or days, a night's sleep, a journey, a scene change), give an away character one plausible development that follows from their goal, personality and last known situation, with "offscreen": true. Use "step" for something in progress or "finish" for something done ("finished the commission for the baron").
 - Only when time has really passed, at most one development per character, and nothing big that the story has not set up (no deaths, no meeting ${userName}, no arrivals in the scene). Leave a character out if nothing would have changed.
 
@@ -296,7 +340,7 @@ Use {"characters": []} if nothing changed.`;
 
     return [
         { role: 'system', content: system },
-        { role: 'user', content: `Current ledger:\n${JSON.stringify(ledger)}\n${scene ? `\nCurrent scene info: ${scene}\n` : ''}\n${story}NEW messages (record these; the last one is the newest):\n<messages>\n${format(latest)}\n</messages>\n\nUpdate the ledger. JSON only.` },
+        { role: 'user', content: `Current ledger:\n${JSON.stringify(ledger)}\n${scene ? `\nCurrent scene info: ${scene}\n` : ''}${statusPanel ? `\nStatus panel, characters in the scene now:\n${statusPanel}\n` : ''}\n${story}NEW messages (record these; the last one is the newest):\n<messages>\n${format(latest)}\n</messages>\n\nUpdate the ledger. JSON only.` },
     ];
 }
 
@@ -415,38 +459,76 @@ async function waitForTrackers(maxMs = 120000) {
 }
 
 /**
- * Updates the cast from the reply at messageIndex. Runs one at a time, after RPG Companion's own
+ * Updates the cast from the message at messageIndex. Runs one at a time, after RPG Companion's own
  * tracker update so the two requests never overlap.
+ * @param {number} messageIndex - The message to record
+ * @param {{force?: boolean}} [options] - force: also run for the user's own message (Refresh)
  */
-export function updateCastFromMessage(messageIndex) {
+export function updateCastFromMessage(messageIndex, { force = false } = {}) {
     updateQueue = updateQueue.then(async () => {
         if (!extensionSettings.enabled || extensionSettings.castEnabled === false) return;
         const message = chat[messageIndex];
-        if (!message || message.is_user || message.is_system) return;
+        if (!message || message.is_system || (message.is_user && !force)) return;
 
-        await waitForTrackers();
-        const chatId = getContext().chatId;
-        const signature = messageSignature(messageIndex);
-
-        let response;
+        castStatus.running = true;
+        notify();
         try {
-            response = await requestUpdate(buildUpdatePrompt(messageIndex));
-        } catch (error) {
-            console.warn('[RPG Companion] Cast update failed:', error);
-            return;
-        }
-        // The chat or the reply changed while we waited: drop this result
-        if (getContext().chatId !== chatId || messageSignature(messageIndex) !== signature) return;
+            await waitForTrackers();
+            const chatId = getContext().chatId;
+            const signature = messageSignature(messageIndex);
 
-        const updates = parseUpdate(response);
-        if (!updates) {
-            console.warn('[RPG Companion] Cast update: could not read the reply as JSON');
-            return;
+            let response;
+            try {
+                response = await requestUpdate(buildUpdatePrompt(messageIndex));
+            } catch (error) {
+                console.warn('[RPG Companion] Cast update failed:', error);
+                castStatus.lastError = error?.message || String(error);
+                return;
+            }
+            // The chat or the message changed while we waited: drop this result
+            if (getContext().chatId !== chatId || messageSignature(messageIndex) !== signature) return;
+
+            const updates = parseUpdate(response);
+            if (!updates) {
+                console.warn('[RPG Companion] Cast update: could not read the reply as JSON');
+                castStatus.lastError = 'The model did not reply with the cast in the right format.';
+                return;
+            }
+            applyCastUpdate(updates, messageIndex);
+            castStatus.lastOk = Date.now();
+            castStatus.lastError = null;
+            refreshCastPrompt();
+        } finally {
+            castStatus.running = false;
+            notify();
         }
-        applyCastUpdate(updates, messageIndex);
-        refreshCastPrompt();
     }).catch((error) => console.error('[RPG Companion] Cast update error:', error));
     return updateQueue;
+}
+
+/**
+ * Refresh (Cast tab): redoes the update for the latest message. Whatever that message already changed is
+ * undone first, so the cast goes back to its last update before it and is rebuilt from the latest
+ * message.
+ */
+export function refreshCast() {
+    let latest = chat.length - 1;
+    while (latest >= 0 && chat[latest]?.is_system) latest--;
+    if (latest < 0) return Promise.resolve();
+
+    const cast = getCast();
+    const signature = messageSignature(latest);
+    let undone = false;
+    while (cast.journal.length && cast.journal.at(-1).signature === signature) {
+        const entry = cast.journal.pop();
+        for (const [key, before] of Object.entries(entry.before)) {
+            if (before === null) delete cast.characters[key];
+            else cast.characters[key] = before;
+        }
+        undone = true;
+    }
+    if (undone) saveCast();
+    return updateCastFromMessage(latest, { force: true });
 }
 
 /* ---------- Feeding the main model ---------- */
