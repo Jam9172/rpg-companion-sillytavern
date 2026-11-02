@@ -14412,6 +14412,48 @@ body:has(.rpg-panel[data-theme="forge"]) #rpg-fab-widget-container {
         display: flex !important;
     }
 
+    /* A scrolling column: the script caps its height just above the message box. Edges fade where
+       there is more to scroll, and scrolling stays inside (the chat behind does not move). */
+    #rpg-thought-panel.rpg-whisper {
+        flex-wrap: nowrap;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scroll-behavior: smooth;
+        padding: 2px 8px 12px 2px;
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--forge-brass, #D9A35B) 45%, transparent) transparent;
+        --whisper-fade-top: 0px;
+        --whisper-fade-bottom: 0px;
+        -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--whisper-fade-top), #000 calc(100% - var(--whisper-fade-bottom)), transparent);
+        mask-image: linear-gradient(to bottom, transparent, #000 var(--whisper-fade-top), #000 calc(100% - var(--whisper-fade-bottom)), transparent);
+    }
+
+    #rpg-thought-panel.rpg-whisper > * {
+        flex-shrink: 0;
+    }
+
+    #rpg-thought-panel.rpg-whisper.rpg-whisper-more-above {
+        --whisper-fade-top: 28px;
+    }
+
+    #rpg-thought-panel.rpg-whisper.rpg-whisper-more-below {
+        --whisper-fade-bottom: 28px;
+    }
+
+    #rpg-thought-panel.rpg-whisper::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #rpg-thought-panel.rpg-whisper::-webkit-scrollbar-thumb {
+        border-radius: 3px;
+        background: color-mix(in srgb, var(--forge-brass, #D9A35B) 45%, transparent);
+    }
+
+    #rpg-thought-panel.rpg-whisper::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
     /* !important: a desktop rule shows every .rpg-thought-close with !important */
     #rpg-thought-panel.rpg-whisper .rpg-whisper-close {
         display: none !important;
