@@ -4,7 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## 3.8.0 (2026-11-01)
 
-First release of this fork. It includes every change listed below.
+First release of this fork. It includes every change listed below. The Arcane Forge UI is an early, slow-moving beta.
 
 ## 2026-11-01: README rewrite
 

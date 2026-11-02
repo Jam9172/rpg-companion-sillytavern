@@ -2,6 +2,9 @@
 
 An RPG extension for SillyTavern and TauriTavern. It tracks your stats, the scene, the characters around you and what they're thinking, and shows it all in a side panel. It updates automatically and works with any preset.
 
+> [!WARNING]
+> **Early beta.** The Arcane Forge UI is in early beta and progresses slowly. Expect rough edges, layout bugs and changes between versions. Please report problems on the [Issues page](https://github.com/Jam9172/rpg-companion-sillytavern/issues).
+
 > **About this fork.** This is a modified version of [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern) by Marysia (marinara_spaghetti), maintained by [Jam9172](https://github.com/Jam9172) since October 2026. It is not the official extension and is not endorsed by the original author. Please report problems with this fork here, not to the original author.
 >
 > Main changes:
