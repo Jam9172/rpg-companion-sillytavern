@@ -211,6 +211,16 @@ function messageText(message) {
  * Builds the background model's request: the characters it may need, the latest messages, and the
  * rules for steps, events and the bio.
  */
+/**
+ * How many messages the background model reads per update: 0 means the whole story.
+ * @returns {number}
+ */
+export function castReadRange() {
+    const value = Number(extensionSettings.castUpdateDepth ?? 4);
+    if (!Number.isFinite(value) || value < 0) return 4;
+    return value === 0 ? 0 : Math.max(2, Math.round(value));
+}
+
 /** The in-story date, time and place from RPG Companion's Info Box, if it has one. */
 function sceneInfo() {
     const info = lastGeneratedData?.infoBox || committedTrackerData?.infoBox;
@@ -239,9 +249,14 @@ function buildUpdatePrompt(messageIndex) {
     const cast = getCast();
     const context = getContext();
     const userName = context.name1 || 'User';
-    const depth = Math.max(2, Number(extensionSettings.castUpdateDepth) || 4);
-    const recent = chat.slice(Math.max(0, messageIndex - depth + 1), messageIndex + 1).filter((m) => !m.is_system);
-    const recentText = recent.map((m) => messageText(m)).join('\n');
+    // How far back the model reads (0 = the whole story). The last two messages are what to record;
+    // anything before them is context only.
+    const range = castReadRange();
+    const first = range === 0 ? 0 : Math.max(0, messageIndex - range + 1);
+    const recent = chat.slice(first, messageIndex + 1).filter((m) => !m.is_system);
+    const earlier = recent.slice(0, -2);
+    const latest = recent.slice(-2);
+    const recentText = latest.map((m) => messageText(m)).join('\n');
 
     const characters = Object.values(cast.characters);
     const inScene = characters.filter((c) => c.status === 'present' || isMentioned(c, recentText));
@@ -274,11 +289,14 @@ Use {"characters": []} if nothing changed.`;
         away: away.map((c) => awayEntry(c, messageIndex)),
     };
 
-    const history = recent.map((m) => `${m.is_user ? userName : (m.name || 'Narrator')}: ${messageText(m)}`).join('\n\n');
+    const format = (messages) => messages.map((m) => `${m.is_user ? userName : (m.name || 'Narrator')}: ${messageText(m)}`).join('\n\n');
+    const story = earlier.length
+        ? `${range === 0 ? 'The story so far' : 'Earlier messages'} (context only; the ledger already holds what mattered):\n<earlier>\n${format(earlier)}\n</earlier>\n\n`
+        : '';
 
     return [
         { role: 'system', content: system },
-        { role: 'user', content: `Current ledger:\n${JSON.stringify(ledger)}\n${scene ? `\nCurrent scene info: ${scene}\n` : ''}\nNEW messages (the last one is the newest):\n<messages>\n${history}\n</messages>\n\nUpdate the ledger. JSON only.` },
+        { role: 'user', content: `Current ledger:\n${JSON.stringify(ledger)}\n${scene ? `\nCurrent scene info: ${scene}\n` : ''}\n${story}NEW messages (record these; the last one is the newest):\n<messages>\n${format(latest)}\n</messages>\n\nUpdate the ledger. JSON only.` },
     ];
 }
 

@@ -7,9 +7,36 @@
 import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
-import { listCharacters, editCharacter, deleteCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX } from '../features/cast.js';
+import { listCharacters, editCharacter, deleteCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange } from '../features/cast.js';
+import { saveSettings } from '../../core/persistence.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
+
+// Read ranges offered in the picker (0 = the whole story)
+const RANGE_PRESETS = [4, 10, 25, 50, 100, 0];
+
+function rangeLabel(value) {
+    return value === 0
+        ? t('cast.range.whole', 'Whole story')
+        : `${t('cast.range.last', 'Last')} ${value} ${t('cast.range.messages', 'messages')}`;
+}
+
+/** The picker for how much of the story the background model reads per update. */
+function rangePicker() {
+    const current = castReadRange();
+    const values = RANGE_PRESETS.includes(current) ? RANGE_PRESETS : [...RANGE_PRESETS.slice(0, -1), current, 0].sort((a, b) => (a || Infinity) - (b || Infinity));
+    const options = values.map((v) => `<option value="${v}"${v === current ? ' selected' : ''}>${escapeHtml(rangeLabel(v))}</option>`).join('');
+    const help = t('cast.range.help', 'How much of the story the background model reads on each update. More gives better memory but costs more tokens per reply.');
+    return `
+        <label class="rpg-cast-range" title="${escapeHtml(help)}">
+            <span class="rpg-cast-label">${escapeHtml(t('cast.range.title', 'Reads'))}</span>
+            <select class="rpg-cast-range-select" aria-label="${escapeHtml(help)}">
+                ${options}
+                <option value="custom">${escapeHtml(t('cast.range.custom', 'Custom…'))}</option>
+            </select>
+        </label>
+        ${current === 0 ? `<p class="rpg-cast-range-note">${escapeHtml(t('cast.range.wholeNote', 'Reads the whole chat on every update: best memory, but long stories cost a lot of tokens and can pass your tracker model\'s context limit.'))}</p>` : ''}`;
+}
 
 // Cards the user opened or closed, by name, so a re-render keeps them that way
 const openState = new Map();
@@ -101,6 +128,7 @@ export function renderCast() {
             <h4 class="rpg-cast-title">${escapeHtml(t('global.cast', 'Cast'))}</h4>
             <span class="rpg-cast-count">${escapeHtml(summary)}</span>
         </div>
+        ${rangePicker()}
         ${characters.length
             ? `<div class="rpg-cast-list">${characters.map(card).join('')}</div>`
             : `<p class="rpg-cast-empty">${escapeHtml(t('cast.empty', 'No characters yet. Everyone the story meets is remembered here as it goes on.'))}</p>`}
@@ -129,6 +157,21 @@ export function initCastTab() {
         e.stopPropagation();
         const locked = $(this).attr('aria-pressed') !== 'true';
         editCharacter(nameOf(this), { locked });
+    });
+    $doc.on('change', '#rpg-cast .rpg-cast-range-select', async function () {
+        let value = this.value;
+        if (value === 'custom') {
+            const answer = await callGenericPopup(t('cast.range.customPrompt', 'How many of the latest messages should the background model read? (0 = the whole story)'), POPUP_TYPE.INPUT, String(castReadRange()));
+            if (answer === false || answer === null || answer === undefined || String(answer).trim() === '') {
+                renderCast();
+                return;
+            }
+            value = answer;
+        }
+        const number = Math.round(Number(value));
+        extensionSettings.castUpdateDepth = Number.isFinite(number) && number >= 0 ? (number === 0 ? 0 : Math.max(2, number)) : 4;
+        saveSettings();
+        renderCast();
     });
     $doc.on('keydown', '#rpg-cast .rpg-cast-value', function (e) {
         if (e.key === 'Enter' && !$(this).hasClass('rpg-cast-bio')) {

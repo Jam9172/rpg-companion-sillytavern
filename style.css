@@ -15191,3 +15191,24 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     font-size: 0.8em;
     color: var(--forge-muted, inherit);
 }
+
+/* Cast: how much of the story the background model reads */
+.rpg-cast-range {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.rpg-cast-range-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+}
+
+.rpg-cast-range-note {
+    margin: -0.25rem 0 0;
+    font-size: 0.8em;
+    line-height: 1.4;
+    opacity: 0.75;
+}
