@@ -2212,7 +2212,9 @@ export function createThoughtPanel($message, thoughtsArray) {
     const $thoughtPanel = $(useWhisper ? `
         <div id="rpg-thought-panel" class="rpg-thought-panel rpg-whisper" data-theme="${theme}">
             <button type="button" class="rpg-thought-close rpg-whisper-close" title="${hideThoughtsText}" aria-label="${hideThoughtsText}">×</button>
+            <div class="rpg-whisper-more rpg-whisper-more-up"><button type="button" data-dir="-1" title="Scroll up" aria-label="Scroll up"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button></div>
             ${thoughtsArray.map(buildWhisperItem).join('')}
+            <div class="rpg-whisper-more rpg-whisper-more-down"><button type="button" data-dir="1" title="Scroll down" aria-label="Scroll down"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>
         </div>
     ` : `
         <div id="rpg-thought-panel" class="rpg-thought-panel" data-theme="${theme}">
@@ -2357,7 +2359,8 @@ export function createThoughtPanel($message, thoughtsArray) {
             const top = Math.max(topPosition, chat ? chat.getBoundingClientRect().top + WHISPER_GAP : 0);
             const bottom = form ? form.getBoundingClientRect().top - WHISPER_GAP : window.innerHeight - margin;
             const openCards = [...$thoughtPanel[0].querySelectorAll('.rpg-whisper-item.is-open')];
-            const oneCard = openCards.length ? Math.max(...openCards.map((card) => card.offsetHeight)) + 14 : Infinity;
+            // A little more than one card, so one always fits and the next one peeks in
+            const oneCard = openCards.length ? Math.max(...openCards.map((card) => card.offsetHeight)) + 60 : Infinity;
             $thoughtPanel.css({ top: `${top}px`, 'max-height': `${Math.max(120, Math.min(bottom - top, oneCard))}px` });
             updateWhisperScrollEdges($thoughtPanel[0]);
         }
@@ -2401,6 +2404,12 @@ export function createThoughtPanel($message, thoughtsArray) {
         }
         whisperRelayout = updateBubblePosition;
         $thoughtPanel.on('scroll', () => updateWhisperScrollEdges($thoughtPanel[0]));
+        // The arrows at the top and bottom edge scroll by about one card
+        $thoughtPanel.find('.rpg-whisper-more button').on('click', function (e) {
+            e.preventDefault();
+            const panel = $thoughtPanel[0];
+            panel.scrollBy({ top: Number(this.dataset.dir) * Math.max(80, panel.clientHeight - 60), behavior: 'smooth' });
+        });
     }
 
     // Desktop: always show panel, hide icon

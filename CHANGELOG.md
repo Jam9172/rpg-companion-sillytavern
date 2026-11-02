@@ -4,7 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: RPG Companion Arcane 1.0.0)
 
-- Arcane Forge thoughts (Whisper) on desktop: with several cards open, the column is about one card tall, starts below any bar above the chat (such as Top Info Bar, which Memory Books uses) and stops above the message box, with room at both ends. The other cards scroll. The edges fade where there is more to scroll, scrolling it does not move the chat, and opening a card slides it into view.
+- Arcane Forge thoughts (Whisper) on desktop: with several cards open, the column is a little taller than one card (so one always fits), starts below any bar above the chat (such as Top Info Bar, which Memory Books uses) and stops above the message box, with room at both ends. The other cards scroll: an always-visible brass scrollbar and arrow buttons at the top and bottom edge show there is more, scrolling it does not move the chat, and opening a card slides it into view.
 - The main reply no longer starts printing "Context for the scene:" with the tracker data. History Persistence's notes now go on your messages instead of the AI's own, so the AI stops copying them. Existing settings and tracker presets are moved over once. The notes are also tagged as hidden, and the scene context always tells the model never to repeat it, even with a custom instructions prompt.
 
 ## 3.9.0 (2026-11-02)
