@@ -1,11 +1,11 @@
 {
-    "display_name": "RPG Companion",
+    "display_name": "RPG Companion Arcane",
     "loading_order": 100,
     "requires": [],
     "optional": [],
     "js": "index.js",
     "css": "style.css",
     "author": "Marinara",
-    "version": "3.9.0",
-    "homePage": "https://github.com/SpicyMarinara/rpg-companion-sillytavern"
+    "version": "1.0.0",
+    "homePage": "https://github.com/Jam9172/rpg-companion-sillytavern"
 }

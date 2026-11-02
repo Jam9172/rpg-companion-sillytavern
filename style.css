@@ -12108,6 +12108,19 @@ body:has(.rpg-panel[data-theme="forge"]) #rpg-fab-widget-container {
     color: var(--forge-brass);
 }
 
+/* "RPG Companion Arcane" stays on one line: a touch smaller, and cut with … in a very narrow panel */
+.rpg-panel[data-theme="forge"] .rpg-panel-header h3 {
+    min-width: 0;
+}
+
+.rpg-panel[data-theme="forge"] #rpg-panel-title {
+    overflow: hidden;
+    font-size: 0.86em;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 .rpg-panel[data-theme="forge"] .rpg-content-box {
     background: var(--rpg-bg);
     border: 1px solid var(--rpg-border);

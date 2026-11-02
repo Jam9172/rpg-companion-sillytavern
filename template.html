@@ -50,7 +50,7 @@
         <div class="rpg-panel-header">
             <h3>
                 <i class="fa-solid fa-dice-d20"></i>
-                <span id="rpg-panel-title" data-i18n-key="template.mainPanel.title">RPG Companion</span>
+                <span id="rpg-panel-title" data-i18n-key="template.mainPanel.title">RPG Companion Arcane</span>
             </h3>
         </div>
 
@@ -219,7 +219,7 @@
         <header class="rpg-settings-popup-header">
             <h3 id="rpg-settings-title">
                 <i class="fa-solid fa-gear" aria-hidden="true"></i>
-                <span data-i18n-key="template.settingsTitle">RPG Companion Settings</span>
+                <span data-i18n-key="template.settingsTitle">RPG Companion Arcane Settings</span>
             </h3>
             <button id="rpg-close-settings" class="rpg-popup-close" type="button"
                 aria-label="Close settings">&times;</button>
@@ -1264,7 +1264,7 @@
         <header class="rpg-settings-popup-header">
             <h3 id="rpg-welcome-title">
                 <i class="fa-solid fa-stars"></i>
-                Welcome to RPG Companion v3.9.0!
+                Welcome to RPG Companion Arcane v1.0.0!
             </h3>
             <button id="rpg-welcome-close" class="rpg-popup-close" type="button"
                 aria-label="Close Welcome">
@@ -1276,28 +1276,24 @@
                 <strong style="color: orange;">⚠️ Early beta:</strong> The Arcane Forge UI is in early beta and progresses slowly. Expect rough edges and changes between versions. Please report problems on the <a href="https://github.com/Jam9172/rpg-companion-sillytavern/issues" target="_blank">Issues page</a>.
             </div>
 
+            <p style="line-height: 1.6;">This fork now has its own name, <strong>RPG Companion Arcane</strong>, and its own version numbers starting from 1.0.0. It comes after 3.9.0; nothing went backwards.</p>
+
             <h4 style="margin-top: 20px; margin-bottom: 10px;"><strong>What's new?</strong></h4>
             <ul style="line-height: 1.6; margin-left: 20px;">
-                <li><strong>Arcane Forge</strong> is the new default theme: stat rings, portrait cards, a ledger inventory, a quest journal and Whisper-style thoughts.</li>
-                <li>Arcane Forge works on phones too, with Forge icons for the thoughts and the panel toggle.</li>
-                <li>With <a href="https://github.com/Jam9172/arcane-forge-ui" target="_blank">Arcane Forge UI</a> installed, the panel follows its colour pickers and palettes.</li>
-                <li>Present Characters' stats are sent to the main model and kept in history; your stats show what changed (e.g. "Health: 42 (was 40)").</li>
-                <li>Full-size character portraits with a crop-focus picker.</li>
-                <li>Fonts are bundled, so the Forge look works offline.</li>
+                <li><strong>Thoughts button</strong> (Arcane Forge, desktop): one "Thoughts" button at the top left of the chat opens every character's thought card in an overlay you can scroll. Close it with ×, Escape or a click outside. Prefer the old column of cards? Turn off "Thoughts Button (Arcane Forge)" in the settings.</li>
+                <li>The thoughts column (with the button off) stays between the bars above the chat and the message box, fits one card and scrolls the rest, with a visible scrollbar and arrows.</li>
             </ul>
 
             <h4 style="margin-top: 20px; margin-bottom: 10px;"><strong>Fixes:</strong></h4>
             <ul style="line-height: 1.6; margin-left: 20px;">
-                <li>NPCs keep their own looks instead of borrowing the character card's.</li>
-                <li>The chat window can be moved again with MovingUI.</li>
-                <li>The "is thinking" pill stays inside the chat column, so side panels never cover it.</li>
-                <li>Info box labels and values line up.</li>
+                <li>The AI no longer starts its reply with "Context for the scene:" and the tracker data. History Persistence's notes now go on your messages instead of the AI's own, and the model is told never to repeat the scene context.</li>
+                <li>Thoughts no longer run over the message box or bars like Top Info Bar (used by Memory Books) when several characters are present.</li>
             </ul>
             <p style="margin-left: 20px; line-height: 1.6;">Everything is listed in the <a href="https://github.com/Jam9172/rpg-companion-sillytavern/blob/main/CHANGELOG.md" target="_blank">changelog</a>.</p>
 
             <h4 style="margin-top: 20px; margin-bottom: 10px;"><strong data-i18n="settings.recommendedModels.title">Recommended Models:</strong></h4>
             <p style="margin-left: 20px; line-height: 1.6;" data-i18n="settings.recommendedModels.description">
-                For the extension to work properly, **it is not recommended to use any models below 20B, especially if they're old.** It works best with the SOTA models such as Deepseek, Claude, GPT, or Gemini.
+                For the extension to work properly, it is not recommended to use any models below 20B, especially if they're old. It works best with the SOTA models such as Deepseek, Claude, GPT, or Gemini.
             </p>
 
             <h4 style="margin-top: 20px; margin-bottom: 10px;"><strong>Credits</strong></h4>

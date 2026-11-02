@@ -597,7 +597,7 @@ export function getSettingsModal() {
  * Checks if user has already seen this version's welcome screen
  */
 export function showWelcomeModalIfNeeded() {
-    const WELCOME_VERSION = '3.9.0';
+    const WELCOME_VERSION = '1.0.0';
     const STORAGE_KEY = 'rpg_companion_welcome_seen';
 
     try {

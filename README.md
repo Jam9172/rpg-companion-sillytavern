@@ -1,4 +1,4 @@
-# RPG Companion (Arcane Forge fork)
+# RPG Companion Arcane
 
 An RPG extension for SillyTavern and TauriTavern. It tracks your stats, the scene, the characters around you and what they're thinking, and shows it all in a side panel. It updates automatically and works with any preset.
 
@@ -12,7 +12,10 @@ An RPG extension for SillyTavern and TauriTavern. It tracks your stats, the scen
 > - Arcane Forge on phones and in TauriTavern,
 > - a full-size portrait crop picker,
 > - character stats sent to the main model, and NPCs that keep their own looks,
+> - a Thoughts button that opens every character's thoughts in one overlay,
 > - the deprecation popup removed.
+>
+> **Versions.** This fork is called RPG Companion Arcane and numbers its own versions, starting at 1.0.0 (which came after the fork's 3.9.0). New changes collect under "Unreleased" in the changelog and ship together in the next release.
 >
 > Every change is listed with its date in [CHANGELOG.md](CHANGELOG.md).
 
@@ -50,7 +53,7 @@ For the Arcane Forge look across the rest of the app, also install [Arcane Forge
 - **Sci-Fi**, **Fantasy** and **Cyberpunk**.
 - **Custom**: pick your own colours.
 
-Change it under RPG Companion → Settings → Theme.
+Change it under RPG Companion Arcane → Settings → Theme.
 
 ## ⚙️ Generation modes
 
@@ -72,7 +75,9 @@ In Separate and External mode, **Refresh RPG Info** updates the trackers at any 
 
 **Tracker editor:** Edit Trackers lets you change user stats, info box widgets, Present Characters fields, relationship options, character stats and the thoughts label. Everything you add is included in the prompts automatically.
 
-**Guided Generations:** RPG Companion can skip its tracker prompts during guided generations (Settings → Advanced): never, only for impersonation, or for every guided generation.
+**Thoughts button:** with Arcane Forge on desktop, a Thoughts button at the top left of the chat opens every character's thought card in an overlay that scrolls. Turn off "Thoughts Button (Arcane Forge)" in Settings to show a column of thought cards beside the chat instead.
+
+**Guided Generations:** RPG Companion Arcane can skip its tracker prompts during guided generations (Settings → Advanced): never, only for impersonation, or for every guided generation.
 
 ## 🐛 Troubleshooting
 
