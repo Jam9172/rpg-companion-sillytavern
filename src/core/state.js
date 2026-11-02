@@ -25,6 +25,7 @@ export let extensionSettings = {
     showQuests: true, // Show quests section
     showThoughtsInChat: true, // Show thoughts overlay in chat
     thoughtsInChatStyle: 'corner', // 'corner' or 'inline'
+    thoughtsOverlay: true, // Arcane Forge on desktop: a Thoughts button opens every thought in an overlay
     narratorMode: false, // Use character card as narrator instead of fixed character references
     customNarratorPrompt: '', // Custom narrator mode prompt text (empty = use default)
     customContextInstructionsPrompt: '', // Custom context instructions prompt text (empty = use default)

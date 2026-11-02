@@ -14689,3 +14689,176 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
         animation: none;
     }
 }
+
+/* ==========================================================================
+   Arcane Forge: Thoughts button and overlay (desktop, "Thoughts Button" setting)
+   One button at the top left of the chat; it opens every character's thought
+   card in a centred overlay that scrolls. Closes with ×, Escape or a click on
+   the dimmed backdrop.
+   ========================================================================== */
+@media (min-width: 1001px) {
+    #rpg-thoughts-button {
+        position: fixed;
+        z-index: 1000;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        padding: 0.375rem 0.625rem 0.375rem 0.625rem;
+        border: 1px solid var(--forge-brass, #D9A35B);
+        border-radius: 999px;
+        background: var(--forge-card, #1E100D);
+        color: var(--forge-brass, #D9A35B);
+        font-family: var(--forge-heading, 'Cinzel', serif);
+        font-size: 0.95rem;
+        letter-spacing: 0.06em;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+        cursor: pointer;
+        transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    #rpg-thoughts-button svg {
+        width: 20px;
+        height: 20px;
+        flex: none;
+    }
+
+    #rpg-thoughts-button:hover,
+    #rpg-thoughts-button:focus-visible,
+    #rpg-thoughts-button[aria-expanded="true"] {
+        color: var(--rpg-highlight, #E8622C);
+        border-color: var(--rpg-highlight, #E8622C);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55), 0 0 12px color-mix(in srgb, var(--rpg-highlight, #E8622C) 35%, transparent);
+    }
+
+    #rpg-thoughts-button .rpg-thoughts-count {
+        display: grid;
+        place-items: center;
+        min-width: 1.375rem;
+        height: 1.375rem;
+        padding: 0 0.3rem;
+        border-radius: 999px;
+        background: var(--rpg-highlight, #E8622C);
+        color: var(--forge-bright, #FCEBDD);
+        font-family: var(--forge-body-font, 'Alegreya Sans', system-ui, sans-serif);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0;
+    }
+
+    #rpg-thoughts-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 9998;
+        display: none;
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    #rpg-thoughts-backdrop.is-shown {
+        display: block;
+        animation: thoughtsBackdropIn 0.2s ease-out;
+    }
+
+    /* The overlay is the thought panel itself, hidden until the button opens it */
+    #rpg-thought-panel.rpg-whisper.rpg-whisper-overlay {
+        display: none !important;
+    }
+
+    #rpg-thought-panel.rpg-whisper.rpg-whisper-overlay.is-shown {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+        align-items: start;
+        align-content: start;
+        gap: 14px;
+        z-index: 9999;
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        width: min(1040px, calc(100vw - 64px)) !important;
+        max-width: none !important;
+        max-height: min(86vh, 900px) !important;
+        padding: 0 14px 18px 18px;
+        border: 1px solid var(--rpg-border, #4A2219);
+        border-radius: 14px;
+        background: var(--rpg-bg, #120908);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+        transform: translate(-50%, -50%) !important;
+        animation: thoughtsOverlayIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    #rpg-thought-panel.rpg-whisper-overlay .rpg-whisper-overlay-head {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 14px 0 12px;
+        border-bottom: 1px solid var(--rpg-border, #4A2219);
+        background: var(--rpg-bg, #120908);
+    }
+
+    #rpg-thought-panel.rpg-whisper-overlay .rpg-whisper-overlay-title {
+        font-family: var(--forge-heading, 'Cinzel', serif);
+        font-size: 1.35rem;
+        letter-spacing: 0.06em;
+        color: var(--forge-brass, #D9A35B);
+    }
+
+    #rpg-thought-panel.rpg-whisper-overlay .rpg-whisper-overlay-close {
+        display: grid;
+        place-items: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        margin: 0;
+        padding: 0;
+        border: 1px solid var(--forge-brass, #D9A35B);
+        border-radius: 50%;
+        background: var(--forge-card, #1E100D);
+        color: var(--rpg-text, #F1E3D6);
+        font-size: 1.35rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    #rpg-thought-panel.rpg-whisper-overlay .rpg-whisper-overlay-close:hover,
+    #rpg-thought-panel.rpg-whisper-overlay .rpg-whisper-overlay-close:focus-visible {
+        color: var(--rpg-highlight, #E8622C);
+        border-color: var(--rpg-highlight, #E8622C);
+    }
+
+    /* In the overlay every card is open: no pills, fold buttons or column arrows */
+    #rpg-thought-panel.rpg-whisper-overlay :is(.rpg-whisper-pill, .rpg-whisper-collapse, .rpg-whisper-more, .rpg-whisper-close) {
+        display: none !important;
+    }
+
+    #rpg-thought-panel.rpg-whisper-overlay .rpg-whisper-item {
+        width: auto;
+        min-width: 0;
+    }
+
+    #rpg-thought-panel.rpg-whisper-overlay .rpg-whisper-item .rpg-whisper-body {
+        display: block;
+        animation: none;
+        pointer-events: auto;
+    }
+}
+
+@keyframes thoughtsOverlayIn {
+    from { opacity: 0; transform: translate(-50%, -47%) scale(0.97); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@keyframes thoughtsBackdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #rpg-thought-panel.rpg-whisper.rpg-whisper-overlay.is-shown,
+    #rpg-thoughts-backdrop.is-shown {
+        animation: none;
+    }
+}

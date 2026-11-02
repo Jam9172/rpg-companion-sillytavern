@@ -2150,6 +2150,8 @@ let whisperFormObserver = null;
 let whisperRelayout = null;
 // Room kept between the Whisper column and the bars above and below it
 const WHISPER_GAP = 16;
+// Whether the Thoughts overlay is open, so it stays open when the thoughts are re-rendered
+let thoughtsOverlayOpen = false;
 
 /**
  * Whisper fades its top or bottom edge while there is more to scroll that way.
@@ -2172,6 +2174,8 @@ export function createThoughtPanel($message, thoughtsArray) {
     whisperFormObserver?.disconnect();
     whisperFormObserver = null;
     whisperRelayout = null;
+    $('#rpg-thoughts-button, #rpg-thoughts-backdrop').remove();
+    $(document).off('keydown.rpgThoughtsOverlay');
 
     // Get the avatar position from the message
     const $avatar = $message.find('.avatar img');
@@ -2207,11 +2211,17 @@ export function createThoughtPanel($message, thoughtsArray) {
     // the pills open from the thought icon and have a close button; on desktop they always show.
     const useWhisper = theme === 'forge';
     const hideThoughtsText = i18n.getTranslation('thoughts.hide') || 'Hide thoughts';
+    // Thoughts button (Arcane Forge, desktop): one "Thoughts" button at the top left of the chat opens
+    // every thought in an overlay, instead of the column of cards beside the chat
+    const useOverlay = useWhisper && extensionSettings.thoughtsOverlay !== false && window.innerWidth > 1000;
+    const thoughtsTitle = i18n.getTranslation('thoughts.title') || 'Thoughts';
+    const closeText = i18n.getTranslation('common.close') || 'Close';
 
     // Create the floating thought panel with theme
     const $thoughtPanel = $(useWhisper ? `
-        <div id="rpg-thought-panel" class="rpg-thought-panel rpg-whisper" data-theme="${theme}">
+        <div id="rpg-thought-panel" class="rpg-thought-panel rpg-whisper${useOverlay ? ' rpg-whisper-overlay' : ''}" data-theme="${theme}"${useOverlay ? ` role="dialog" aria-modal="true" aria-label="${thoughtsTitle}"` : ''}>
             <button type="button" class="rpg-thought-close rpg-whisper-close" title="${hideThoughtsText}" aria-label="${hideThoughtsText}">×</button>
+            ${useOverlay ? `<div class="rpg-whisper-overlay-head"><span class="rpg-whisper-overlay-title">${thoughtsTitle}</span><button type="button" class="rpg-whisper-overlay-close" title="${closeText}" aria-label="${closeText}">×</button></div>` : ''}
             <div class="rpg-whisper-more rpg-whisper-more-up"><button type="button" data-dir="-1" title="Scroll up" aria-label="Scroll up"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button></div>
             ${thoughtsArray.map(buildWhisperItem).join('')}
             <div class="rpg-whisper-more rpg-whisper-more-down"><button type="button" data-dir="1" title="Scroll down" aria-label="Scroll down"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>
@@ -2256,6 +2266,41 @@ export function createThoughtPanel($message, thoughtsArray) {
     // Append to body so it's not clipped by chat container
     $('body').append($thoughtPanel);
     $('body').append($thoughtIcon);
+
+    if (useOverlay) {
+        const $thoughtsButton = $(`
+            <button type="button" id="rpg-thoughts-button" aria-haspopup="dialog" aria-expanded="false" title="${thoughtsTitle}">
+                ${thoughtGlyph}<span class="rpg-thoughts-button-label">${thoughtsTitle}</span><span class="rpg-thoughts-count">${thoughtsArray.length}</span>
+            </button>
+        `);
+        const $backdrop = $('<div id="rpg-thoughts-backdrop"></div>');
+        $('body').append($backdrop, $thoughtsButton);
+
+        const setOverlayOpen = (open, { focus = true } = {}) => {
+            thoughtsOverlayOpen = open;
+            $thoughtPanel.toggleClass('is-shown', open);
+            $backdrop.toggleClass('is-shown', open);
+            $thoughtsButton.attr('aria-expanded', String(open));
+            if (!focus) return;
+            if (open) {
+                $thoughtPanel.scrollTop(0);
+                $thoughtPanel.find('.rpg-whisper-overlay-close').trigger('focus');
+            } else {
+                $thoughtsButton.trigger('focus');
+            }
+        };
+        $thoughtsButton.on('click', () => setOverlayOpen(true));
+        $backdrop.on('click', () => setOverlayOpen(false));
+        $thoughtPanel.find('.rpg-whisper-overlay-close').on('click', () => setOverlayOpen(false));
+        $(document).on('keydown.rpgThoughtsOverlay', (e) => {
+            if (e.key === 'Escape' && $thoughtPanel.hasClass('is-shown')) {
+                e.preventDefault();
+                setOverlayOpen(false);
+            }
+        });
+        // Re-rendered while open (new thoughts arrived): stay open
+        if (thoughtsOverlayOpen) setOverlayOpen(true, { focus: false });
+    }
 
     // Attach drag handlers to the icon
     attachDragHandlersToIcon($thoughtIcon);
@@ -2344,6 +2389,15 @@ export function createThoughtPanel($message, thoughtsArray) {
 
         // Whisper pills sit just inside the chat column instead of the window edge, so a docked
         // SillyTavern panel (such as AI Response on the left) can never slide over them.
+        // Thoughts button: at the top left of the chat, below any bars above it. The overlay itself is
+        // centred by its stylesheet.
+        if (sheld && $thoughtPanel.hasClass('rpg-whisper-overlay')) {
+            const chat = document.getElementById('chat');
+            const chatRect = (chat || sheld).getBoundingClientRect();
+            $('#rpg-thoughts-button').css({ top: `${chatRect.top + 12}px`, left: `${chatRect.left + 12}px` });
+            return;
+        }
+
         if (sheld && $thoughtPanel.hasClass('rpg-whisper') && window.innerWidth > 1000) {
             const sheldRect = sheld.getBoundingClientRect();
             $thoughtPanel.css(isRightPanel
