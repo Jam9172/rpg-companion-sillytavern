@@ -2,6 +2,10 @@
 
 Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-companion-sillytavern), newest first. Each entry is one update published to GitHub. The original extension's history before the fork is in the git log.
 
+## 3.8.0 (2026-11-01)
+
+First release of this fork. It includes every change listed below.
+
 ## 2026-11-01: README rewrite
 
 - README rewritten for this fork: install, features, themes, generation modes (including External), how to use and troubleshooting are up to date.
