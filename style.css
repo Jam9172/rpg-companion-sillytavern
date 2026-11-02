@@ -15178,3 +15178,16 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
 .rpg-cast-card[open] .rpg-cast-role {
     display: none;
 }
+
+/* Cast: events that happened off-screen (the user has not seen them) */
+.rpg-cast-event.is-offscreen span,
+.rpg-cast-steps .fa-eye-slash {
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.rpg-cast-event.is-offscreen .fa-eye-slash,
+.rpg-cast-steps .fa-eye-slash {
+    font-size: 0.8em;
+    color: var(--forge-muted, inherit);
+}

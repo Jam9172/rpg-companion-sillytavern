@@ -7,7 +7,7 @@
 import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
-import { listCharacters, editCharacter, deleteCharacter, onCastChanged, refreshCastPrompt } from '../features/cast.js';
+import { listCharacters, editCharacter, deleteCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX } from '../features/cast.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
 
@@ -26,6 +26,7 @@ const STATUS_LABELS = {
 
 const FIELDS = [
     ['role', 'cast.field.role', 'Role'],
+    ['goal', 'cast.field.goal', 'Wants'],
     ['appearance', 'cast.field.appearance', 'Looks'],
     ['personality', 'cast.field.personality', 'Personality'],
     ['relationship', 'cast.field.relationship', 'Toward you'],
@@ -43,11 +44,16 @@ function field(name, key, label, value) {
 function card(character) {
     const [statusKey, statusFallback] = STATUS_LABELS[character.status] || STATUS_LABELS.away;
     const open = openState.has(character.name) ? openState.get(character.name) : character.status === 'present';
-    const events = (character.events || []).map((event, i) => `
-        <li class="rpg-cast-event">
-            <span>${escapeHtml(event)}</span>
+    const offscreenTitle = escapeHtml(t('cast.offscreen', 'Happened off-screen: you have not seen this yet'));
+    const events = (character.events || []).map((event, i) => {
+        const offscreen = event.startsWith(OFFSCREEN_PREFIX);
+        const text = offscreen ? event.slice(OFFSCREEN_PREFIX.length) : event;
+        return `
+        <li class="rpg-cast-event${offscreen ? ' is-offscreen' : ''}"${offscreen ? ` title="${offscreenTitle}"` : ''}>
+            <span>${offscreen ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i> ' : ''}${escapeHtml(text)}</span>
             <button type="button" class="rpg-cast-event-remove" data-index="${i}" title="${escapeHtml(t('cast.removeEvent', 'Remove this event'))}" aria-label="${escapeHtml(t('cast.removeEvent', 'Remove this event'))}">×</button>
-        </li>`).join('');
+        </li>`;
+    }).join('');
     const lockTitle = character.locked
         ? t('cast.unlock', 'Locked: the background model leaves this character alone. Click to unlock.')
         : t('cast.lock', 'Lock this character so the background model stops changing them');
@@ -67,7 +73,7 @@ function card(character) {
                     <p class="rpg-cast-value rpg-cast-bio" contenteditable="true" spellcheck="false" data-field="bio" data-placeholder="—">${escapeHtml(character.bio)}</p>
                 </div>
                 ${events ? `<div class="rpg-cast-block"><span class="rpg-cast-label">${escapeHtml(t('cast.events', 'What happened'))}</span><ul class="rpg-cast-events">${events}</ul></div>` : ''}
-                ${character.steps?.length ? `<div class="rpg-cast-block"><span class="rpg-cast-label">${escapeHtml(t('cast.steps', 'Doing now'))}</span><p class="rpg-cast-steps">${character.steps.map(escapeHtml).join(' → ')}</p></div>` : ''}
+                ${character.steps?.length ? `<div class="rpg-cast-block"><span class="rpg-cast-label">${escapeHtml(t('cast.steps', 'Doing now'))}</span><p class="rpg-cast-steps">${character.steps.map((step) => step.startsWith(OFFSCREEN_PREFIX) ? `<i class="fa-solid fa-eye-slash" aria-hidden="true" title="${offscreenTitle}"></i> ${escapeHtml(step.slice(OFFSCREEN_PREFIX.length))}` : escapeHtml(step)).join(' → ')}</p></div>` : ''}
                 <div class="rpg-cast-actions">
                     <button type="button" class="rpg-cast-delete">${escapeHtml(t('cast.delete', 'Forget this character'))}</button>
                 </div>

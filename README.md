@@ -75,7 +75,7 @@ In Separate and External mode, **Refresh RPG Info** updates the trackers at any 
 
 **Tracker editor:** Edit Trackers lets you change user stats, info box widgets, Present Characters fields, relationship options, character stats and the thoughts label. Everything you add is included in the prompts automatically.
 
-**Cast (character memory):** after each reply a background request remembers every character's looks, relationship, whereabouts and what they did, for the whole story, and feeds the ones in the scene to the main model. Long activities are folded into one line once they're over ("went to the store and got 10 eggs"). See and edit everyone in the Cast tab; lock a character to stop changes. It adds one request per reply and can be turned off in Settings.
+**Cast (character memory):** after each reply a background request remembers the story's major characters (looks, goals, relationship, whereabouts and what they did) for the whole story, moves absent characters along off-screen as time passes, and feeds the ones in the scene to the main model. Long activities are folded into one line once they're over ("went to the store and got 10 eggs"). See and edit everyone in the Cast tab; lock a character to stop changes. It adds one request per reply and can be turned off in Settings.
 
 **Thoughts button:** with Arcane Forge on desktop, a Thoughts button at the top left of the chat opens every character's thought card in an overlay that scrolls. Turn off "Thoughts Button (Arcane Forge)" in Settings to show a column of thought cards beside the chat instead.
 
