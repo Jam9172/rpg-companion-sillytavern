@@ -15270,3 +15270,125 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     border-color: var(--forge-brass, #D9A35B);
     color: var(--forge-brass, #D9A35B);
 }
+
+/* ==========================================================================
+   Phone tab bar: every tab fits (icon over a small label), so no tab is hidden off the edge
+   ========================================================================== */
+@media (max-width: 1000px) {
+    .rpg-mobile-tabs {
+        overflow-x: hidden;
+    }
+
+    .rpg-mobile-tab {
+        flex: 1 1 0;
+        min-width: 0;
+        height: auto;
+        min-height: 52px;
+        flex-direction: column;
+        gap: 3px;
+        padding: 6px 2px 5px;
+        font-size: 10.5px;
+        letter-spacing: 0.04em;
+    }
+
+    .rpg-mobile-tab i {
+        font-size: 17px;
+    }
+
+    .rpg-mobile-tab span {
+        max-width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .rpg-panel[data-theme="forge"] .rpg-mobile-tab {
+        font-family: 'Cinzel', serif;
+    }
+}
+
+/* ==========================================================================
+   Arcane Forge on phones, "Thoughts Button" setting: the thought icon opens every character's
+   thought card as a full-screen sheet that scrolls; × (top right) closes it.
+   (No display rule here: the script fades the sheet in and out.)
+   ========================================================================== */
+@media (max-width: 1000px) {
+    #rpg-thought-panel.rpg-whisper.rpg-whisper-sheet {
+        position: fixed !important;
+        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        /* Above the floating panel and thought buttons */
+        z-index: 100000 !important;
+        width: 100vw !important;
+        max-width: none !important;
+        height: 100dvh;
+        max-height: none !important;
+        padding: 0 14px calc(16px + env(safe-area-inset-bottom)) !important;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border: none;
+        border-radius: 0;
+        background: var(--rpg-bg, #120908) !important;
+        transform: none !important;
+    }
+
+    #rpg-thought-panel.rpg-whisper-sheet .rpg-whisper-sheet-head {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        align-self: stretch;
+        align-items: center;
+        gap: 0.6rem;
+        width: calc(100% + 28px);
+        margin: 0 -14px 12px;
+        padding: calc(14px + env(safe-area-inset-top)) 64px 12px 16px;
+        border-bottom: 1px solid var(--rpg-border, #4A2219);
+        background: var(--rpg-bg, #120908);
+    }
+
+    #rpg-thought-panel.rpg-whisper-sheet .rpg-whisper-overlay-title {
+        font-family: var(--forge-heading, 'Cinzel', serif);
+        font-size: 1.3rem;
+        letter-spacing: 0.06em;
+        color: var(--forge-brass, #D9A35B);
+    }
+
+    #rpg-thought-panel.rpg-whisper-sheet .rpg-thoughts-count {
+        display: grid;
+        place-items: center;
+        min-width: 1.4rem;
+        height: 1.4rem;
+        padding: 0 0.3rem;
+        border-radius: 999px;
+        background: var(--rpg-highlight, #E8622C);
+        color: var(--forge-bright, #FCEBDD);
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    /* × stays in the top-right corner while the cards scroll under it */
+    #rpg-thought-panel.rpg-whisper-sheet .rpg-whisper-close {
+        position: fixed !important;
+        top: calc(10px + env(safe-area-inset-top));
+        right: 12px;
+        z-index: 100001;
+    }
+
+    /* Every card is open: no pills, fold buttons or column arrows */
+    #rpg-thought-panel.rpg-whisper-sheet :is(.rpg-whisper-pill, .rpg-whisper-collapse, .rpg-whisper-more) {
+        display: none !important;
+    }
+
+    #rpg-thought-panel.rpg-whisper-sheet .rpg-whisper-item {
+        width: 100%;
+        margin-bottom: 14px;
+    }
+
+    #rpg-thought-panel.rpg-whisper-sheet .rpg-whisper-item .rpg-whisper-body {
+        display: block;
+        animation: none;
+        pointer-events: auto;
+    }
+}

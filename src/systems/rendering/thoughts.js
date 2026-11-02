@@ -2214,13 +2214,16 @@ export function createThoughtPanel($message, thoughtsArray) {
     // Thoughts button (Arcane Forge, desktop): one "Thoughts" button at the top left of the chat opens
     // every thought in an overlay, instead of the column of cards beside the chat
     const useOverlay = useWhisper && extensionSettings.thoughtsOverlay !== false && window.innerWidth > 1000;
+    // Phones, same setting: the thought icon opens every thought as a full-screen sheet
+    const usePhoneSheet = useWhisper && extensionSettings.thoughtsOverlay !== false && window.innerWidth <= 1000;
     const thoughtsTitle = i18n.getTranslation('thoughts.title') || 'Thoughts';
     const closeText = i18n.getTranslation('common.close') || 'Close';
 
     // Create the floating thought panel with theme
     const $thoughtPanel = $(useWhisper ? `
-        <div id="rpg-thought-panel" class="rpg-thought-panel rpg-whisper${useOverlay ? ' rpg-whisper-overlay' : ''}" data-theme="${theme}"${useOverlay ? ` role="dialog" aria-modal="true" aria-label="${thoughtsTitle}"` : ''}>
+        <div id="rpg-thought-panel" class="rpg-thought-panel rpg-whisper${useOverlay ? ' rpg-whisper-overlay' : ''}${usePhoneSheet ? ' rpg-whisper-sheet' : ''}" data-theme="${theme}"${useOverlay || usePhoneSheet ? ` role="dialog" aria-modal="true" aria-label="${thoughtsTitle}"` : ''}>
             <button type="button" class="rpg-thought-close rpg-whisper-close" title="${hideThoughtsText}" aria-label="${hideThoughtsText}">×</button>
+            ${usePhoneSheet ? `<div class="rpg-whisper-sheet-head"><span class="rpg-whisper-overlay-title">${thoughtsTitle}</span><span class="rpg-thoughts-count">${thoughtsArray.length}</span></div>` : ''}
             ${useOverlay ? `<div class="rpg-whisper-overlay-head"><span class="rpg-whisper-overlay-title">${thoughtsTitle}</span><button type="button" class="rpg-whisper-overlay-close" title="${closeText}" aria-label="${closeText}">×</button></div>` : ''}
             <div class="rpg-whisper-more rpg-whisper-more-up"><button type="button" data-dir="-1" title="Scroll up" aria-label="Scroll up"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button></div>
             ${thoughtsArray.map(buildWhisperItem).join('')}
