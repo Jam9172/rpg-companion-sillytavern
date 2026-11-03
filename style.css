@@ -12946,6 +12946,14 @@ body:has(.rpg-panel[data-theme="forge"]) #rpg-fab-widget-container {
         margin: -4px 0 -4px;
     }
 
+    /* The same room for the edit ring around Time (its row scrolls sideways) and Location (its row
+       scrolls too on desktop), which cut the ring off at the edges; the margins keep the layout as it was */
+    .rpg-panel[data-theme="forge"] .rpg-time-range,
+    .rpg-panel[data-theme="forge"] .rpg-dashboard-row-2 {
+        padding: 4px;
+        margin: -4px;
+    }
+
     .rpg-panel[data-theme="forge"] .rpg-notebook-line {
         display: flex;
         align-items: baseline;
@@ -14403,6 +14411,13 @@ body:has(.rpg-panel[data-theme="forge"]) #rpg-fab-widget-container {
         display: flex !important;
         flex-direction: column;
         grid-template-rows: none !important;
+    }
+
+    /* Phone: the Info panel scrolls, and full-width fields (Location) reach its edges, so it needs the
+       same room for the edit ring at the sides; the margins keep everything where it was */
+    .rpg-panel[data-theme="forge"] .rpg-info-content {
+        padding-inline: 4px;
+        margin-inline: -4px;
     }
 
     .rpg-panel[data-theme="forge"] .rpg-dashboard-row-1,
