@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Editing the Info Box no longer redraws it under you: clicking from one field into another used to rebuild the whole box and drop what you typed next. Saves still happen right away; the box redraws once you leave it (also when a background tracker update finishes while you are typing).
 - Arcane Forge: the edit outline around a Recent Events line is no longer cut off at the top and right edge.
 - Phones: the panel's tab bar fits every tab (icon over a short label), so Cast and Quests are no longer pushed off the edge.
 - Phones (Arcane Forge, "Thoughts Button" on): the thought icon opens every character's thought card as a full-screen sheet that scrolls, with a pinned "Thoughts" header and × to close, instead of the narrow column.

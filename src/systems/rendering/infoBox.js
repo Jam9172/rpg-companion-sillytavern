@@ -71,11 +71,36 @@ function separateEmojiFromText(str) {
     return { emoji: '', text: str };
 }
 
+// A redraw asked for while the user was typing in the Info Box, done once they leave it
+let renderPending = false;
+
+/** Whether the user is typing in one of the Info Box's editable fields. */
+function isEditingInfoBox() {
+    const active = document.activeElement;
+    return !!active?.isContentEditable && !!document.getElementById('rpg-info-box')?.contains(active);
+}
+
+// Leaving the Info Box (not just moving to another of its fields) runs a redraw that was held back
+document.addEventListener('focusout', (e) => {
+    if (!renderPending || !e.target.closest?.('#rpg-info-box')) return;
+    setTimeout(() => {
+        if (renderPending && !isEditingInfoBox()) renderInfoBox();
+    }, 0);
+}, true);
+
 /**
  * Renders the info box as a visual dashboard with calendar, weather, temperature, clock, and map widgets.
  * Includes event listeners for editable fields.
  */
 export function renderInfoBox() {
+    // Redrawing replaces every field, which would throw away what the user is typing: wait until they
+    // leave the Info Box
+    if (isEditingInfoBox()) {
+        renderPending = true;
+        return;
+    }
+    renderPending = false;
+
     // console.log('[RPG InfoBox Render] ==================== RENDERING INFO BOX ====================');
     // console.log('[RPG InfoBox Render] showInfoBox setting:', extensionSettings.showInfoBox);
     // console.log('[RPG InfoBox Render] Container exists:', !!$infoBoxContainer);
@@ -612,15 +637,18 @@ export function renderInfoBox() {
             updateLocationTextSize($this);
         }
 
-        // Handle recent events separately
-        if (field === 'event1' || field === 'event2' || field === 'event3') {
-            updateRecentEvent(field, value);
-        } else {
-            updateInfoBoxField(field, value);
-        }
+        // Save once focus has landed: if the user clicked into another Info Box field, the redraw that
+        // follows the save then waits until they leave the box instead of wiping the field they are in
+        setTimeout(() => {
+            if (field === 'event1' || field === 'event2' || field === 'event3') {
+                updateRecentEvent(field, value);
+            } else {
+                updateInfoBoxField(field, value);
+            }
 
-        // Update FAB widgets to reflect changes
-        updateFabWidgets();
+            // Update FAB widgets to reflect changes
+            updateFabWidgets();
+        }, 0);
     });
 
     // Update location size on input as well (real-time)
