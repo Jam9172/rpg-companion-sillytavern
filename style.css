@@ -15120,6 +15120,37 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     color: var(--forge-danger, #e5432f);
 }
 
+/* Forgotten characters: a quiet line under the list, each name a button to track them again */
+.rpg-cast-forgotten {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.6rem;
+    font-size: 0.8em;
+}
+
+.rpg-cast-forgotten > span {
+    opacity: 0.7;
+}
+
+.rpg-cast-remember {
+    margin: 0;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--rpg-border, rgba(255, 255, 255, 0.2));
+    border-radius: 999px;
+    background: none;
+    color: inherit;
+    font-size: 1em;
+    opacity: 0.75;
+    cursor: pointer;
+}
+
+.rpg-cast-remember:hover {
+    opacity: 1;
+    border-color: var(--forge-brass, currentColor);
+}
+
 /* Arcane Forge: brass headings, ember for who is here */
 .rpg-panel[data-theme="forge"] .rpg-cast-title,
 .rpg-panel[data-theme="forge"] .rpg-cast-name {

@@ -7,7 +7,7 @@
 import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
-import { listCharacters, editCharacter, deleteCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus } from '../features/cast.js';
+import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus } from '../features/cast.js';
 import { saveSettings } from '../../core/persistence.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
@@ -126,6 +126,17 @@ function card(character) {
         </details>`;
 }
 
+/** Forgotten characters, each with a button to track them again. */
+function forgottenLine() {
+    const names = listForgotten();
+    if (!names.length) return '';
+    const title = escapeHtml(t('cast.rememberTitle', 'Track this character again (from scratch)'));
+    return `<div class="rpg-cast-forgotten">
+        <span>${escapeHtml(t('cast.forgotten', 'Forgotten:'))}</span>
+        ${names.map((name) => `<button type="button" class="rpg-cast-remember" data-name="${escapeHtml(name)}" title="${title}">${escapeHtml(name)} <i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>`).join('')}
+    </div>`;
+}
+
 /** Draws the Cast tab from the current chat's ledger. */
 export function renderCast() {
     const $cast = $('#rpg-cast');
@@ -157,6 +168,7 @@ export function renderCast() {
         ${characters.length
             ? `<div class="rpg-cast-list">${characters.map(card).join('')}</div>`
             : `<p class="rpg-cast-empty">${escapeHtml(t('cast.empty', 'No characters yet. Everyone the story meets is remembered here as it goes on.'))}</p>`}
+        ${forgottenLine()}
     `);
 }
 
@@ -237,9 +249,11 @@ export function initCastTab() {
     });
     $doc.on('click', '#rpg-cast .rpg-cast-delete', async function () {
         const name = nameOf(this);
-        const ok = await callGenericPopup(`${t('cast.deleteConfirm', 'Forget')} ${escapeHtml(name)}? ${t('cast.deleteNote', 'Their memory is removed from this chat.')}`, POPUP_TYPE.CONFIRM);
+        const ok = await callGenericPopup(`${t('cast.deleteConfirm', 'Forget')} ${escapeHtml(name)}? ${t('cast.deleteNote', 'Their memory is removed from this chat, and Cast will not track them again unless you bring them back under Forgotten.')}`, POPUP_TYPE.CONFIRM);
         if (!ok) return;
         deleteCharacter(name);
-        refreshCastPrompt();
+    });
+    $doc.on('click', '#rpg-cast .rpg-cast-remember', function () {
+        rememberCharacter(String($(this).data('name')));
     });
 }

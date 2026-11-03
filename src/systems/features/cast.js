@@ -70,6 +70,7 @@ export function getCast() {
     const cast = chat_metadata[METADATA_KEY];
     cast.characters ??= {};
     cast.journal ??= [];
+    cast.forgotten ??= [];
     return cast;
 }
 
@@ -110,6 +111,17 @@ export function findCharacter(cast, name) {
     return partial.length === 1 ? partial[0] : null;
 }
 
+/** Whether a name (or a shorter or longer form of it) belongs to a character the user forgot. */
+function isForgotten(cast, name) {
+    const words = castKey(name).split(' ').filter(Boolean);
+    if (!words.length) return false;
+    return (cast.forgotten || []).some((forgotten) => {
+        const known = castKey(forgotten).split(' ');
+        const [shorter, longer] = words.length <= known.length ? [words, known] : [known, words];
+        return shorter.every((w) => longer.includes(w));
+    });
+}
+
 /** All characters, the most recently seen first. */
 export function listCharacters() {
     return Object.values(getCast().characters).sort((a, b) => (b.lastSeen ?? 0) - (a.lastSeen ?? 0));
@@ -140,12 +152,31 @@ export function editCharacter(name, fields) {
     saveCast();
 }
 
-/** Removes a character from the cast by hand. */
+/**
+ * Forgets a character for good: their memory is removed, later updates never add them back, and undoing
+ * an update (swipe, delete, Refresh) never restores them. rememberCharacter() lets them be tracked again.
+ */
 export function deleteCharacter(name) {
     const cast = getCast();
     const character = findCharacter(cast, name);
     if (!character) return;
-    delete cast.characters[castKey(character.name)];
+    const key = castKey(character.name);
+    delete cast.characters[key];
+    if (!cast.forgotten.some((n) => castKey(n) === key)) cast.forgotten.push(character.name);
+    for (const entry of cast.journal) delete entry.before[key];
+    saveCast();
+    refreshCastPrompt();
+}
+
+/** The names of forgotten characters. */
+export function listForgotten() {
+    return [...getCast().forgotten];
+}
+
+/** Lets a forgotten character be tracked again (from scratch: their old memory is gone). */
+export function rememberCharacter(name) {
+    const cast = getCast();
+    cast.forgotten = cast.forgotten.filter((n) => castKey(n) !== castKey(name));
     saveCast();
 }
 
@@ -331,7 +362,7 @@ Leave out any list you do not need, except "here".
 # Who belongs in the ledger
 - Only MAJOR characters: named characters who matter to the story. They interact with ${userName} in a meaningful way, keep coming back, or affect the plot. The main character of the story always counts.
 - Leave out minor characters: passing extras, waiters, guards, crowds, one-line strangers. Add one later only if they become important.
-- Never list ${userName}.
+- Never list ${userName}, or anyone under "forgotten" in the ledger (the user removed them on purpose).
 - Use the exact ledger name for a known character, even when the story uses a nickname or title. A new major character is added by listing them in "here" or "away".
 
 # Writing the memory
@@ -353,6 +384,7 @@ An away character's life keeps going the whole time ${userName} is elsewhere. Th
         away: away.map((c) => awayEntry(c, messageIndex)),
     };
     if (dead.length) ledger.dead = dead.map((c) => c.name);
+    if (cast.forgotten.length) ledger.forgotten = [...cast.forgotten];
 
     const format = (messages) => messages.map((m) => `${m.is_user ? userName : (m.name || 'Narrator')}: ${messageText(m)}`).join('\n\n');
     const story = earlier.length
@@ -432,6 +464,8 @@ export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
         if (!name || castKey(name) === userKey) continue;
 
         let character = findCharacter(cast, name);
+        // Forgotten by the user: never brought back by an update
+        if (!character && isForgotten(cast, name)) continue;
         if (character?.locked) continue;
         if (character && castKey(character.name) !== castKey(name) && !(character.aliases || []).some((a) => castKey(a) === castKey(name))) {
             if (!(castKey(character.name) in before)) before[castKey(character.name)] = structuredClone(character);
