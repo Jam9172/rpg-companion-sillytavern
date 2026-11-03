@@ -12940,7 +12940,10 @@ body:has(.rpg-panel[data-theme="forge"]) #rpg-fab-widget-container {
         gap: 0.375em;
         width: 100%;
         background: none;
-        padding: 0;
+        /* Room for the edit ring (2px, drawn 2px outside the text) inside this scrolling list, which
+           would otherwise cut it off; the margins keep the lines where they were */
+        padding: 4px 4px 4px 0;
+        margin: -4px 0 -4px;
     }
 
     .rpg-panel[data-theme="forge"] .rpg-notebook-line {
