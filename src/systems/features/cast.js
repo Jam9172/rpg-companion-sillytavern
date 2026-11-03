@@ -269,17 +269,16 @@ export function statusPanelCharacters() {
     return String(raw).slice(0, 3000);
 }
 
-/** A mid-size entry for a character who is away: enough to move them along off-screen. */
+/**
+ * A character who is away gets the same full entry as one in the scene (looks, relationship, bio and
+ * every event), so their off-screen story has everything it needs to continue, plus how long it has
+ * been since they were last seen.
+ */
 function awayEntry(character, messageIndex) {
-    const out = { name: character.name };
-    if (character.role) out.role = character.role;
-    if (character.goal) out.goal = character.goal;
-    if (character.personality) out.personality = character.personality;
-    if (character.location) out.last_seen = character.location;
-    if (character.steps?.length) out.steps = character.steps;
-    if (character.events?.length) out.last_event = character.events.at(-1);
-    out.replies_since_seen = Math.max(0, messageIndex - (character.lastSeen ?? messageIndex));
-    return out;
+    return {
+        ...compact(character, true),
+        replies_since_seen: Math.max(0, messageIndex - (character.lastSeen ?? messageIndex)),
+    };
 }
 
 /**
@@ -321,7 +320,8 @@ ${needsBio.length ? `- "bio": for ${needsBio.join(', ')}, two or three sentences
 ${statusPanel ? `The status panel (Present Characters tracker) lists who is in the scene right now, with their current details. Treat its major characters as present, use it to fill in or correct their looks, relationship and situation, and add any major character from it who is missing from the ledger.
 
 ` : ''}Off-screen lives (characters under "away"):
-- Their lives go on while ${userName} is elsewhere. When the new messages show real story time passing (hours or days, a night's sleep, a journey, a scene change), give an away character one plausible development that follows from their goal, personality and last known situation, with "offscreen": true. Use "step" for something in progress or "finish" for something done ("finished the commission for the baron").
+- Their lives go on while ${userName} is elsewhere, and each one is a story of its own. When the new messages show real story time passing (hours or days, a night's sleep, a journey, a scene change), give an away character one plausible development with "offscreen": true. Use "step" for something in progress or "finish" for something done ("finished the commission for the baron").
+- Build on their whole entry: continue their earlier off-screen events and steps, follow their goal, and let their bio, relationship and personality shape what they do, so their story moves forward one believable piece at a time. Update their goal, location or relationship with "set" when the development changes them.
 - Only when time has really passed, at most one development per character, and nothing big that the story has not set up (no deaths, no meeting ${userName}, no arrivals in the scene). Leave a character out if nothing would have changed.
 
 Reply with JSON only:
