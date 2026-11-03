@@ -128,7 +128,7 @@ function card(character) {
                     <p class="rpg-cast-value rpg-cast-bio" contenteditable="true" spellcheck="false" data-field="bio" data-placeholder="—">${escapeHtml(character.bio)}</p>
                 </div>
                 ${events ? `<div class="rpg-cast-block"><span class="rpg-cast-label">${escapeHtml(t('cast.events', 'What happened'))}</span><ul class="rpg-cast-events">${events}</ul></div>` : ''}
-                ${character.steps?.length ? `<div class="rpg-cast-block"><span class="rpg-cast-label">${escapeHtml(t('cast.steps', 'Doing now'))}</span><p class="rpg-cast-steps">${character.steps.map((step) => step.startsWith(OFFSCREEN_PREFIX) ? `<i class="fa-solid fa-eye-slash" aria-hidden="true" title="${offscreenTitle}"></i> ${escapeHtml(step.slice(OFFSCREEN_PREFIX.length))}` : escapeHtml(step)).join(' → ')}</p></div>` : ''}
+                ${character.steps?.length || character.status === 'away' ? `<div class="rpg-cast-block"><span class="rpg-cast-label">${escapeHtml(t('cast.steps', 'Doing now'))}</span><p class="rpg-cast-steps">${character.steps?.length ? character.steps.map((step) => step.startsWith(OFFSCREEN_PREFIX) ? `<i class="fa-solid fa-eye-slash" aria-hidden="true" title="${offscreenTitle}"></i> ${escapeHtml(step.slice(OFFSCREEN_PREFIX.length))}` : escapeHtml(step)).join(' → ') : `<span class="rpg-cast-pending">${escapeHtml(t('cast.stepsPending', 'Picked up on the next update'))}</span>`}</p></div>` : ''}
                 <div class="rpg-cast-actions">
                     <button type="button" class="rpg-cast-delete">${escapeHtml(t('cast.delete', 'Forget this character'))}</button>
                 </div>

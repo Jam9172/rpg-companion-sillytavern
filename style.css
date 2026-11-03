@@ -15395,3 +15395,7 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
         pointer-events: auto;
     }
 }
+
+.rpg-cast-pending {
+    opacity: 0.6;
+}

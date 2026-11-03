@@ -302,6 +302,8 @@ function buildUpdatePrompt(messageIndex) {
     const inScene = characters.filter((c) => c.status === 'present' || isMentioned(c, recentText));
     const away = characters.filter((c) => !inScene.includes(c) && c.status !== 'dead');
     const needsBio = characters.filter((c) => (c.events?.length || 0) > MAX_EVENTS).map((c) => c.name);
+    // Away characters with nothing in "Doing now" must be given an activity this time
+    const idle = away.filter((c) => !c.steps?.length).map((c) => c.name);
     const scene = sceneInfo();
     const statusPanel = statusPanelCharacters();
 
@@ -319,10 +321,12 @@ What to write for a character:
 ${needsBio.length ? `- "bio": for ${needsBio.join(', ')}, two or three sentences of who they are now and what still matters, merging their current bio with their ${EVENTS_TO_FOLD} oldest events.\n` : ''}
 ${statusPanel ? `The status panel (Present Characters tracker) lists who is in the scene right now, with their current details. Treat its major characters as present, use it to fill in or correct their looks, relationship and situation, and add any major character from it who is missing from the ledger.
 
-` : ''}Off-screen lives (characters under "away"):
-- Their lives go on while ${userName} is elsewhere, and each one is a story of its own. When the new messages show real story time passing (hours or days, a night's sleep, a journey, a scene change), give an away character one plausible development with "offscreen": true. Use "step" for something in progress or "finish" for something done ("finished the commission for the baron").
-- Build on their whole entry: continue their earlier off-screen events and steps, follow their goal, and let their bio, relationship and personality shape what they do, so their story moves forward one believable piece at a time. Update their goal, location or relationship with "set" when the development changes them.
-- Only when time has really passed, at most one development per character, and nothing big that the story has not set up (no deaths, no meeting ${userName}, no arrivals in the scene). Leave a character out if nothing would have changed.
+` : ''}Off-screen lives (characters under "away"): their lives keep going the whole time ${userName} is elsewhere, and each one is a story of its own.
+- "Doing now" never stops for them: every away character always has a current off-screen activity in their steps, until they are back in a scene with ${userName}. Mark every off-screen change with "offscreen": true.
+- On every update, move each away character along in proportion to the story time that passed in the NEW messages. A few minutes: usually the same activity continues and you can leave them out. Longer: add a "step" when the activity develops, or "finish" it (one past-tense sentence for "What happened") AND give the next "step" in the same entry, so their "Doing now" is never empty.
+${idle.length ? `- These away characters have nothing in "Doing now" yet; give each one a current activity now: ${idle.join(', ')}.\n` : ''}- Build on their whole entry: continue their earlier off-screen events and steps, follow their goal, and let their bio, relationship and personality shape what they do, so their story moves forward one believable piece at a time. Update their goal, location or relationship with "set" when it changes.
+- Keep it grounded: nothing big the story has not set up (no deaths, no meeting ${userName}, no arriving in ${userName}'s scene).
+- When an away character comes back into a scene with ${userName}, set "status": "present" and "finish" their off-screen activity in one sentence of what they were up to.
 
 Reply with JSON only:
 {"characters": [{"name": "Name", "set": {"location": "..."}, "step": "...", "finish": "...", "offscreen": false, "bio": "..."}]}
@@ -408,6 +412,12 @@ export function applyCastUpdate(updates, messageIndex) {
         if (typeof update.step === 'string' && update.step.trim() && character.steps.at(-1) !== mark(update.step)) {
             character.steps.push(mark(update.step));
         }
+        // Back in the scene with off-screen steps still open: fold them into one off-screen event
+        if (character.status === 'present' && (before[key]?.status ?? 'present') !== 'present'
+            && character.steps.length && character.steps.every((step) => step.startsWith(OFFSCREEN_PREFIX))) {
+            character.events.push(OFFSCREEN_PREFIX + character.steps.map((step) => step.slice(OFFSCREEN_PREFIX.length)).join(', then '));
+            character.steps = [];
+        }
         // The model forgot to finish a long activity: keep only the latest steps
         if (character.steps.length > MAX_STEPS) character.steps = character.steps.slice(-MAX_STEPS);
 
@@ -416,7 +426,7 @@ export function applyCastUpdate(updates, messageIndex) {
             character.events = character.events.slice(EVENTS_TO_FOLD);
         }
 
-        if (offscreen) {
+        if (offscreen && set.status !== 'present') {
             // Something happened to them elsewhere, so they are not in this scene
             if (character.status === 'present') character.status = 'away';
         } else {
