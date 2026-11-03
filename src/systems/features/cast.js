@@ -305,7 +305,9 @@ Who belongs in the ledger:
 - Leave out minor characters: passing extras, waiters, guards, crowds, one-line strangers. Add one later only if they become important.
 - Use the exact name already in the ledger for known characters (match nicknames and titles to them). Never record ${userName}.
 
-How to write, always in the character's own voice ("I", "me", "my"), fleshed out rather than bare notes:
+Characters who are here (status "present", in the scene with ${userName}): do not track their actions. The story itself shows what they do. For them, only report "status" when it changes (for example "away" when they leave the scene, and from then on they get "Doing now"). Never give them a "step", and no "finish" except the one when they come back from off-screen.
+
+How to write for characters who are away, always in the character's own voice ("I", "me", "my"), fleshed out rather than bare notes:
 - "step": what I am doing right now, present tense, one or two sentences with the detail that matters: what I am doing, how, and why or how I feel about it. ("I'm hauling crates off the barge at the docks, counting every one twice because the Vey's man is watching.") Only for a NEW development: do not repeat a step that is still true; ten turns of shopping is one step.
 - "finish": when an activity is over (I left, the scene moved on, or it reached its result), what happened in two or three sentences, past tense: what I did, how it turned out, and what it means for me. ("I went to the store and got ten eggs. The old man at the till tried to short-change me and I let it go; I wasn't in the mood for a fight.") It replaces my steps. If I have ${MAX_STEPS} or more steps, finish now.
 - "status": "present" when I am in the current scene, "away" when I am not, "dead" if I died. Only when it changes.
@@ -392,22 +394,30 @@ export function applyCastUpdate(updates, messageIndex) {
         const status = String(update.status ?? update.set?.status ?? '').trim().toLowerCase();
         if (STATUSES.includes(status)) character.status = status;
 
-        // Off-screen developments are marked: ${userName} has not seen them
-        const offscreen = update.offscreen === true;
+        // Characters who are here are not tracked: the story shows what they do. The one exception is
+        // coming back from off-screen, when what they were up to is closed into "What happened".
+        const wasHere = before[key] ? before[key].status === 'present' : true;
+        const isHere = character.status === 'present';
+        const rejoining = isHere && !wasHere;
+        // Everything tracked happens away from the user, so it is always marked off-screen
+        const offscreen = !isHere || rejoining;
         const mark = (text) => (offscreen ? OFFSCREEN_PREFIX : '') + text.trim();
-        if (typeof update.finish === 'string' && update.finish.trim()) {
-            character.events.push(mark(update.finish));
-            character.steps = [];
-        }
-        if (typeof update.step === 'string' && update.step.trim() && character.steps.at(-1) !== mark(update.step)) {
-            character.steps.push(mark(update.step));
+        if (!isHere || rejoining) {
+            if (typeof update.finish === 'string' && update.finish.trim()) {
+                character.events.push(mark(update.finish));
+                character.steps = [];
+            }
+            if (!isHere && typeof update.step === 'string' && update.step.trim() && character.steps.at(-1) !== mark(update.step)) {
+                character.steps.push(mark(update.step));
+            }
         }
         // Back in the scene with off-screen steps still open: fold them into one off-screen event
-        if (character.status === 'present' && (before[key]?.status ?? 'present') !== 'present'
-            && character.steps.length && character.steps.every((step) => step.startsWith(OFFSCREEN_PREFIX))) {
-            character.events.push(OFFSCREEN_PREFIX + character.steps.map((step) => step.slice(OFFSCREEN_PREFIX.length)).join(', then '));
-            character.steps = [];
+        if (rejoining && character.steps.length) {
+            const open = character.steps.map((step) => step.replace(OFFSCREEN_PREFIX, ''));
+            character.events.push(OFFSCREEN_PREFIX + open.join(' Then '));
         }
+        // Nothing is "Doing now" while they are here
+        if (isHere) character.steps = [];
         // The model forgot to finish a long activity: keep only the latest steps
         if (character.steps.length > MAX_STEPS) character.steps = character.steps.slice(-MAX_STEPS);
 
@@ -417,7 +427,7 @@ export function applyCastUpdate(updates, messageIndex) {
             character.events = [summary, ...character.events.slice(EVENTS_TO_FOLD)];
         }
 
-        if (offscreen && status !== 'present') {
+        if (offscreen && !isHere) {
             // Something happened to them elsewhere, so they are not in this scene
             if (character.status === 'present') character.status = 'away';
         } else {

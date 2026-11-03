@@ -111,10 +111,10 @@ function card(character) {
                 <button type="button" class="rpg-cast-lock" aria-pressed="${character.locked}" title="${escapeHtml(lockTitle)}" aria-label="${escapeHtml(lockTitle)}"><i class="fa-solid ${character.locked ? 'fa-lock' : 'fa-lock-open'}"></i></button>
             </summary>
             <div class="rpg-cast-body">
-                <div class="rpg-cast-block">
+                ${character.status === 'present' ? '' : `<div class="rpg-cast-block">
                     <span class="rpg-cast-label">${escapeHtml(t('cast.steps', 'Doing now'))}</span>
                     ${steps ? `<ul class="rpg-cast-events rpg-cast-steps-list">${steps}</ul>` : empty(character.status === 'away' ? t('cast.stepsPending', 'Picked up on the next update') : t('cast.stepsNone', 'Nothing yet'))}
-                </div>
+                </div>`}
                 <div class="rpg-cast-block">
                     <span class="rpg-cast-label">${escapeHtml(t('cast.events', 'What happened'))}</span>
                     ${events ? `<ul class="rpg-cast-events">${events}</ul>` : empty(t('cast.eventsNone', 'Nothing yet'))}
