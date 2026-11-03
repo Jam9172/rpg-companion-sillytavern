@@ -615,9 +615,9 @@ function describe(character) {
 }
 
 /**
- * The cast notes for the main model: each relevant character's own memory (what happened to them and
- * what they are doing now) for characters in the scene or mentioned in the latest messages, and the
- * names of everyone else.
+ * The cast notes for the main model: the full memory (what happened to them and what they are doing now)
+ * of characters in the scene or mentioned in the latest messages, what every other away character is
+ * doing right now, and the names of the rest.
  */
 export function buildCastNotes() {
     const characters = Object.values(getCast().characters);
@@ -627,10 +627,20 @@ export function buildCastNotes() {
 
     const relevant = characters.filter((c) => c.status === 'present' || isMentioned(c, lookback));
     const others = characters.filter((c) => !relevant.includes(c) && c.status !== 'dead');
+    // Away characters nobody mentioned: only what they are doing right now, so the story knows
+    const elsewhere = others.filter((c) => c.status === 'away' && c.steps?.length);
+    const named = others.filter((c) => !elsewhere.includes(c));
 
     let notes = `<cast_notes>\nLasting memory of this story's characters, each in their own words (first person), for consistency. Use it quietly: never quote or list these notes in the reply. Lines marked (off-screen) happened where ${userName} could not see: characters may bring them up, but ${userName} does not know them yet.\n`;
     if (relevant.length) notes += relevant.map(describe).join('\n') + '\n';
-    if (others.length) notes += `Also in the story: ${others.map((c) => c.name).join(', ')}\n`;
+    if (elsewhere.length) {
+        notes += `Elsewhere right now (off-screen, ${userName} does not know):\n`;
+        notes += elsewhere.map((c) => `- ${c.name}: ${c.steps.at(-1).replace(OFFSCREEN_PREFIX, '')}`).join('\n') + '\n';
+    }
+    if (named.length) notes += `Also in the story: ${named.map((c) => c.name).join(', ')}\n`;
+    if (elsewhere.length || named.length) {
+        notes += `Characters who are away have their own lives and concerns. Bring one into the story only when it fits naturally (word of them reaches ${userName}, a chance meeting, a consequence of what they are doing), never just to involve them. Do not have them come looking for ${userName} or step in on ${userName}'s behalf without a reason of their own, and do not make them fixated on ${userName}.\n`;
+    }
     notes += '</cast_notes>';
     return notes;
 }
