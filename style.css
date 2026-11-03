@@ -15262,12 +15262,42 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     opacity: 0.75;
 }
 
-/* Cast: last update state and the Refresh button */
+/* Cast: last update state and the Undo tidy, Tidy and Refresh buttons; a tidy's fixes go underneath */
 .rpg-cast-status-bar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
+}
+
+.rpg-cast-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    flex: none;
+    max-width: 100%;
+}
+
+.rpg-cast-fixes {
+    flex: 1 1 100%;
+    margin: 0;
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+.rpg-cast-fixes summary {
+    cursor: pointer;
+}
+
+.rpg-cast-fixes ul {
+    margin: 0.3rem 0 0;
+    padding-left: 1.1rem;
+}
+
+.rpg-cast-fixes li {
+    margin-bottom: 0.2rem;
 }
 
 .rpg-cast-state {
@@ -15290,7 +15320,7 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     opacity: 1;
 }
 
-.rpg-cast-refresh {
+:is(.rpg-cast-refresh, .rpg-cast-tidy, .rpg-cast-undo-tidy) {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -15305,19 +15335,24 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     cursor: pointer;
 }
 
-.rpg-cast-refresh:hover:not(:disabled) {
+:is(.rpg-cast-refresh, .rpg-cast-tidy, .rpg-cast-undo-tidy):hover:not(:disabled) {
     border-color: var(--rpg-highlight, #e94560);
     color: var(--rpg-highlight, #e94560);
 }
 
-.rpg-cast-refresh:disabled {
+:is(.rpg-cast-refresh, .rpg-cast-tidy):disabled {
     opacity: 0.6;
     cursor: default;
 }
 
-.rpg-panel[data-theme="forge"] .rpg-cast-refresh {
+.rpg-panel[data-theme="forge"] :is(.rpg-cast-refresh, .rpg-cast-tidy) {
     border-color: var(--forge-brass, #D9A35B);
     color: var(--forge-brass, #D9A35B);
+}
+
+/* Undo tidy is the quieter one */
+.rpg-cast-undo-tidy {
+    opacity: 0.8;
 }
 
 /* ==========================================================================

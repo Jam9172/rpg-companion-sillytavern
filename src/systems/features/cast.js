@@ -44,11 +44,14 @@ const listeners = [];
 let updateQueue = Promise.resolve();
 
 // The background update's state, shown in the Cast tab
-const castStatus = { running: false, lastOk: null, lastError: null };
+// task: what is running ('update' or 'tidy'); errorTask: what lastError came from; lastTidy: {at, count, fixes}
+const castStatus = { running: false, task: null, lastOk: null, lastError: null, errorTask: null, lastTidy: null };
 
-/** @returns {{running: boolean, lastOk: number|null, lastError: string|null}} */
+/** @returns {{running: boolean, task: string|null, lastOk: number|null, lastError: string|null, errorTask: string|null, lastTidy: Object|null}} */
 export function getCastStatus() {
-    return { ...castStatus };
+    // A tidy's result belongs to the chat it ran in
+    const lastTidy = castStatus.lastTidy?.chatId === getContext().chatId ? castStatus.lastTidy : null;
+    return { ...castStatus, lastTidy };
 }
 
 function notify() {
@@ -528,6 +531,8 @@ export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
     }
 
     if (Object.keys(before).length) {
+        // The cast moved on, so going back to before the last tidy would lose this update
+        delete cast.tidyUndo;
         cast.journal.push({ messageIndex, signature: messageSignature(messageIndex), before });
         if (cast.journal.length > MAX_JOURNAL) cast.journal.splice(0, cast.journal.length - MAX_JOURNAL);
         saveCast();
@@ -564,6 +569,7 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
         if (!message || message.is_system || (message.is_user && !force)) return;
 
         castStatus.running = true;
+        castStatus.task = 'update';
         notify();
         try {
             await waitForTrackers();
@@ -576,6 +582,7 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
             } catch (error) {
                 console.warn('[RPG Companion] Cast update failed:', error);
                 castStatus.lastError = error?.message || String(error);
+                castStatus.errorTask = 'update';
                 return;
             }
             // The chat or the message changed while we waited: drop this result
@@ -585,6 +592,7 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
             if (!parsed) {
                 console.warn('[RPG Companion] Cast update: could not read the reply as JSON');
                 castStatus.lastError = 'The model did not reply with the cast in the right format.';
+                castStatus.errorTask = 'update';
                 return;
             }
             applyCastUpdate(parsed.updates, messageIndex, { here: parsed.here });
@@ -593,6 +601,7 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
             refreshCastPrompt();
         } finally {
             castStatus.running = false;
+            castStatus.task = null;
             notify();
         }
     }).catch((error) => console.error('[RPG Companion] Cast update error:', error));
@@ -622,6 +631,161 @@ export function refreshCast() {
     }
     if (undone) saveCast();
     return updateCastFromMessage(latest, { force: true });
+}
+
+/* ---------- Tidy (Cast tab) ---------- */
+
+const TIDY_EVENTS = 5;        // what a tidy aims for: at most this many What happened entries per character
+
+/** The tidy request: every character's whole memory, the cards and the recent story, and the rules. */
+async function buildTidyPrompt(characters) {
+    const context = getContext();
+    const userName = context.name1 || 'User';
+    const range = castReadRange();
+    const last = chat.length - 1;
+    const first = range === 0 ? 0 : Math.max(0, last - range + 1);
+    const story = chat.slice(first).filter((m) => !m.is_system)
+        .map((m) => `${m.is_user ? userName : (m.name || 'Narrator')}: ${messageText(m)}`).join('\n\n');
+    let cards = '';
+    try {
+        cards = String(await getCharacterCardsInfo() || '').trim().slice(0, CARDS_LIMIT);
+    } catch {
+        // No card info: the memory and the story are the context
+    }
+
+    const system = `You tidy the cast ledger of an ongoing roleplay story: the lasting memory of its major characters, each written by the character about themself in FIRST PERSON ("I", "me", "my"). You never write story text. You reply with JSON only.
+
+Rewrite each character's memory so it is shorter, cleaner and correct:
+- "what_happened": their finished experiences, oldest first. Merge entries that belong together, drop repeats and filler, and keep every fact that still matters (names, places, deals, debts, injuries, promises, and how the character feels about them). Aim for at most ${TIDY_EVENTS} entries; the oldest can become one short summary. Each entry two to four sentences, past tense.
+- "doing_now" (only for characters whose status is "away"): one or two sentences, present tense, of what they are doing at this moment. Drop steps that are already over or replaced by later ones; a finished step that matters belongs at the end of "what_happened".
+- Fix mistakes: entries that contradict each other or the story and the cards (the story wins), wrong or misspelled names, entries in third person or the wrong tense, entries that belong to a different character, and things the character could not know.
+- Never invent events or details, and never change what happened. Use only what is already in the memory, the story and the cards.
+- Keep each character's own voice.
+- "fixes": one short line for each mistake you corrected, naming the character ("Kael: the debt was fifty silver, not forty"). Merging and shortening need no line. Empty if nothing was wrong.
+Work quickly: this is cleanup, not a puzzle. Make the obvious merges and corrections and move on.
+
+Reply with JSON only:
+{"characters": [{"name": "Name", "what_happened": ["I ..."], "doing_now": "I'm ..."}], "fixes": ["Name: ..."]}
+Include every character listed, with the exact name given. Leave out "doing_now" for characters who are not away.`;
+
+    const ledger = characters.map((c) => compact(c));
+    return [
+        { role: 'system', content: system },
+        { role: 'user', content: `${cards ? `Character cards (who everyone is):\n<cards>\n${cards}\n</cards>\n\n` : ''}${story ? `The story (${range === 0 ? 'all of it' : 'latest messages'}):\n<story>\n${story}\n</story>\n\n` : ''}The ledger to tidy:\n${JSON.stringify(ledger)}\n\nTidy it. JSON only.` },
+    ];
+}
+
+/**
+ * Applies a tidy reply. Only text is changed (never status), a character is kept as they were when the
+ * reply leaves their memory empty, and locked characters are left alone.
+ * @returns {{count: number, fixes: string[]}|null} null when the reply could not be read
+ */
+function applyTidy(text, characters) {
+    if (typeof text !== 'string') return null;
+    const cleaned = text.replace(/```(?:json)?/gi, '').trim();
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start < 0 || end <= start) return null;
+    let data;
+    try {
+        data = JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+        return null;
+    }
+    if (!Array.isArray(data?.characters)) return null;
+
+    const cast = getCast();
+    const strip = (line) => String(line).replace(/^\s*\(off-screen\)\s*/i, '').trim();
+    let count = 0;
+    for (const entry of data.characters) {
+        const character = findCharacter(cast, entry?.name);
+        if (!character || character.locked || !characters.includes(character)) continue;
+        // Everything tracked now happens off-screen; entries from before that keep no mark
+        const marked = character.events.length > 0 && character.events.every((e) => e.startsWith(OFFSCREEN_PREFIX));
+        const events = (Array.isArray(entry.what_happened) ? entry.what_happened : [entry.what_happened])
+            .filter((e) => typeof e === 'string').map(strip).filter(Boolean);
+        const doing = typeof entry.doing_now === 'string' ? strip(entry.doing_now)
+            : (Array.isArray(entry.doing_now) ? strip(entry.doing_now.filter((s) => typeof s === 'string').at(-1) || '') : '');
+        let touched = false;
+        if (events.length) {
+            character.events = events.map((e) => (marked ? OFFSCREEN_PREFIX + e : e));
+            touched = true;
+        }
+        if (character.status === 'away' && doing) {
+            character.steps = [OFFSCREEN_PREFIX + doing];
+            touched = true;
+        }
+        if (touched) count++;
+    }
+    const fixes = (Array.isArray(data.fixes) ? data.fixes : []).filter((f) => typeof f === 'string' && f.trim()).map((f) => f.trim());
+    return { count, fixes };
+}
+
+/**
+ * Tidy (Cast tab): has the background model compress every character's memory, boil Doing now down to
+ * what is true now and fix mistakes. The cast as it was is kept until the next update, for Undo tidy.
+ */
+export function tidyCast() {
+    updateQueue = updateQueue.then(async () => {
+        if (!extensionSettings.enabled || extensionSettings.castEnabled === false) return;
+        const cast = getCast();
+        const characters = Object.values(cast.characters).filter((c) => !c.locked && (c.events?.length || c.steps?.length));
+        if (!characters.length) return;
+
+        castStatus.running = true;
+        castStatus.task = 'tidy';
+        notify();
+        try {
+            const chatId = getContext().chatId;
+            let response;
+            try {
+                response = await requestUpdate(await buildTidyPrompt(characters));
+            } catch (error) {
+                console.warn('[RPG Companion] Cast tidy failed:', error);
+                castStatus.lastError = error?.message || String(error);
+                castStatus.errorTask = 'tidy';
+                return;
+            }
+            if (getContext().chatId !== chatId) return;
+
+            const snapshot = structuredClone(cast.characters);
+            const result = applyTidy(response, characters);
+            if (!result) {
+                console.warn('[RPG Companion] Cast tidy: could not read the reply as JSON');
+                castStatus.lastError = 'The model did not reply with the cast in the right format.';
+                castStatus.errorTask = 'tidy';
+                return;
+            }
+            cast.tidyUndo = snapshot;
+            castStatus.lastTidy = { at: Date.now(), chatId, ...result };
+            castStatus.lastError = null;
+            saveCast();
+            refreshCastPrompt();
+        } finally {
+            castStatus.running = false;
+            castStatus.task = null;
+            notify();
+        }
+    }).catch((error) => console.error('[RPG Companion] Cast tidy error:', error));
+    return updateQueue;
+}
+
+/** Whether the last tidy can still be undone (until the next update changes the cast). */
+export function canUndoTidy() {
+    return Boolean(chat_metadata?.[METADATA_KEY]?.tidyUndo);
+}
+
+/** Puts the cast back as it was before the last tidy (characters forgotten since then stay forgotten). */
+export function undoTidy() {
+    const cast = getCast();
+    if (!cast.tidyUndo) return;
+    for (const [key, character] of Object.entries(cast.tidyUndo)) {
+        if (cast.characters[key]) cast.characters[key] = character;
+    }
+    delete cast.tidyUndo;
+    castStatus.lastTidy = null;
+    saveCast();
+    refreshCastPrompt();
 }
 
 /* ---------- Feeding the main model ---------- */

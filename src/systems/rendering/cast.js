@@ -7,7 +7,7 @@
 import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
-import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus } from '../features/cast.js';
+import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus, tidyCast, canUndoTidy, undoTidy } from '../features/cast.js';
 import { saveSettings } from '../../core/persistence.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
@@ -34,18 +34,38 @@ function timeAgo(time) {
 function statusBar() {
     const status = getCastStatus();
     const refreshHelp = t('cast.refresh.help', 'Redo the cast update for the latest message: undo what it changed, then read it again.');
+    const tidyHelp = t('cast.tidy.help', 'Compress every character\'s memory: merge and shorten What happened, cut Doing now down to what is true now, and fix mistakes. Nothing new is made up, and it can be undone.');
+    const tidying = status.running && status.task === 'tidy';
+    const tidy = status.lastTidy && status.lastTidy.at >= (status.lastOk || 0) ? status.lastTidy : null;
     let line;
-    if (status.running) line = `<span class="rpg-cast-state is-running">${escapeHtml(t('cast.state.running', 'Updating…'))}</span>`;
-    else if (status.lastError) line = `<span class="rpg-cast-state is-error" title="${escapeHtml(status.lastError)}">${escapeHtml(t('cast.state.failed', 'Last update failed'))}: ${escapeHtml(status.lastError)}</span>`;
+    if (status.running) line = `<span class="rpg-cast-state is-running">${escapeHtml(tidying ? t('cast.state.tidying', 'Tidying…') : t('cast.state.running', 'Updating…'))}</span>`;
+    else if (status.lastError) line = `<span class="rpg-cast-state is-error" title="${escapeHtml(status.lastError)}">${escapeHtml(status.errorTask === 'tidy' ? t('cast.state.tidyFailed', 'Tidy failed') : t('cast.state.failed', 'Last update failed'))}: ${escapeHtml(status.lastError)}</span>`;
+    else if (tidy) line = `<span class="rpg-cast-state">${escapeHtml(t('cast.state.tidied', 'Tidied'))} ${tidy.count} ${escapeHtml(tidy.count === 1 ? t('cast.character', 'character') : t('cast.characters', 'characters'))} ${escapeHtml(timeAgo(tidy.at))}</span>`;
     else if (status.lastOk) line = `<span class="rpg-cast-state">${escapeHtml(t('cast.state.ok', 'Updated'))} ${escapeHtml(timeAgo(status.lastOk))}</span>`;
     else line = `<span class="rpg-cast-state">${escapeHtml(t('cast.state.idle', 'Updates after each reply'))}</span>`;
+    const fixes = tidy && !status.running && !status.lastError
+        ? (tidy.fixes.length
+            ? `<details class="rpg-cast-fixes"><summary>${tidy.fixes.length} ${escapeHtml(tidy.fixes.length === 1 ? t('cast.fix', 'fix') : t('cast.fixes', 'fixes'))}</summary><ul>${tidy.fixes.map((f) => `<li>${escapeHtml(f)}</li>`).join('')}</ul></details>`
+            : `<p class="rpg-cast-fixes">${escapeHtml(t('cast.noFixes', 'No mistakes found.'))}</p>`)
+        : '';
+    const undo = canUndoTidy() && !status.running
+        ? `<button type="button" class="rpg-cast-undo-tidy" title="${escapeHtml(t('cast.undoTidy.help', 'Put every character\'s memory back as it was before the last tidy.'))}"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>${escapeHtml(t('cast.undoTidy', 'Undo tidy'))}</span></button>`
+        : '';
     return `
         <div class="rpg-cast-status-bar">
             ${line}
-            <button type="button" class="rpg-cast-refresh" title="${escapeHtml(refreshHelp)}"${status.running ? ' disabled' : ''}>
-                <i class="fa-solid fa-rotate${status.running ? ' fa-spin' : ''}" aria-hidden="true"></i>
-                <span>${escapeHtml(t('cast.refresh', 'Refresh'))}</span>
-            </button>
+            <div class="rpg-cast-actions">
+                ${undo}
+                <button type="button" class="rpg-cast-tidy" title="${escapeHtml(tidyHelp)}"${status.running ? ' disabled' : ''}>
+                    <i class="fa-solid fa-broom" aria-hidden="true"></i>
+                    <span>${escapeHtml(t('cast.tidy', 'Tidy'))}</span>
+                </button>
+                <button type="button" class="rpg-cast-refresh" title="${escapeHtml(refreshHelp)}"${status.running ? ' disabled' : ''}>
+                    <i class="fa-solid fa-rotate${status.running && !tidying ? ' fa-spin' : ''}" aria-hidden="true"></i>
+                    <span>${escapeHtml(t('cast.refresh', 'Refresh'))}</span>
+                </button>
+            </div>
+            ${fixes}
         </div>`;
 }
 
@@ -199,6 +219,11 @@ export function initCastTab() {
         if (this.disabled) return;
         refreshCast();
     });
+    $doc.on('click', '#rpg-cast .rpg-cast-tidy', function () {
+        if (this.disabled) return;
+        tidyCast();
+    });
+    $doc.on('click', '#rpg-cast .rpg-cast-undo-tidy', () => undoTidy());
     $doc.on('change', '#rpg-cast .rpg-cast-range-select', async function () {
         let value = this.value;
         if (value === 'custom') {
