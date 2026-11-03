@@ -15399,3 +15399,43 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
 .rpg-cast-pending {
     opacity: 0.6;
 }
+
+/* Cast: first-person memory lines (Doing now and What happened), editable in place */
+.rpg-cast-memory {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    outline: none;
+    line-height: 1.45;
+}
+
+.rpg-cast-memory:hover,
+.rpg-cast-memory:focus {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-cast-memory:hover,
+.rpg-panel[data-theme="forge"] .rpg-cast-memory:focus {
+    background: var(--forge-inset, #170C0A);
+}
+
+.rpg-cast-steps-list .rpg-cast-memory {
+    font-style: italic;
+}
+
+.rpg-cast-event.is-offscreen .rpg-cast-memory {
+    font-style: italic;
+    opacity: 0.85;
+}
+
+.rpg-cast-event.is-offscreen > .fa-eye-slash {
+    flex: none;
+    font-size: 0.75em;
+    color: var(--forge-muted, inherit);
+}
+
+.rpg-cast-pending {
+    margin: 0;
+    font-style: italic;
+}

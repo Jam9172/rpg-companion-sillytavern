@@ -79,56 +79,46 @@ const STATUS_LABELS = {
     dead: ['cast.status.dead', 'Dead'],
 };
 
-const FIELDS = [
-    ['role', 'cast.field.role', 'Role'],
-    ['goal', 'cast.field.goal', 'Wants'],
-    ['appearance', 'cast.field.appearance', 'Looks'],
-    ['personality', 'cast.field.personality', 'Personality'],
-    ['relationship', 'cast.field.relationship', 'Toward you'],
-    ['location', 'cast.field.location', 'Last seen'],
-];
-
-function field(name, key, label, value) {
+/** One memory line (an entry or a step): editable in place, removable, marked when off-screen. */
+function memoryLine(text, kind, index, offscreenTitle) {
+    const offscreen = text.startsWith(OFFSCREEN_PREFIX);
+    const body = offscreen ? text.slice(OFFSCREEN_PREFIX.length) : text;
+    const removeLabel = escapeHtml(kind === 'event' ? t('cast.removeEvent', 'Remove this entry') : t('cast.removeStep', 'Remove this step'));
     return `
-        <div class="rpg-cast-field">
-            <span class="rpg-cast-label">${escapeHtml(t(key, label))}</span>
-            <span class="rpg-cast-value" contenteditable="true" spellcheck="false" data-field="${name}" data-placeholder="—">${escapeHtml(value)}</span>
-        </div>`;
+        <li class="rpg-cast-event${offscreen ? ' is-offscreen' : ''}"${offscreen ? ` title="${offscreenTitle}"` : ''}>
+            ${offscreen ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>' : ''}
+            <span class="rpg-cast-memory" contenteditable="true" spellcheck="false" data-kind="${kind}" data-index="${index}">${escapeHtml(body)}</span>
+            <button type="button" class="rpg-cast-event-remove" data-kind="${kind}" data-index="${index}" title="${removeLabel}" aria-label="${removeLabel}">×</button>
+        </li>`;
 }
 
 function card(character) {
     const [statusKey, statusFallback] = STATUS_LABELS[character.status] || STATUS_LABELS.away;
     const open = openState.has(character.name) ? openState.get(character.name) : character.status === 'present';
     const offscreenTitle = escapeHtml(t('cast.offscreen', 'Happened off-screen: you have not seen this yet'));
-    const events = (character.events || []).map((event, i) => {
-        const offscreen = event.startsWith(OFFSCREEN_PREFIX);
-        const text = offscreen ? event.slice(OFFSCREEN_PREFIX.length) : event;
-        return `
-        <li class="rpg-cast-event${offscreen ? ' is-offscreen' : ''}"${offscreen ? ` title="${offscreenTitle}"` : ''}>
-            <span>${offscreen ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i> ' : ''}${escapeHtml(text)}</span>
-            <button type="button" class="rpg-cast-event-remove" data-index="${i}" title="${escapeHtml(t('cast.removeEvent', 'Remove this event'))}" aria-label="${escapeHtml(t('cast.removeEvent', 'Remove this event'))}">×</button>
-        </li>`;
-    }).join('');
+    const steps = (character.steps || []).map((step, i) => memoryLine(step, 'step', i, offscreenTitle)).join('');
+    const events = (character.events || []).map((event, i) => memoryLine(event, 'event', i, offscreenTitle)).join('');
     const lockTitle = character.locked
         ? t('cast.unlock', 'Locked: the background model leaves this character alone. Click to unlock.')
         : t('cast.lock', 'Lock this character so the background model stops changing them');
+    const empty = (text) => `<p class="rpg-cast-pending">${escapeHtml(text)}</p>`;
 
     return `
         <details class="rpg-cast-card${character.locked ? ' is-locked' : ''}" data-name="${escapeHtml(character.name)}" data-status="${escapeHtml(character.status)}"${open ? ' open' : ''}>
             <summary class="rpg-cast-head">
                 <span class="rpg-cast-name">${escapeHtml(character.name)}</span>
-                ${character.role ? `<span class="rpg-cast-role">${escapeHtml(character.role)}</span>` : ''}
                 <span class="rpg-cast-status">${escapeHtml(t(statusKey, statusFallback))}</span>
                 <button type="button" class="rpg-cast-lock" aria-pressed="${character.locked}" title="${escapeHtml(lockTitle)}" aria-label="${escapeHtml(lockTitle)}"><i class="fa-solid ${character.locked ? 'fa-lock' : 'fa-lock-open'}"></i></button>
             </summary>
             <div class="rpg-cast-body">
-                ${FIELDS.map(([name, key, label]) => field(name, key, label, character[name])).join('')}
                 <div class="rpg-cast-block">
-                    <span class="rpg-cast-label">${escapeHtml(t('cast.bio', 'Background'))}</span>
-                    <p class="rpg-cast-value rpg-cast-bio" contenteditable="true" spellcheck="false" data-field="bio" data-placeholder="—">${escapeHtml(character.bio)}</p>
+                    <span class="rpg-cast-label">${escapeHtml(t('cast.steps', 'Doing now'))}</span>
+                    ${steps ? `<ul class="rpg-cast-events rpg-cast-steps-list">${steps}</ul>` : empty(character.status === 'away' ? t('cast.stepsPending', 'Picked up on the next update') : t('cast.stepsNone', 'Nothing yet'))}
                 </div>
-                ${events ? `<div class="rpg-cast-block"><span class="rpg-cast-label">${escapeHtml(t('cast.events', 'What happened'))}</span><ul class="rpg-cast-events">${events}</ul></div>` : ''}
-                ${character.steps?.length || character.status === 'away' ? `<div class="rpg-cast-block"><span class="rpg-cast-label">${escapeHtml(t('cast.steps', 'Doing now'))}</span><p class="rpg-cast-steps">${character.steps?.length ? character.steps.map((step) => step.startsWith(OFFSCREEN_PREFIX) ? `<i class="fa-solid fa-eye-slash" aria-hidden="true" title="${offscreenTitle}"></i> ${escapeHtml(step.slice(OFFSCREEN_PREFIX.length))}` : escapeHtml(step)).join(' → ') : `<span class="rpg-cast-pending">${escapeHtml(t('cast.stepsPending', 'Picked up on the next update'))}</span>`}</p></div>` : ''}
+                <div class="rpg-cast-block">
+                    <span class="rpg-cast-label">${escapeHtml(t('cast.events', 'What happened'))}</span>
+                    ${events ? `<ul class="rpg-cast-events">${events}</ul>` : empty(t('cast.eventsNone', 'Nothing yet'))}
+                </div>
                 <div class="rpg-cast-actions">
                     <button type="button" class="rpg-cast-delete">${escapeHtml(t('cast.delete', 'Forget this character'))}</button>
                 </div>
@@ -212,23 +202,37 @@ export function initCastTab() {
         saveSettings();
         renderCast();
     });
-    $doc.on('keydown', '#rpg-cast .rpg-cast-value', function (e) {
-        if (e.key === 'Enter' && !$(this).hasClass('rpg-cast-bio')) {
+    const listKey = (kind) => (kind === 'step' ? 'steps' : 'events');
+    $doc.on('keydown', '#rpg-cast .rpg-cast-memory', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             this.blur();
         }
     });
-    $doc.on('blur', '#rpg-cast .rpg-cast-value', function () {
+    // Saving an edited line keeps its off-screen mark; an emptied line is removed
+    $doc.on('blur', '#rpg-cast .rpg-cast-memory', function () {
+        const name = nameOf(this);
+        const key = listKey($(this).data('kind'));
+        const index = Number($(this).data('index'));
+        const character = listCharacters().find((c) => c.name === name);
+        if (!character?.[key] || index >= character[key].length) return;
+        const old = character[key][index];
+        const mark = old.startsWith(OFFSCREEN_PREFIX) ? OFFSCREEN_PREFIX : '';
         const value = this.textContent.trim();
-        editCharacter(nameOf(this), { [$(this).data('field')]: value });
+        if (value === old.slice(mark.length)) return;
+        const list = [...character[key]];
+        if (value) list[index] = mark + value;
+        else list.splice(index, 1);
+        editCharacter(name, { [key]: list });
         refreshCastPrompt();
     });
     $doc.on('click', '#rpg-cast .rpg-cast-event-remove', function () {
         const name = nameOf(this);
+        const key = listKey($(this).data('kind'));
         const index = Number($(this).data('index'));
         const character = listCharacters().find((c) => c.name === name);
-        if (!character) return;
-        editCharacter(name, { events: character.events.filter((_, i) => i !== index) });
+        if (!character?.[key]) return;
+        editCharacter(name, { [key]: character[key].filter((_, i) => i !== index) });
         refreshCastPrompt();
     });
     $doc.on('click', '#rpg-cast .rpg-cast-delete', async function () {

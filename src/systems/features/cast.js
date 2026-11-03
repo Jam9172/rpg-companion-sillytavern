@@ -1,17 +1,16 @@
 /**
  * Cast: character persistence for the whole story.
  *
- * A ledger of the story's major characters (saved in the chat's metadata, so it lasts the whole story).
- * After each reply a background model updates the ones involved and, as story time passes, moves the
- * ones who are away along with their own goals off-screen. Before each reply the characters in the scene
- * or recently mentioned are fed to the main model, with a one-line roster of everyone else.
+ * A ledger of the story's major characters, saved in the chat's metadata so it lasts the whole story.
+ * It keeps only each character's own memory, written in first person:
+ *   Doing now     - what I am doing right now; it never stops for characters who are away
+ *   What happened - each finished activity in a few sentences; the oldest fold into one summary
+ * Looks, personality and relationships are not tracked: they come from the character cards and the story.
  *
- * Memory is kept short in three levels:
- *   steps  - what a character is doing right now ("gets in the car", "shopping in the aisles")
- *   events - finished activities, each folded into one outcome ("went to the store and got 10 eggs")
- *   bio    - the oldest events folded into two or three sentences of who they are now
- *
- * Every update remembers the message that caused it, so deleting or swiping that message undoes it.
+ * After each reply a background model updates the characters involved and moves the ones who are away
+ * along off-screen. Before each reply the characters in the scene or recently mentioned are fed to the
+ * main model, with a list of everyone else's names. Every update remembers the message that caused it, so
+ * deleting or swiping that message undoes it.
  */
 
 import {
@@ -27,6 +26,7 @@ import {
 import { getContext } from '../../../../../../extensions.js';
 import { extensionSettings, isGenerating, lastGeneratedData, committedTrackerData } from '../../core/state.js';
 import { generateWithExternalAPI } from '../generation/apiClient.js';
+import { getCharacterCardsInfo } from '../generation/promptBuilder.js';
 import { safeGenerateRaw } from '../../utils/responseExtractor.js';
 
 const PROMPT_KEY = 'rpg-companion-cast';
@@ -34,9 +34,10 @@ const METADATA_KEY = 'rpg_cast';
 
 // Limits that keep each character short
 const MAX_STEPS = 6;          // more than this and the activity is folded into an event
-const MAX_EVENTS = 10;        // more than this and the oldest are folded into the bio
-const EVENTS_TO_FOLD = 6;     // how many of the oldest events go into the bio at once
+const MAX_EVENTS = 10;        // more than this and the oldest are folded into one summary
+const EVENTS_TO_FOLD = 6;     // how many of the oldest events go into that summary at once
 const EVENTS_IN_PROMPT = 3;   // recent events shown to the main model per character
+const CARDS_LIMIT = 6000;     // characters of card descriptions sent to the background model
 const MAX_JOURNAL = 200;      // undo entries kept (older ones can no longer be rolled back)
 
 const listeners = [];
@@ -81,14 +82,7 @@ function newCharacter(name) {
     return {
         name: String(name).trim(),
         aliases: [],
-        role: '',
-        goal: '',
-        appearance: '',
-        personality: '',
-        relationship: '',
-        location: '',
         status: 'present',
-        bio: '',
         events: [],
         steps: [],
         locked: false,
@@ -199,19 +193,12 @@ export function reconcileCast() {
 
 /* ---------- Background update ---------- */
 
-function compact(character, full) {
-    const out = { name: character.name };
-    if (character.role) out.role = character.role;
-    if (!full) {
-        if (character.location) out.last_seen = character.location;
-        return out;
-    }
-    for (const field of ['aliases', 'goal', 'appearance', 'personality', 'relationship', 'location', 'status', 'bio']) {
-        const value = character[field];
-        if (Array.isArray(value) ? value.length : value) out[field] = value;
-    }
-    if (character.events?.length) out.events = character.events;
-    if (character.steps?.length) out.steps = character.steps;
+/** A character's ledger entry as the background model sees it: their own memory only. */
+function compact(character) {
+    const out = { name: character.name, status: character.status };
+    if (character.aliases?.length) out.aliases = character.aliases;
+    if (character.events?.length) out.what_happened = character.events;
+    if (character.steps?.length) out.doing_now = character.steps;
     return out;
 }
 
@@ -219,10 +206,6 @@ function messageText(message) {
     return String(message?.mes ?? '').replace(/<[^>]*>/g, '').trim();
 }
 
-/**
- * Builds the background model's request: the characters it may need, the latest messages, and the
- * rules for steps, events and the bio.
- */
 /**
  * How many messages the background model reads per update: 0 means the whole story.
  * @returns {number}
@@ -270,22 +253,21 @@ export function statusPanelCharacters() {
 }
 
 /**
- * A character who is away gets the same full entry as one in the scene (looks, relationship, bio and
- * every event), so their off-screen story has everything it needs to continue, plus how long it has
- * been since they were last seen.
+ * A character who is away gets their whole memory (every event and step), so their off-screen story
+ * has everything it needs to continue, plus how long it has been since they were last seen.
  */
 function awayEntry(character, messageIndex) {
     return {
-        ...compact(character, true),
+        ...compact(character),
         replies_since_seen: Math.max(0, messageIndex - (character.lastSeen ?? messageIndex)),
     };
 }
 
 /**
- * Builds the background model's request: the ledger, the latest messages, and the rules for major
- * characters, steps, events, the bio and off-screen lives.
+ * Builds the background model's request: the character cards (for who everyone is), the ledger, the
+ * latest messages, and the rules for major characters, first-person memory and off-screen lives.
  */
-function buildUpdatePrompt(messageIndex) {
+async function buildUpdatePrompt(messageIndex) {
     const cast = getCast();
     const context = getContext();
     const userName = context.name1 || 'User';
@@ -301,42 +283,52 @@ function buildUpdatePrompt(messageIndex) {
     const characters = Object.values(cast.characters);
     const inScene = characters.filter((c) => c.status === 'present' || isMentioned(c, recentText));
     const away = characters.filter((c) => !inScene.includes(c) && c.status !== 'dead');
-    const needsBio = characters.filter((c) => (c.events?.length || 0) > MAX_EVENTS).map((c) => c.name);
+    const needsSummary = characters.filter((c) => (c.events?.length || 0) > MAX_EVENTS).map((c) => c.name);
     // Away characters with nothing in "Doing now" must be given an activity this time
     const idle = away.filter((c) => !c.steps?.length).map((c) => c.name);
     const scene = sceneInfo();
     const statusPanel = statusPanelCharacters();
+    let cards = '';
+    try {
+        cards = String(await getCharacterCardsInfo() || '').trim().slice(0, CARDS_LIMIT);
+    } catch {
+        // No card info: the story itself is the context
+    }
 
-    const system = `You keep the cast ledger for an ongoing roleplay story: the lasting memory of its major characters (everyone except ${userName}). It is kept for the whole story, so it must stay short and only hold what matters. You never write story text, only the requested JSON.
+    const system = `You keep the cast ledger for an ongoing roleplay story: the lasting memory of its major characters (everyone except ${userName}), kept for the whole story. For each character it holds only two things, both written by the character in FIRST PERSON:
+- "Doing now": what I am doing right now.
+- "What happened": what I have done and been through, one entry per finished activity.
+Do not track looks, personality, relationships or anything else: the character cards, the status panel and the story already describe who everyone is. Read them for context. You never write story text, only the requested JSON.
 
 Who belongs in the ledger:
 - Only MAJOR characters: named characters who matter to the story. They interact with ${userName} in a meaningful way, keep coming back, or affect the plot. The main character of the story always counts.
 - Leave out minor characters: passing extras, waiters, guards, crowds, one-line strangers. Add one later only if they become important.
 - Use the exact name already in the ledger for known characters (match nicknames and titles to them). Never record ${userName}.
 
-What to write for a character:
-- "set": only fields that changed or are new, each one short phrase: role ("innkeeper"), goal (what they want or are working toward right now), appearance and personality (lasting traits, not moods), relationship (how they feel about ${userName}), location (where they are now), status ("present" in the current scene, "away" otherwise, "dead" if they died).
-- "step": a few words for a NEW development in what they are doing right now ("gets in the car", "shopping in the aisles"). Do not repeat a step that is still true: ten turns of shopping is one step.
-- "finish": when an activity is over (they left, the scene moved on, or it reached its result), one short past-tense sentence of the outcome that matters ("went to the store and got 10 eggs"). It replaces their steps. If they have ${MAX_STEPS} or more steps, finish now.
-${needsBio.length ? `- "bio": for ${needsBio.join(', ')}, two or three sentences of who they are now and what still matters, merging their current bio with their ${EVENTS_TO_FOLD} oldest events.\n` : ''}
-${statusPanel ? `The status panel (Present Characters tracker) lists who is in the scene right now, with their current details. Treat its major characters as present, use it to fill in or correct their looks, relationship and situation, and add any major character from it who is missing from the ledger.
+How to write, always in the character's own voice ("I", "me", "my"), fleshed out rather than bare notes:
+- "step": what I am doing right now, present tense, one or two sentences with the detail that matters: what I am doing, how, and why or how I feel about it. ("I'm hauling crates off the barge at the docks, counting every one twice because the Vey's man is watching.") Only for a NEW development: do not repeat a step that is still true; ten turns of shopping is one step.
+- "finish": when an activity is over (I left, the scene moved on, or it reached its result), what happened in two or three sentences, past tense: what I did, how it turned out, and what it means for me. ("I went to the store and got ten eggs. The old man at the till tried to short-change me and I let it go; I wasn't in the mood for a fight.") It replaces my steps. If I have ${MAX_STEPS} or more steps, finish now.
+- "status": "present" when I am in the current scene, "away" when I am not, "dead" if I died. Only when it changes.
+- Match each character's own voice and way of speaking, as the cards and the story show it.
+${needsSummary.length ? `- "summary": for ${needsSummary.join(', ')}, retell my ${EVENTS_TO_FOLD} oldest "What happened" entries as one first-person paragraph (three to five sentences) that keeps what still matters to me. It replaces them.\n` : ''}
+${statusPanel ? `The status panel (Present Characters tracker) lists who is in the scene right now. Treat its major characters as present, and add any major character from it who is missing from the ledger.
 
-` : ''}Off-screen lives (characters under "away"): their lives keep going the whole time ${userName} is elsewhere. Each one is the lead of their own story, with their own plans, not an extra waiting in the wings for ${userName}.
-- "Doing now" never stops for them: every away character always has a current off-screen activity in their steps, until they are back in a scene with ${userName}. Mark every off-screen change with "offscreen": true.
-- Be proactive. Each activity should push their own story forward: work toward their goal, make and carry out plans, take risks, seek people out, make deals, pick fights, chase leads, deal with the consequences of what they did before. When a goal is reached or blocked, give them a new one with "set".
-- No idling: never "waiting for ${userName}", "thinking about ${userName}", "resting", "passing time" or "going about their day". Sleep, meals and travel only when the story's time calls for them, and even then something can happen. Thinking about ${userName} only counts when it drives an action (going to look for them, preparing something for them).
-- Their world has other people in it: they can meet, help or clash with other characters from the ledger and with people of their own (a rival, a boss, a lover, a creditor). Keep new people as part of their activity, not new ledger entries, unless they become major.
-- Move each away character along in proportion to the story time that passed in the NEW messages. A few minutes: the same activity continues, or the next small move in their plan. Longer: "finish" the activity (one past-tense sentence for "What happened") AND give the next "step" in the same entry, so their "Doing now" is never empty and their story keeps going.
-${idle.length ? `- These away characters have nothing in "Doing now" yet; give each one a purposeful activity now: ${idle.join(', ')}.\n` : ''}- Build on their whole entry: continue their earlier off-screen events and steps, and let their goal, bio, relationship and personality decide what they do next. Update their goal, location or relationship with "set" when it changes.
-- Big moves are fine when they follow from who they are and what they want (a new job, a betrayal, a debt paid off, a move to another town). Off limits: deaths, meeting ${userName}, and arriving in ${userName}'s scene, which only the main story decides.
-- When an away character comes back into a scene with ${userName}, set "status": "present" and "finish" their off-screen activity in one sentence of what they were up to.
+` : ''}Off-screen lives (characters under "away"): my life keeps going the whole time ${userName} is elsewhere. I am the lead of my own story, with my own plans, not an extra waiting in the wings for ${userName}.
+- "Doing now" never stops: every away character always has a current off-screen activity, until they are back in a scene with ${userName}. Mark every off-screen change with "offscreen": true.
+- Be proactive. Each activity pushes my own story forward: I chase what I want, make and carry out plans, take risks, seek people out, make deals, pick fights, follow leads, and deal with the consequences of what I did before. When I get what I wanted, or it falls through, I go after something new.
+- No idling: never "waiting for ${userName}", "thinking about ${userName}", "resting", "passing time" or "going about my day". Sleep, meals and travel only when the story's time calls for them, and even then something can happen. Thinking about ${userName} only counts when it drives an action (going to look for them, getting something ready for them).
+- My world has other people in it: I can meet, help or clash with other characters from the ledger and with people of my own (a rival, a boss, a lover, a creditor). Keep them inside my activity, not as new ledger entries, unless they become major.
+- Move each away character along in proportion to the story time that passed in the NEW messages. A few minutes: the same activity continues, or the next small move in my plan. Longer: "finish" the activity AND give the next "step" in the same entry, so "Doing now" is never empty and my story keeps going.
+${idle.length ? `- These away characters have nothing in "Doing now" yet; give each one a purposeful activity now: ${idle.join(', ')}.\n` : ''}- Build on my whole memory and on who I am in the cards and the story: continue my earlier off-screen steps and entries, so my story moves forward one believable piece at a time.
+- Big moves are fine when they follow from who I am and what I want (a new job, a betrayal, a debt paid off, a move to another town). Off limits: deaths, meeting ${userName}, and arriving in ${userName}'s scene, which only the main story decides.
+- When an away character comes back into a scene with ${userName}, set "status": "present" and "finish" the off-screen activity with what I was up to.
 
 Reply with JSON only:
-{"characters": [{"name": "Name", "set": {"location": "..."}, "step": "...", "finish": "...", "offscreen": false, "bio": "..."}]}
-Use {"characters": []} if nothing changed.`;
+{"characters": [{"name": "Name", "status": "away", "step": "I'm ...", "finish": "I ...", "offscreen": false, "summary": "..."}]}
+Leave out keys you do not need. Use {"characters": []} if nothing changed.`;
 
     const ledger = {
-        in_scene_or_mentioned: inScene.map((c) => compact(c, true)),
+        in_scene_or_mentioned: inScene.map((c) => compact(c)),
         away: away.map((c) => awayEntry(c, messageIndex)),
     };
 
@@ -347,7 +339,7 @@ Use {"characters": []} if nothing changed.`;
 
     return [
         { role: 'system', content: system },
-        { role: 'user', content: `Current ledger:\n${JSON.stringify(ledger)}\n${scene ? `\nCurrent scene info: ${scene}\n` : ''}${statusPanel ? `\nStatus panel, characters in the scene now:\n${statusPanel}\n` : ''}\n${story}NEW messages (record these; the last one is the newest):\n<messages>\n${format(latest)}\n</messages>\n\nUpdate the ledger. JSON only.` },
+        { role: 'user', content: `${cards ? `Character cards (who everyone is):\n<cards>\n${cards}\n</cards>\n\n` : ''}Current ledger:\n${JSON.stringify(ledger)}\n${scene ? `\nCurrent scene info: ${scene}\n` : ''}${statusPanel ? `\nStatus panel, characters in the scene now:\n${statusPanel}\n` : ''}\n${story}NEW messages (record these; the last one is the newest):\n<messages>\n${format(latest)}\n</messages>\n\nUpdate the ledger. JSON only.` },
     ];
 }
 
@@ -365,7 +357,7 @@ function parseUpdate(text) {
     }
 }
 
-const SETTABLE = ['role', 'goal', 'appearance', 'personality', 'relationship', 'location', 'status'];
+const STATUSES = ['present', 'away', 'dead'];
 export const OFFSCREEN_PREFIX = '(off-screen) ';
 
 /**
@@ -396,14 +388,9 @@ export function applyCastUpdate(updates, messageIndex) {
             cast.characters[key] = character;
         }
 
-        const set = update.set && typeof update.set === 'object' ? update.set : {};
-        for (const field of SETTABLE) {
-            const value = set[field];
-            if (typeof value === 'string' && value.trim()) character[field] = value.trim();
-        }
-        if (Array.isArray(set.aliases)) {
-            character.aliases = [...new Set([...(character.aliases || []), ...set.aliases.map(String).filter(Boolean)])];
-        }
+        // Status may come at the top level or, from older replies, inside "set"
+        const status = String(update.status ?? update.set?.status ?? '').trim().toLowerCase();
+        if (STATUSES.includes(status)) character.status = status;
 
         // Off-screen developments are marked: ${userName} has not seen them
         const offscreen = update.offscreen === true;
@@ -424,12 +411,13 @@ export function applyCastUpdate(updates, messageIndex) {
         // The model forgot to finish a long activity: keep only the latest steps
         if (character.steps.length > MAX_STEPS) character.steps = character.steps.slice(-MAX_STEPS);
 
-        if (typeof update.bio === 'string' && update.bio.trim() && character.events.length > MAX_EVENTS) {
-            character.bio = update.bio.trim();
-            character.events = character.events.slice(EVENTS_TO_FOLD);
+        // The oldest entries retold as one summary, which takes their place
+        const summary = typeof update.summary === 'string' ? update.summary.trim() : '';
+        if (summary && character.events.length > MAX_EVENTS) {
+            character.events = [summary, ...character.events.slice(EVENTS_TO_FOLD)];
         }
 
-        if (offscreen && set.status !== 'present') {
+        if (offscreen && status !== 'present') {
             // Something happened to them elsewhere, so they are not in this scene
             if (character.status === 'present') character.status = 'away';
         } else {
@@ -440,7 +428,7 @@ export function applyCastUpdate(updates, messageIndex) {
 
     // When the model names who is in the scene, everyone else who was present has stepped out of it
     const touched = new Set(Object.keys(before));
-    const sceneReported = updates.some((u) => u?.set?.status === 'present');
+    const sceneReported = updates.some((u) => String(u?.status ?? u?.set?.status ?? '').toLowerCase() === 'present');
     for (const [key, character] of Object.entries(cast.characters)) {
         if (!sceneReported || touched.has(key) || character.locked || character.status !== 'present') continue;
         before[key] = structuredClone(character);
@@ -492,7 +480,7 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
 
             let response;
             try {
-                response = await requestUpdate(buildUpdatePrompt(messageIndex));
+                response = await requestUpdate(await buildUpdatePrompt(messageIndex));
             } catch (error) {
                 console.warn('[RPG Companion] Cast update failed:', error);
                 castStatus.lastError = error?.message || String(error);
@@ -559,25 +547,19 @@ export function isMentioned(character, text) {
     return names.some((n) => n && new RegExp(`(^|[^\\p{L}])${escapeRegex(n)}($|[^\\p{L}])`, 'iu').test(text));
 }
 
-function describe(character, userName) {
+function describe(character) {
     const parts = [];
-    if (character.appearance) parts.push(`Looks: ${character.appearance}`);
-    if (character.personality) parts.push(`Personality: ${character.personality}`);
-    if (character.goal) parts.push(`Wants: ${character.goal}`);
-    if (character.relationship) parts.push(`Toward ${userName}: ${character.relationship}`);
-    if (character.bio) parts.push(`Background: ${character.bio}`);
     const events = (character.events || []).slice(-EVENTS_IN_PROMPT);
-    if (events.length) parts.push(`Recently: ${events.join('; ')}`);
-    if (character.steps?.length) parts.push(`Doing now: ${character.steps.join(' → ')}`);
-    if (character.location) parts.push(`${character.status === 'present' ? 'At' : 'Last seen at'}: ${character.location}`);
-    if (character.status === 'dead') parts.push('Status: dead');
-    const role = character.role ? ` (${character.role})` : '';
-    return `- ${character.name}${role}. ${parts.join('. ')}`;
+    if (events.length) parts.push(`What happened: ${events.join(' ')}`);
+    if (character.steps?.length) parts.push(`Doing now: ${character.steps.join(' Then: ')}`);
+    if (character.status === 'dead') parts.push('(dead)');
+    return `- ${character.name}${parts.length ? `: ${parts.join(' | ')}` : ''}`;
 }
 
 /**
- * The cast notes for the main model: full entries for characters in the scene or mentioned in the
- * latest messages, and a roster line for everyone else.
+ * The cast notes for the main model: each relevant character's own memory (what happened to them and
+ * what they are doing now) for characters in the scene or mentioned in the latest messages, and the
+ * names of everyone else.
  */
 export function buildCastNotes() {
     const characters = Object.values(getCast().characters);
@@ -588,11 +570,9 @@ export function buildCastNotes() {
     const relevant = characters.filter((c) => c.status === 'present' || isMentioned(c, lookback));
     const others = characters.filter((c) => !relevant.includes(c) && c.status !== 'dead');
 
-    let notes = `<cast_notes>\nLasting memory of this story's characters, for consistency. Use it quietly: never quote or list these notes in the reply. Lines marked (off-screen) happened where ${userName} could not see: characters may bring them up, but ${userName} does not know them yet.\n`;
-    if (relevant.length) notes += relevant.map((c) => describe(c, userName)).join('\n') + '\n';
-    if (others.length) {
-        notes += `Also known: ${others.map((c) => `${c.name}${c.role ? ` (${c.role}${c.location ? `, last seen at ${c.location}` : ''})` : ''}`).join('; ')}\n`;
-    }
+    let notes = `<cast_notes>\nLasting memory of this story's characters, each in their own words (first person), for consistency. Use it quietly: never quote or list these notes in the reply. Lines marked (off-screen) happened where ${userName} could not see: characters may bring them up, but ${userName} does not know them yet.\n`;
+    if (relevant.length) notes += relevant.map(describe).join('\n') + '\n';
+    if (others.length) notes += `Also in the story: ${others.map((c) => c.name).join(', ')}\n`;
     notes += '</cast_notes>';
     return notes;
 }

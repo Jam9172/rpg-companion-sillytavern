@@ -80,7 +80,7 @@ export const HIDDEN_NOTES_LABEL = '(Hidden tracker notes, not part of the messag
  * Gets character card information for current chat (handles both single and group chats)
  * @returns {string} Formatted character information
  */
-async function getCharacterCardsInfo() {
+export async function getCharacterCardsInfo() {
     let characterInfo = '';
 
     // Narrator mode: use character card as narrator context, infer characters from story context
