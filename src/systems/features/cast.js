@@ -197,8 +197,10 @@ export function reconcileCast() {
 function compact(character) {
     const out = { name: character.name, status: character.status };
     if (character.aliases?.length) out.aliases = character.aliases;
-    if (character.events?.length) out.what_happened = character.events;
-    if (character.steps?.length) out.doing_now = character.steps;
+    // Without the off-screen marks: the model writes plain text and the mark is added on our side
+    const plain = (lines) => lines.map((line) => line.replace(OFFSCREEN_PREFIX, ''));
+    if (character.events?.length) out.what_happened = plain(character.events);
+    if (character.steps?.length) out.doing_now = plain(character.steps);
     return out;
 }
 
@@ -312,17 +314,16 @@ Nothing else. Looks, personality and relationships are already in the character 
 Being talked about, remembered or thought of does not make a character here. Only being in the scene with ${userName} does.
 
 # Your reply
-{"here": ["Name"], "away": [{"name": "Name", "what_happened": "I ...", "doing_now": "I'm ..."}], "returned": [{"name": "Name", "what_happened": "I ..."}], "dead": ["Name"]${needsSummary.length ? ', "summaries": [{"name": "Name", "text": "..."}]' : ''}}
+{"here": ["Name"], "away": [{"name": "Name", "what_happened": "I ...", "doing_now": "I'm ..."}], "dead": ["Name"]${needsSummary.length ? ', "summaries": [{"name": "Name", "text": "..."}]' : ''}}
 
-"here" (always required): every major character in the scene with ${userName} at the end of the NEW messages, including the ones who were already here. Anyone you leave out is moved to away. Use [] only when no major character is with ${userName}.
+"here" (always required): every major character in the scene with ${userName} at the end of the NEW messages, including the ones who were already here and the ones who just came back from away. Write nothing else for any of them, not even when they come back: what they were last doing off-screen is kept as it is. Anyone you leave out is moved to away. Use [] only when no major character is with ${userName}.
 
 "away": one entry per away character whose off-screen life moves on in this update.
+- "doing_now" and "what_happened" are each ONE string (not a list), plain text without "(off-screen)".
 - "doing_now": what they are doing now, when it is something NEW. One or two sentences: what they are doing, how, and why or how they feel about it. ("I'm hauling crates off the barge at the docks, counting every one twice because the Vey's man is watching.") Leave it out if their current Doing now is still true. Ten turns of shopping is one entry, not ten.
 - "what_happened": when their current activity is over (they got what they went for, it fell through, or enough story time passed), close it in two or three sentences: what they did, how it turned out, and what it means to them. ("I went to the store and got ten eggs. The old man at the till tried to short-change me and I let it go; I wasn't in the mood for a fight.") This replaces their Doing now, so ALWAYS give the next "doing_now" in the same entry. If their Doing now already has ${MAX_STEPS} or more lines, close it now.
 - A character who LEFT the scene in the NEW messages goes here too, with only a "doing_now": what they went off to do.
 ${idle.length ? `- These away characters have nothing in Doing now. Each one MUST get an entry with a "doing_now" in this update: ${idle.join(', ')}.\n` : ''}
-"returned": characters who are under "away" in the ledger and are back in the scene with ${userName} in the NEW messages. Give each one "what_happened": two or three sentences on what they were up to while they were away, ending with them coming back. List them in "here" too. Leave "returned" out when nobody came back.
-
 "dead": characters who died in the NEW messages. Leave it out otherwise.
 ${needsSummary.length ? `\n"summaries": for ${needsSummary.join(', ')}: retell the ${EVENTS_TO_FOLD} oldest What happened entries as one first-person paragraph (three to five sentences) that keeps what still matters to the character. It replaces them.\n` : ''}
 Leave out any list you do not need, except "here".
@@ -386,6 +387,11 @@ function parseUpdate(text) {
 
     const list = (value) => (Array.isArray(value) ? value : []);
     const nameOf = (entry) => String(typeof entry === 'string' ? entry : entry?.name || '').trim();
+    // One line of memory; models sometimes copy the ledger's shape (a list, or the off-screen mark)
+    const line = (value) => {
+        const text = Array.isArray(value) ? value.filter((v) => typeof v === 'string').at(-1) : value;
+        return typeof text === 'string' ? text.replace(/^\s*\(off-screen\)\s*/i, '').trim() || undefined : undefined;
+    };
     // One update per character, however many lists they appear in
     const byName = new Map();
     const add = (name, fields) => {
@@ -396,9 +402,10 @@ function parseUpdate(text) {
     const here = list(data.here).map(nameOf).filter(Boolean);
     for (const name of here) add(name, { status: 'present' });
     for (const entry of list(data.away)) {
-        add(nameOf(entry), { status: 'away', step: entry?.doing_now, finish: entry?.what_happened });
+        add(nameOf(entry), { status: 'away', step: line(entry?.doing_now), finish: line(entry?.what_happened) });
     }
-    for (const entry of list(data.returned)) add(nameOf(entry), { status: 'present', finish: entry?.what_happened });
+    // No longer asked for; whoever is in it is back in the scene
+    for (const entry of list(data.returned)) add(nameOf(entry), { status: 'present' });
     for (const entry of list(data.dead)) add(nameOf(entry), { status: 'dead' });
     for (const entry of list(data.summaries)) {
         if (nameOf(entry) && typeof entry?.text === 'string') add(nameOf(entry), { summary: entry.text });
@@ -441,24 +448,22 @@ export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
         const status = String(update.status ?? update.set?.status ?? '').trim().toLowerCase();
         if (STATUSES.includes(status)) character.status = status;
 
-        // Characters who are here are not tracked: the story shows what they do. The one exception is
-        // coming back from off-screen, when what they were up to is closed into "What happened".
+        // Characters who are here are not tracked at all: the story shows what they do. Everything that is
+        // tracked happens away from the user, so it is always marked off-screen.
         const wasHere = before[key] ? before[key].status === 'present' : true;
         const isHere = character.status === 'present';
         const rejoining = isHere && !wasHere;
-        // Everything tracked happens away from the user, so it is always marked off-screen
-        const offscreen = !isHere || rejoining;
-        const mark = (text) => (offscreen ? OFFSCREEN_PREFIX : '') + text.trim();
-        if (!isHere || rejoining) {
+        const mark = (text) => OFFSCREEN_PREFIX + text.trim();
+        if (!isHere) {
             if (typeof update.finish === 'string' && update.finish.trim()) {
                 character.events.push(mark(update.finish));
                 character.steps = [];
             }
-            if (!isHere && typeof update.step === 'string' && update.step.trim() && character.steps.at(-1) !== mark(update.step)) {
+            if (typeof update.step === 'string' && update.step.trim() && character.steps.at(-1) !== mark(update.step)) {
                 character.steps.push(mark(update.step));
             }
         }
-        // Back in the scene with off-screen steps still open: fold them into one off-screen event
+        // Back in the scene: what they were last doing off-screen is kept, as it was, in "What happened"
         if (rejoining && character.steps.length) {
             const open = character.steps.map((step) => step.replace(OFFSCREEN_PREFIX, ''));
             character.events.push(OFFSCREEN_PREFIX + open.join(' Then '));
@@ -474,12 +479,7 @@ export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
             character.events = [summary, ...character.events.slice(EVENTS_TO_FOLD)];
         }
 
-        if (offscreen && !isHere) {
-            // Something happened to them elsewhere, so they are not in this scene
-            if (character.status === 'present') character.status = 'away';
-        } else {
-            character.lastSeen = messageIndex;
-        }
+        if (isHere) character.lastSeen = messageIndex;
         changed++;
     }
 
