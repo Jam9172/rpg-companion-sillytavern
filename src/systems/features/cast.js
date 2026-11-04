@@ -4,8 +4,9 @@
  * A ledger of the story's major characters, saved in the chat's metadata so it lasts the whole story.
  * It keeps only each character's own memory, written in first person:
  *   Doing now     - what I am doing right now; it never stops for characters who are away
- *   What happened - each finished activity in a few sentences; the oldest are summed up, and the
- *                   entries themselves go to the archive, where a mention of their keywords brings them back
+ *   What happened - a short timeline: one short sentence per finished activity; the oldest are summed up
+ *                   in a sentence or two, and the entries themselves go to the archive, where a mention of
+ *                   their keywords brings them back. It is for continuity, not every detail.
  * Looks, personality and relationships are not tracked: they come from the character cards and the story.
  * Alongside it, the story so far: one beat per reply, retold as chapters.
  *
@@ -36,8 +37,10 @@ const METADATA_KEY = 'rpg_cast';
 
 // Limits that keep each character short
 const MAX_STEPS = 6;          // more than this and the activity is folded into an event
-const MAX_EVENTS = 10;        // more than this and the oldest are folded into one summary
-const EVENTS_TO_FOLD = 6;     // how many of the oldest events go into that summary at once
+const MAX_EVENTS = 5;         // more than this and the older ones are folded into one summary
+const RECENT_EVENTS = 3;      // the newest events a summary leaves as they are
+const EVENTS_HARD_CAP = 20;   // the summing-up call keeps failing: past this, the older ones are archived anyway
+                              // (above the old limits, so long memories from before still get their summary)
 const EVENTS_IN_PROMPT = 3;   // recent events shown to the main model per character
 const CARDS_LIMIT = 6000;     // characters of card descriptions sent to the background model
 const MAX_JOURNAL = 200;      // undo entries kept (older ones can no longer be rolled back)
@@ -189,9 +192,13 @@ function isKeyMemory(character, event) {
     return Boolean(character.keyMemories?.includes(event));
 }
 
-/** The oldest entries that can be summed up and archived: key memories always stay. */
+/**
+ * The entries a summary takes in: everything but the newest few (an earlier summary included), so What
+ * happened is back to a summary and the latest entries afterwards. Key memories always stay.
+ */
 function foldable(character) {
-    return (character.events || []).filter((e) => !isKeyMemory(character, e)).slice(0, EVENTS_TO_FOLD);
+    const events = character.events || [];
+    return events.slice(0, Math.max(0, events.length - RECENT_EVENTS)).filter((e) => !isKeyMemory(character, e));
 }
 
 /**
@@ -572,8 +579,8 @@ async function buildUpdatePrompt(messageIndex) {
 
 <ledger_rules>
 Each character's memory is written by the character about themself, in FIRST PERSON ("I", "me", "my"), in their own voice:
-- What happened: things they finished doing or went through. Past tense, two or three sentences each.
-- Doing now: what they are doing at this moment. Present tense, one or two sentences. Kept only while they are away.
+- What happened: a short timeline of what they finished doing or went through, for continuity. Past tense, ONE short sentence per entry: what happened and how it ended. Never the small details.
+- Doing now: what they are doing at this moment. Present tense, one short sentence. Kept only while they are away.
 Nothing else is tracked: looks, personality and relationships come from the cards and the story.
 
 HERE: in the same scene as ${userName} at the end of the NEW messages. The story already shows what they do, so you write nothing about them.
@@ -598,9 +605,9 @@ Away characters are the leads of their own stories, not extras waiting in the wi
 - "story_beat": what happened in the main story in the NEW messages, in one sentence (two at most): past tense, third person, naming who did what (${userName} by name). "" if nothing happened.
 - "here": every major character with ${userName} at the end of the NEW messages, including those already here and those who just came back from away. Anyone you leave out is moved to away. Nothing else is written for them.
 - "away": one entry for each away character whose off-screen life moves on, and one for each character who LEFT the scene in the NEW messages (with what they went off to do).
-  - "what_happened": "" unless their current activity is over. Then close it in two or three past-tense sentences: what they did, how it turned out, and what it means to them.
+  - "what_happened": "" unless their current activity is over. Then close it in ONE short past-tense sentence (about 20 words at most): what they did and how it turned out.
   - "important": true only when that finished activity is one the character will carry for a long time (a death, a betrayal, a promise made or broken, a big win or loss, a secret learned). Otherwise false. Entries marked "★" in the ledger are already key memories.
-  - "doing_now": "" if their current Doing now is still true (never repeat or reword it). Otherwise the new activity in one or two present-tense sentences: what they are doing, how, and why or how they feel about it. When you close an activity, always give the next one.
+  - "doing_now": "" if their current Doing now is still true (never repeat or reword it). Otherwise the new activity in one short present-tense sentence: what they are doing and why. When you close an activity, always give the next one.
   - Ten turns of shopping is one activity, not ten. If their Doing now has ${MAX_STEPS} or more lines, close it.
 - "dead": characters who died in the NEW messages.
 - Use [] for an empty list. Plain text only, without "(off-screen)" marks.
@@ -611,7 +618,7 @@ Made-up names; only the shape matters.
 Ledger: here: Aldo. Away: Brina, Doing now: "I'm bribing the harbor clerk for the shipping lists."
 NEW messages: Aldo storms out to fetch the healer, and ${userName} waits alone until nightfall.
 Reply:
-{"story_beat": "Aldo stormed out to fetch the healer, and ${userName} waited alone until nightfall.", "here": [], "away": [{"name": "Aldo", "what_happened": "", "important": false, "doing_now": "I'm running through the market to drag the healer back, shoving past anyone slow enough to be in my way."}, {"name": "Brina", "what_happened": "I got the shipping lists for two silver and a promise I don't mean to keep. The clerk will want more by the next tide, but now I have the name of the ship.", "important": false, "doing_now": "I'm rowing out to the Gull's Wake after dark to see what it is really carrying."}], "dead": []}
+{"story_beat": "Aldo stormed out to fetch the healer, and ${userName} waited alone until nightfall.", "here": [], "away": [{"name": "Aldo", "what_happened": "", "important": false, "doing_now": "I'm running through the market to drag the healer back."}, {"name": "Brina", "what_happened": "I bribed the harbor clerk for the shipping lists and learned the ship's name.", "important": false, "doing_now": "I'm rowing out to the Gull's Wake to see what it really carries."}], "dead": []}
 </example>`;
 
     const ledger = {
@@ -771,10 +778,8 @@ export function applyCastUpdate(updates, messageIndex, { here = null, story = nu
             }
         }
         // Back in the scene: what they were last doing off-screen is kept, as it was, in "What happened"
-        if (rejoining && character.steps.length) {
-            const open = character.steps.map((step) => step.replace(OFFSCREEN_PREFIX, ''));
-            character.events.push(OFFSCREEN_PREFIX + open.join(' Then '));
-        }
+        // (only the latest step: the earlier ones led up to it)
+        if (rejoining && character.steps.length) character.events.push(character.steps.at(-1));
         // Nothing is "Doing now" while they are here
         if (isHere) character.steps = [];
         // The model forgot to finish a long activity: keep only the latest steps
@@ -789,7 +794,7 @@ export function applyCastUpdate(updates, messageIndex, { here = null, story = nu
             // A summary of off-screen entries is off-screen too
             const mark = folded.every((e) => e.startsWith(OFFSCREEN_PREFIX)) ? OFFSCREEN_PREFIX : '';
             character.events = [mark + summary, ...character.events.filter((e) => !folded.includes(e))];
-        } else if (character.events.length > MAX_EVENTS + EVENTS_TO_FOLD && folded.length) {
+        } else if (character.events.length > EVENTS_HARD_CAP && folded.length) {
             // The model never summed them up: archive the oldest anyway, so What happened stays short
             archived.push(archiveMemories(cast, character, folded, [], messageIndex));
             character.events = character.events.filter((e) => !folded.includes(e));
@@ -845,9 +850,9 @@ function buildFoldPrompt({ summaries, chapter }) {
     const system = `You keep the long-term memory of an ongoing roleplay story. You never write story text. You reply with one JSON object and nothing else.
 
 Do only the jobs listed in the request:
-- Character summary: retell the listed memories of one character as one paragraph in that character's own voice, in FIRST PERSON ("I", "me", "my"), past tense, three to five sentences. Keep what still matters to them: names, places, deals, debts, injuries, promises, and how they feel about it. "keywords": three to eight names of the people, places and things in those memories (never the character's own name); a later mention of one brings the full memories back.
+- Character summary: retell the listed memories of one character (the first may already be a summary) as a short timeline in that character's own voice, in FIRST PERSON ("I", "me", "my"), past tense: one or two short sentences, about 40 words at most, in order ("I ..., then I ..."). Keep only what matters for continuity: who, where, how each thing ended, and any debt or promise still open. Drop the small details. "keywords": three to eight names of the people, places and things in those memories (never the character's own name); a later mention of one brings the full memories back.
 - Chapter: retell the listed story beats (or earlier chapters) as one chapter of the story: four to six sentences, past tense, third person, keeping who, where and what changed.
-Use only what is listed. Add nothing, and leave nothing out that matters.
+Use only what is listed. Add nothing.
 
 Reply: {"summaries": [{"name": "...", "text": "...", "keywords": ["..."]}], "chapter": "..."}
 Use [] or "" for a job that was not asked for.`;
@@ -1195,7 +1200,7 @@ export function refreshCast() {
 
 /* ---------- Tidy (Cast tab) ---------- */
 
-const TIDY_EVENTS = 5;        // what a tidy aims for: at most this many What happened entries per character
+const TIDY_EVENTS = 4;        // what a tidy aims for: at most this many What happened entries per character
 
 /** The tidy request: every character's whole memory, the cards and the recent story, and the rules. */
 async function buildTidyPrompt(characters) {
@@ -1216,8 +1221,8 @@ async function buildTidyPrompt(characters) {
     const system = `You tidy the cast ledger of an ongoing roleplay story: the lasting memory of its major characters, each written by the character about themself in FIRST PERSON ("I", "me", "my"). You never write story text. You reply with JSON only.
 
 Rewrite each character's memory so it is shorter, cleaner and correct:
-- "what_happened": their finished experiences, oldest first. Merge entries that belong together, drop repeats and filler, and keep every fact that still matters (names, places, deals, debts, injuries, promises, and how the character feels about them). Aim for at most ${TIDY_EVENTS} entries; the oldest can become one short summary. Each entry two to four sentences, past tense.
-- "doing_now" (only for characters whose status is "away"): one or two sentences, present tense, of what they are doing at this moment. Drop steps that are already over or replaced by later ones; a finished step that matters belongs at the end of "what_happened".
+- "what_happened": a short timeline of their finished experiences, oldest first, for continuity only. Merge entries that belong together and drop repeats, filler and small details; keep who, where, how each thing ended, and any debt or promise still open. At most ${TIDY_EVENTS} entries: the oldest become one summary of one or two short sentences, and every other entry is ONE short sentence of 20 words at most, past tense. Merging means shortening: never just join two entries with "and".
+- "doing_now" (only for characters whose status is "away"): one short sentence, present tense, of what they are doing at this moment. Drop steps that are already over or replaced by later ones; a finished step that matters belongs at the end of "what_happened".
 - Fix mistakes: entries that contradict each other or the story and the cards (the story wins), wrong or misspelled names, entries in third person or the wrong tense, entries that belong to a different character, and things the character could not know.
 - Never invent events or details, and never change what happened. Use only what is already in the memory, the story and the cards.
 - Keep each character's own voice.
