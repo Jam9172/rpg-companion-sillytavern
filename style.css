@@ -15350,6 +15350,40 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     color: var(--forge-brass, #D9A35B);
 }
 
+/* Cast: the key memory star on What happened entries */
+.rpg-cast-key {
+    flex: none;
+    margin: 0;
+    padding: 0 0.25rem;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 0.8em;
+    opacity: 0.35;
+    cursor: pointer;
+}
+
+.rpg-cast-key:hover,
+.rpg-cast-key[aria-pressed="true"] {
+    opacity: 1;
+    color: var(--forge-brass, #D9A35B);
+}
+
+/* Arcane Forge draws every star as the same outline icon: a starred entry gets it filled */
+.rpg-panel[data-theme="forge"] .rpg-cast-key[aria-pressed="true"] i.fa-star {
+    --forge-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000' stroke='%23000' stroke-width='1.75' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.6 5.6 6 .6-4.5 4 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.5-4 6-.6z'/%3E%3C/svg%3E");
+}
+
+.rpg-cast-event.is-key .rpg-cast-memory {
+    color: var(--forge-bright, inherit);
+}
+
+.rpg-meanwhile-key {
+    margin-right: 0.35em;
+    color: var(--forge-brass, #D9A35B);
+    font-size: 0.8em;
+}
+
 /* Cast: the story so far (chapters, then beats), folded above the cast list */
 .rpg-cast-story {
     margin: 0.5rem 0 0.25rem;

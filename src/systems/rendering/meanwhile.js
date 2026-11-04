@@ -24,7 +24,7 @@ function line(item) {
         case 'left': return `<li class="is-status">${name} ${escapeHtml(t('meanwhile.left', 'left the scene'))}</li>`;
         case 'back': return `<li class="is-status">${name} ${escapeHtml(t('meanwhile.back', 'is back'))}</li>`;
         case 'died': return `<li class="is-status">${name} ${escapeHtml(t('meanwhile.died', 'died'))}</li>`;
-        case 'done': return `<li><span class="rpg-meanwhile-kind">${escapeHtml(t('meanwhile.done', 'Finished'))}</span>${name}<span class="rpg-meanwhile-text">${escapeHtml(item.text)}</span></li>`;
+        case 'done': return `<li${item.key ? ' class="is-key"' : ''}><span class="rpg-meanwhile-kind">${escapeHtml(t('meanwhile.done', 'Finished'))}</span>${item.key ? `<i class="fa-solid fa-star rpg-meanwhile-key" title="${escapeHtml(t('meanwhile.key', 'Key memory'))}" aria-label="${escapeHtml(t('meanwhile.key', 'Key memory'))}"></i>` : ''}${name}<span class="rpg-meanwhile-text">${escapeHtml(item.text)}</span></li>`;
         default: return `<li><span class="rpg-meanwhile-kind is-now">${escapeHtml(t('meanwhile.doing', 'Now'))}</span>${name}<span class="rpg-meanwhile-text">${escapeHtml(item.text)}</span></li>`;
     }
 }

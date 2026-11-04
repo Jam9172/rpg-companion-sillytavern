@@ -49,6 +49,8 @@ const MAX_CHAPTERS = 8;       // more chapters than this and the oldest are reto
 const CHAPTERS_TO_FOLD = 4;   // how many of the oldest chapters go into it
 const STORY_CHARS = 6000;     // most of the story so far sent to the main model (newest parts kept)
 const STORY_PROMPT_KEY = 'rpg-companion-story';
+const MAX_KEY_MEMORIES = 5;   // key memories kept per character (starring another unstars the oldest)
+const KEY_MARK = '★ ';        // how key memories are shown to the background model
 
 const listeners = [];
 let updateQueue = Promise.resolve();
@@ -166,7 +168,30 @@ export function editCharacter(name, fields) {
     const character = findCharacter(cast, name);
     if (!character) return;
     Object.assign(character, fields);
+    // A key memory whose entry was edited away or removed is no longer one
+    if (character.keyMemories?.length) character.keyMemories = character.keyMemories.filter((k) => character.events.includes(k));
     saveCast();
+}
+
+/** Stars or unstars a What happened entry as a key memory (never summed up; sent whenever they are relevant). */
+export function toggleKeyMemory(name, index) {
+    const cast = getCast();
+    const character = findCharacter(cast, name);
+    const event = character?.events?.[index];
+    if (!event) return;
+    const keys = character.keyMemories || [];
+    character.keyMemories = keys.includes(event) ? keys.filter((k) => k !== event) : [...keys, event].slice(-MAX_KEY_MEMORIES);
+    saveCast();
+    refreshCastPrompt();
+}
+
+function isKeyMemory(character, event) {
+    return Boolean(character.keyMemories?.includes(event));
+}
+
+/** The oldest entries that can be summed up and archived: key memories always stay. */
+function foldable(character) {
+    return (character.events || []).filter((e) => !isKeyMemory(character, e)).slice(0, EVENTS_TO_FOLD);
 }
 
 /**
@@ -264,7 +289,7 @@ function compact(character) {
     if (character.aliases?.length) out.aliases = character.aliases;
     // Without the off-screen marks: the model writes plain text and the mark is added on our side
     const plain = (lines) => lines.map((line) => line.replace(OFFSCREEN_PREFIX, ''));
-    if (character.events?.length) out.what_happened = plain(character.events);
+    if (character.events?.length) out.what_happened = character.events.map((e) => (isKeyMemory(character, e) ? KEY_MARK : '') + e.replace(OFFSCREEN_PREFIX, ''));
     if (character.steps?.length) out.doing_now = plain(character.steps);
     return out;
 }
@@ -456,8 +481,8 @@ const UPDATE_SCHEMA = {
                 items: {
                     type: 'object',
                     additionalProperties: false,
-                    required: ['name', 'what_happened', 'doing_now'],
-                    properties: { name: { type: 'string' }, what_happened: { type: 'string' }, doing_now: { type: 'string' } },
+                    required: ['name', 'what_happened', 'important', 'doing_now'],
+                    properties: { name: { type: 'string' }, what_happened: { type: 'string' }, important: { type: 'boolean' }, doing_now: { type: 'string' } },
                 },
             },
             dead: { type: 'array', items: { type: 'string' } },
@@ -574,6 +599,7 @@ Away characters are the leads of their own stories, not extras waiting in the wi
 - "here": every major character with ${userName} at the end of the NEW messages, including those already here and those who just came back from away. Anyone you leave out is moved to away. Nothing else is written for them.
 - "away": one entry for each away character whose off-screen life moves on, and one for each character who LEFT the scene in the NEW messages (with what they went off to do).
   - "what_happened": "" unless their current activity is over. Then close it in two or three past-tense sentences: what they did, how it turned out, and what it means to them.
+  - "important": true only when that finished activity is one the character will carry for a long time (a death, a betrayal, a promise made or broken, a big win or loss, a secret learned). Otherwise false. Entries marked "★" in the ledger are already key memories.
   - "doing_now": "" if their current Doing now is still true (never repeat or reword it). Otherwise the new activity in one or two present-tense sentences: what they are doing, how, and why or how they feel about it. When you close an activity, always give the next one.
   - Ten turns of shopping is one activity, not ten. If their Doing now has ${MAX_STEPS} or more lines, close it.
 - "dead": characters who died in the NEW messages.
@@ -585,7 +611,7 @@ Made-up names; only the shape matters.
 Ledger: here: Aldo. Away: Brina, Doing now: "I'm bribing the harbor clerk for the shipping lists."
 NEW messages: Aldo storms out to fetch the healer, and ${userName} waits alone until nightfall.
 Reply:
-{"story_beat": "Aldo stormed out to fetch the healer, and ${userName} waited alone until nightfall.", "here": [], "away": [{"name": "Aldo", "what_happened": "", "doing_now": "I'm running through the market to drag the healer back, shoving past anyone slow enough to be in my way."}, {"name": "Brina", "what_happened": "I got the shipping lists for two silver and a promise I don't mean to keep. The clerk will want more by the next tide, but now I have the name of the ship.", "doing_now": "I'm rowing out to the Gull's Wake after dark to see what it is really carrying."}], "dead": []}
+{"story_beat": "Aldo stormed out to fetch the healer, and ${userName} waited alone until nightfall.", "here": [], "away": [{"name": "Aldo", "what_happened": "", "important": false, "doing_now": "I'm running through the market to drag the healer back, shoving past anyone slow enough to be in my way."}, {"name": "Brina", "what_happened": "I got the shipping lists for two silver and a promise I don't mean to keep. The clerk will want more by the next tide, but now I have the name of the ship.", "important": false, "doing_now": "I'm rowing out to the Gull's Wake after dark to see what it is really carrying."}], "dead": []}
 </example>`;
 
     const ledger = {
@@ -649,7 +675,7 @@ export function parseUpdate(text) {
     // One line of memory; models sometimes copy the ledger's shape (a list, or the off-screen mark)
     const line = (value) => {
         const text = Array.isArray(value) ? value.filter((v) => typeof v === 'string').at(-1) : value;
-        return typeof text === 'string' ? text.replace(/^\s*\(off-screen\)\s*/i, '').trim() || undefined : undefined;
+        return typeof text === 'string' ? text.replace(/^\s*\(off-screen\)\s*/i, '').replace(/^\s*★\s*/, '').trim() || undefined : undefined;
     };
     // One update per character, however many lists they appear in
     const byName = new Map();
@@ -662,7 +688,7 @@ export function parseUpdate(text) {
     const here = rawHere.map(nameOf).filter(Boolean);
     for (const name of here) add(name, { status: 'present' });
     for (const entry of list(data.away)) {
-        add(nameOf(entry), { status: 'away', step: line(entry?.doing_now), finish: line(entry?.what_happened) });
+        add(nameOf(entry), { status: 'away', step: line(entry?.doing_now), finish: line(entry?.what_happened), important: entry?.important === true });
     }
     // No longer asked for; whoever is in it is back in the scene
     for (const entry of list(data.returned)) add(nameOf(entry), { status: 'present' });
@@ -737,6 +763,7 @@ export function applyCastUpdate(updates, messageIndex, { here = null, story = nu
         if (!isHere) {
             if (typeof update.finish === 'string' && update.finish.trim()) {
                 character.events.push(mark(update.finish));
+                if (update.important === true) character.keyMemories = [...(character.keyMemories || []), mark(update.finish)].slice(-MAX_KEY_MEMORIES);
                 character.steps = [];
             }
             if (typeof update.step === 'string' && update.step.trim() && character.steps.at(-1) !== mark(update.step)) {
@@ -756,16 +783,16 @@ export function applyCastUpdate(updates, messageIndex, { here = null, story = nu
         // The oldest entries retold as one summary, which takes their place in What happened; the
         // entries themselves go to the archive, where a mention of what is in them brings them back
         const summary = typeof update.summary === 'string' ? update.summary.trim() : '';
-        if (summary && character.events.length > MAX_EVENTS) {
-            const folded = character.events.slice(0, EVENTS_TO_FOLD);
+        const folded = foldable(character);
+        if (summary && character.events.length > MAX_EVENTS && folded.length) {
             archived.push(archiveMemories(cast, character, folded, update.keywords, messageIndex));
             // A summary of off-screen entries is off-screen too
             const mark = folded.every((e) => e.startsWith(OFFSCREEN_PREFIX)) ? OFFSCREEN_PREFIX : '';
-            character.events = [mark + summary, ...character.events.slice(EVENTS_TO_FOLD)];
-        } else if (character.events.length > MAX_EVENTS + EVENTS_TO_FOLD) {
+            character.events = [mark + summary, ...character.events.filter((e) => !folded.includes(e))];
+        } else if (character.events.length > MAX_EVENTS + EVENTS_TO_FOLD && folded.length) {
             // The model never summed them up: archive the oldest anyway, so What happened stays short
-            archived.push(archiveMemories(cast, character, character.events.slice(0, EVENTS_TO_FOLD), [], messageIndex));
-            character.events = character.events.slice(EVENTS_TO_FOLD);
+            archived.push(archiveMemories(cast, character, folded, [], messageIndex));
+            character.events = character.events.filter((e) => !folded.includes(e));
         }
 
         if (isHere) character.lastSeen = messageIndex;
@@ -804,7 +831,7 @@ export function applyCastUpdate(updates, messageIndex, { here = null, story = nu
 
 /** What needs summing up or retelling now: characters with too many memories, and a chapter's beats. */
 function pendingFolds(cast) {
-    const summaries = Object.values(cast.characters).filter((c) => !c.locked && (c.events?.length || 0) > MAX_EVENTS);
+    const summaries = Object.values(cast.characters).filter((c) => !c.locked && (c.events?.length || 0) > MAX_EVENTS && foldable(c).length);
     const chapter = pendingStoryFold(cast);
     return summaries.length || chapter ? { summaries, chapter } : null;
 }
@@ -826,7 +853,7 @@ Reply: {"summaries": [{"name": "...", "text": "...", "keywords": ["..."]}], "cha
 Use [] or "" for a job that was not asked for.`;
     const parts = [];
     for (const c of summaries) {
-        parts.push(`<summary_needed name="${c.name}">\n${c.events.slice(0, EVENTS_TO_FOLD).map((e, i) => `${i + 1}. ${e.replace(OFFSCREEN_PREFIX, '')}`).join('\n')}\n</summary_needed>`);
+        parts.push(`<summary_needed name="${c.name}">\n${foldable(c).map((e, i) => `${i + 1}. ${e.replace(OFFSCREEN_PREFIX, '')}`).join('\n')}\n</summary_needed>`);
     }
     if (chapter) {
         parts.push(`<chapter_needed>\nRetell these ${chapter.kind === 'beats' ? 'story beats' : 'earlier chapters'} as one chapter:\n${chapter.items.map((x, i) => `${i + 1}. ${x.text}`).join('\n')}\n</chapter_needed>`);
@@ -1058,7 +1085,7 @@ function meanwhileOf(before, cast) {
         // A summary that replaced old entries is bookkeeping, not news
         const summary = now.events.length && !oldEvents.has(now.events[0]) && (old?.events?.length || 0) > MAX_EVENTS ? now.events[0] : null;
         for (const event of now.events) {
-            if (!oldEvents.has(event) && event !== summary && event.startsWith(OFFSCREEN_PREFIX)) lines.push({ name: now.name, kind: 'done', text: plain(event) });
+            if (!oldEvents.has(event) && event !== summary && event.startsWith(OFFSCREEN_PREFIX)) lines.push({ name: now.name, kind: 'done', text: plain(event), ...(isKeyMemory(now, event) ? { key: true } : {}) });
         }
         for (const step of now.steps) {
             if (!oldSteps.has(step)) lines.push({ name: now.name, kind: 'doing', text: plain(step) });
@@ -1194,6 +1221,7 @@ Rewrite each character's memory so it is shorter, cleaner and correct:
 - Fix mistakes: entries that contradict each other or the story and the cards (the story wins), wrong or misspelled names, entries in third person or the wrong tense, entries that belong to a different character, and things the character could not know.
 - Never invent events or details, and never change what happened. Use only what is already in the memory, the story and the cards.
 - Keep each character's own voice.
+- Entries starting with "★" are key memories: keep each one as its own entry, still starting with "★", and change it only to fix a mistake.
 - "fixes": one short line for each mistake you corrected, naming the character ("Kael: the debt was fifty silver, not forty"). Merging and shortening need no line. Empty if nothing was wrong.
 Work quickly: this is cleanup, not a puzzle. Make the obvious merges and corrections and move on.
 
@@ -1235,13 +1263,15 @@ function applyTidy(text, characters) {
         if (!character || character.locked || !characters.includes(character)) continue;
         // Everything tracked now happens off-screen; entries from before that keep no mark
         const marked = character.events.length > 0 && character.events.every((e) => e.startsWith(OFFSCREEN_PREFIX));
-        const events = (Array.isArray(entry.what_happened) ? entry.what_happened : [entry.what_happened])
-            .filter((e) => typeof e === 'string').map(strip).filter(Boolean);
+        const raw = (Array.isArray(entry.what_happened) ? entry.what_happened : [entry.what_happened]).filter((e) => typeof e === 'string');
+        const events = raw.map((e) => strip(e).replace(/^★\s*/, '')).filter(Boolean);
+        const keyTexts = raw.filter((e) => /^\s*(\(off-screen\)\s*)?★/.test(e)).map((e) => strip(e).replace(/^★\s*/, ''));
         const doing = typeof entry.doing_now === 'string' ? strip(entry.doing_now)
             : (Array.isArray(entry.doing_now) ? strip(entry.doing_now.filter((s) => typeof s === 'string').at(-1) || '') : '');
         let touched = false;
         if (events.length) {
             character.events = events.map((e) => (marked ? OFFSCREEN_PREFIX + e : e));
+            character.keyMemories = keyTexts.map((e) => (marked ? OFFSCREEN_PREFIX + e : e)).filter((k) => character.events.includes(k)).slice(-MAX_KEY_MEMORIES);
             touched = true;
         }
         if (character.status === 'away' && doing) {
@@ -1339,6 +1369,9 @@ export function isMentioned(character, text) {
 function describe(character) {
     const parts = [];
     const events = (character.events || []).slice(-EVENTS_IN_PROMPT);
+    // Key memories older than the latest entries still come along
+    const keys = (character.keyMemories || []).filter((k) => !events.includes(k));
+    if (keys.length) parts.push(`Never forget: ${keys.join(' ')}`);
     if (events.length) parts.push(`What happened: ${events.join(' ')}`);
     if (character.steps?.length) parts.push(`Doing now: ${character.steps.join(' Then: ')}`);
     if (character.status === 'dead') parts.push('(dead)');

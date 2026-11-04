@@ -7,7 +7,7 @@
 import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
-import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus, tidyCast, canUndoTidy, undoTidy, listArchive, editArchiveKeywords, deleteArchive, getStory, editStory } from '../features/cast.js';
+import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus, tidyCast, canUndoTidy, undoTidy, listArchive, editArchiveKeywords, deleteArchive, getStory, editStory, toggleKeyMemory } from '../features/cast.js';
 import { saveSettings } from '../../core/persistence.js';
 import { castConnectionProfiles, castReasoning } from '../features/castRequest.js';
 import { renderAllMeanwhile } from './meanwhile.js';
@@ -179,14 +179,22 @@ const STATUS_LABELS = {
 };
 
 /** One memory line (an entry or a step): editable in place, removable, marked when off-screen. */
-function memoryLine(text, kind, index, offscreenTitle) {
+function memoryLine(text, kind, index, offscreenTitle, isKey = false) {
     const offscreen = text.startsWith(OFFSCREEN_PREFIX);
     const body = offscreen ? text.slice(OFFSCREEN_PREFIX.length) : text;
     const removeLabel = escapeHtml(kind === 'event' ? t('cast.removeEvent', 'Remove this entry') : t('cast.removeStep', 'Remove this step'));
+    // What happened entries can be starred as key memories: never summed up, sent whenever the character is
+    const keyLabel = escapeHtml(isKey
+        ? t('cast.keyOn', 'Key memory: never summed up, and sent to the chat whenever this character is here or mentioned. Click to unstar.')
+        : t('cast.keyOff', 'Star as a key memory: never summed up, and sent to the chat whenever this character is here or mentioned'));
+    const star = kind === 'event'
+        ? `<button type="button" class="rpg-cast-key" data-index="${index}" aria-pressed="${isKey}" title="${keyLabel}" aria-label="${keyLabel}"><i class="fa-${isKey ? 'solid' : 'regular'} fa-star" aria-hidden="true"></i></button>`
+        : '';
     return `
-        <li class="rpg-cast-event${offscreen ? ' is-offscreen' : ''}"${offscreen ? ` title="${offscreenTitle}"` : ''}>
+        <li class="rpg-cast-event${offscreen ? ' is-offscreen' : ''}${isKey ? ' is-key' : ''}"${offscreen ? ` title="${offscreenTitle}"` : ''}>
             ${offscreen ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>' : ''}
             <span class="rpg-cast-memory" contenteditable="true" spellcheck="false" data-kind="${kind}" data-index="${index}">${escapeHtml(body)}</span>
+            ${star}
             <button type="button" class="rpg-cast-event-remove" data-kind="${kind}" data-index="${index}" title="${removeLabel}" aria-label="${removeLabel}">×</button>
         </li>`;
 }
@@ -222,7 +230,7 @@ function card(character) {
     const open = openState.has(character.name) ? openState.get(character.name) : character.status === 'present';
     const offscreenTitle = escapeHtml(t('cast.offscreen', 'Happened off-screen: you have not seen this yet'));
     const steps = (character.steps || []).map((step, i) => memoryLine(step, 'step', i, offscreenTitle)).join('');
-    const events = (character.events || []).map((event, i) => memoryLine(event, 'event', i, offscreenTitle)).join('');
+    const events = (character.events || []).map((event, i) => memoryLine(event, 'event', i, offscreenTitle, Boolean(character.keyMemories?.includes(event)))).join('');
     const lockTitle = character.locked
         ? t('cast.unlock', 'Locked: the background model leaves this character alone. Click to unlock.')
         : t('cast.lock', 'Lock this character so the background model stops changing them');
@@ -430,7 +438,11 @@ export function initCastTab() {
         const list = [...character[key]];
         if (value) list[index] = mark + value;
         else list.splice(index, 1);
-        editCharacter(name, { [key]: list });
+        // A starred entry stays starred when its text is edited
+        const keyMemories = key === 'events' && character.keyMemories?.includes(old) && value
+            ? character.keyMemories.map((k) => (k === old ? mark + value : k))
+            : character.keyMemories;
+        editCharacter(name, { [key]: list, ...(keyMemories ? { keyMemories } : {}) });
         refreshCastPrompt();
     });
     $doc.on('click', '#rpg-cast .rpg-cast-event-remove', function () {
@@ -441,6 +453,9 @@ export function initCastTab() {
         if (!character?.[key]) return;
         editCharacter(name, { [key]: character[key].filter((_, i) => i !== index) });
         refreshCastPrompt();
+    });
+    $doc.on('click', '#rpg-cast .rpg-cast-key', function () {
+        toggleKeyMemory(nameOf(this), Number($(this).data('index')));
     });
     $doc.on('click', '#rpg-cast .rpg-cast-delete', async function () {
         const name = nameOf(this);
