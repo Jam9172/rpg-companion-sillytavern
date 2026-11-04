@@ -25,9 +25,10 @@ const EFFORT = { off: 'none', low: 'low' };
 const MAX_TOKENS = {
     update: { off: 3000, low: 6000, default: 10000 },
     tidy: { off: 6000, low: 10000, default: 16000 },
+    fold: { off: 4000, low: 8000, default: 12000 },
 };
 // Updates invent off-screen lives; a tidy only cleans up
-const TEMPERATURE = { update: 0.7, tidy: 0.3 };
+const TEMPERATURE = { update: 0.7, tidy: 0.3, fold: 0.3 };
 
 /** @returns {string} 'off', 'low' or 'default' */
 export function castReasoning() {
@@ -96,13 +97,13 @@ async function send(messages, { maxTokens, overrides, jsonSchema }) {
 /**
  * Sends a Cast request and returns the reply text.
  * @param {Array<{role: string, content: string}>} messages
- * @param {{task: 'update'|'tidy', schema?: {name: string, value: Object}}} options
+ * @param {{task: 'update'|'tidy'|'fold', schema?: {name: string, value: Object}}} options
  * @returns {Promise<string>}
  */
 export async function requestCast(messages, { task, schema }) {
-    // A tidy has to catch contradictions across the whole memory, which it misses without some thinking;
-    // it only runs when asked, so it always reasons at least a little
-    const reasoning = task === 'tidy' && castReasoning() === 'off' ? 'low' : castReasoning();
+    // A tidy has to catch contradictions across the whole memory, and summing up has to keep what matters;
+    // both miss things without some thinking and run rarely, so they always reason at least a little
+    const reasoning = task !== 'update' && castReasoning() === 'off' ? 'low' : castReasoning();
     const maxTokens = MAX_TOKENS[task][reasoning];
     const overrides = { temperature: TEMPERATURE[task] };
     if (reasoning !== 'default') {

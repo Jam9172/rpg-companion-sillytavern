@@ -7,7 +7,7 @@
 import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
-import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus, tidyCast, canUndoTidy, undoTidy, listArchive, editArchiveKeywords, deleteArchive } from '../features/cast.js';
+import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus, tidyCast, canUndoTidy, undoTidy, listArchive, editArchiveKeywords, deleteArchive, getStory, editStory } from '../features/cast.js';
 import { saveSettings } from '../../core/persistence.js';
 import { castConnectionProfiles, castReasoning } from '../features/castRequest.js';
 import { renderAllMeanwhile } from './meanwhile.js';
@@ -88,8 +88,37 @@ function rangePicker() {
         ${current === 0 ? `<p class="rpg-cast-range-note">${escapeHtml(t('cast.range.wholeNote', 'Reads the whole chat on every update: best memory, but long stories cost a lot of tokens and can pass your tracker model\'s context limit.'))}</p>` : ''}`;
 }
 
-// Whether the Background model fold is open, so a re-render keeps it that way
+// Whether the Settings and Story folds are open, so a re-render keeps them that way
 let modelOpen = false;
+let storyOpen = false;
+
+/** The story so far: chapters, then the beats since the last one, all editable. */
+function storyFold() {
+    const { chapters, beats } = getStory();
+    const count = [
+        chapters.length ? `${chapters.length} ${chapters.length === 1 ? t('cast.story.chapter', 'chapter') : t('cast.story.chapters', 'chapters')}` : '',
+        beats.length ? `${beats.length} ${beats.length === 1 ? t('cast.story.beat', 'beat') : t('cast.story.beats', 'beats')}` : '',
+    ].filter(Boolean).join(' · ');
+    const removeTitle = escapeHtml(t('cast.story.remove', 'Remove this line'));
+    let number = 0;
+    const chapterHtml = chapters.map((c) => `
+        <div class="rpg-cast-chapter">
+            <span class="rpg-cast-label">${escapeHtml(c.part ? t('cast.story.earlier', 'Earlier') : `${t('cast.story.chapterTitle', 'Chapter')} ${++number}`)}</span>
+            <p class="rpg-cast-story-text" contenteditable="true" spellcheck="false" data-kind="chapter" data-id="${escapeHtml(c.id)}">${escapeHtml(c.text)}</p>
+        </div>`).join('');
+    const beatHtml = beats.length ? `
+        <span class="rpg-cast-label">${escapeHtml(chapters.length ? t('cast.story.since', 'Since then') : t('cast.story.sofar', 'So far'))}</span>
+        <ul class="rpg-cast-events">${beats.map((b) => `
+            <li class="rpg-cast-event">
+                <span class="rpg-cast-story-text" contenteditable="true" spellcheck="false" data-kind="beat" data-id="${escapeHtml(b.id)}">${escapeHtml(b.text)}</span>
+                <button type="button" class="rpg-cast-story-remove" data-kind="beat" data-id="${escapeHtml(b.id)}" title="${removeTitle}" aria-label="${removeTitle}">×</button>
+            </li>`).join('')}</ul>` : '';
+    return `
+        <details class="rpg-cast-story"${storyOpen ? ' open' : ''}>
+            <summary><span class="rpg-cast-label">${escapeHtml(t('cast.story.title', 'Story so far'))}</span><span class="rpg-cast-story-count">${escapeHtml(count)}</span></summary>
+            ${chapterHtml || beatHtml ? chapterHtml + beatHtml : `<p class="rpg-cast-pending">${escapeHtml(t('cast.story.empty', 'Each reply adds a line here; every 20 become a chapter.'))}</p>`}
+        </details>`;
+}
 
 /** The background model's settings: connection, reasoning and strict JSON. */
 function modelSettings() {
@@ -120,6 +149,10 @@ function modelSettings() {
                 <span>${escapeHtml(t('cast.model.strict', 'Strict JSON (replies always match Cast\'s format)'))}</span>
             </label>
             <p class="rpg-cast-range-note">${escapeHtml(t('cast.model.note', 'Reasoning and temperature are set by Cast on OpenRouter, Connection Profiles and the External API. Other connections follow their preset.'))}</p>
+            <label class="checkbox_label rpg-cast-model-check" title="${escapeHtml(t('cast.story.injectHelp', 'Send the story so far (chapters and the latest beats) to the main model, so it keeps the whole story in mind. Turn it off if Memory Books already gives it summaries.'))}">
+                <input type="checkbox" class="rpg-cast-story-toggle"${extensionSettings.castStoryInject !== false ? ' checked' : ''}>
+                <span>${escapeHtml(t('cast.story.inject', 'Send "Story so far" to the main model'))}</span>
+            </label>
             <label class="checkbox_label rpg-cast-model-check" title="${escapeHtml(t('cast.meanwhile.help', 'A small fold under each reply with what changed off-screen: who left or came back, and what the away characters started and finished.'))}">
                 <input type="checkbox" class="rpg-cast-meanwhile-toggle"${extensionSettings.castMeanwhile !== false ? ' checked' : ''}>
                 <span>${escapeHtml(t('cast.meanwhile.toggle', 'Show "Meanwhile" under replies'))}</span>
@@ -254,6 +287,7 @@ export function renderCast() {
         ${statusBar()}
         ${rangePicker()}
         ${modelSettings()}
+        ${storyFold()}
         ${characters.length
             ? `<div class="rpg-cast-list">${characters.map(card).join('')}</div>`
             : `<p class="rpg-cast-empty">${escapeHtml(t('cast.empty', 'No characters yet. Everyone the story meets is remembered here as it goes on.'))}</p>`}
@@ -313,6 +347,7 @@ export function initCastTab() {
     });
     document.addEventListener('toggle', (e) => {
         if (e.target instanceof HTMLDetailsElement && e.target.matches('#rpg-cast .rpg-cast-model')) modelOpen = e.target.open;
+        if (e.target instanceof HTMLDetailsElement && e.target.matches('#rpg-cast .rpg-cast-story')) storyOpen = e.target.open;
     }, true);
     $doc.on('change', '#rpg-cast .rpg-cast-connection', function () {
         extensionSettings.castConnection = this.value;
@@ -325,6 +360,26 @@ export function initCastTab() {
     $doc.on('change', '#rpg-cast .rpg-cast-strict', function () {
         extensionSettings.castStrictJson = this.checked;
         saveSettings();
+    });
+    $doc.on('change', '#rpg-cast .rpg-cast-story-toggle', function () {
+        extensionSettings.castStoryInject = this.checked;
+        saveSettings();
+        refreshCastPrompt();
+    });
+    $doc.on('keydown', '#rpg-cast .rpg-cast-story-text', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.blur();
+        }
+    });
+    $doc.on('blur', '#rpg-cast .rpg-cast-story-text', function () {
+        const kind = $(this).data('kind');
+        const id = String($(this).data('id'));
+        const item = getStory()[kind === 'chapter' ? 'chapters' : 'beats'].find((x) => x.id === id);
+        if (item && item.text !== this.textContent.trim()) editStory(kind, id, this.textContent);
+    });
+    $doc.on('click', '#rpg-cast .rpg-cast-story-remove', function () {
+        editStory($(this).data('kind'), String($(this).data('id')), '');
     });
     $doc.on('change', '#rpg-cast .rpg-cast-meanwhile-toggle', function () {
         extensionSettings.castMeanwhile = this.checked;

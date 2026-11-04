@@ -15350,6 +15350,57 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     color: var(--forge-brass, #D9A35B);
 }
 
+/* Cast: the story so far (chapters, then beats), folded above the cast list */
+.rpg-cast-story {
+    margin: 0.5rem 0 0.25rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--rpg-border, rgba(255, 255, 255, 0.2));
+    border-radius: 8px;
+}
+
+.rpg-cast-story > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.rpg-cast-story-count {
+    font-size: 0.8em;
+    opacity: 0.75;
+}
+
+.rpg-cast-chapter {
+    margin: 0.5rem 0;
+}
+
+.rpg-cast-chapter .rpg-cast-story-text {
+    margin: 0.2rem 0 0;
+    line-height: 1.45;
+}
+
+.rpg-cast-story .rpg-cast-story-text:focus {
+    outline: 1px solid var(--forge-brass, currentColor);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+.rpg-cast-story-remove {
+    margin: 0 0 0 0.3rem;
+    padding: 0 0.3rem;
+    border: none;
+    background: none;
+    color: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+.rpg-cast-story-remove:hover {
+    opacity: 1;
+    color: var(--forge-danger, #e5432f);
+}
+
 /* Cast: a character's archive of older memories, folded under What happened */
 .rpg-cast-archive {
     margin-top: 0.5rem;

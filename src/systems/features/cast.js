@@ -4,13 +4,16 @@
  * A ledger of the story's major characters, saved in the chat's metadata so it lasts the whole story.
  * It keeps only each character's own memory, written in first person:
  *   Doing now     - what I am doing right now; it never stops for characters who are away
- *   What happened - each finished activity in a few sentences; the oldest fold into one summary
+ *   What happened - each finished activity in a few sentences; the oldest are summed up, and the
+ *                   entries themselves go to the archive, where a mention of their keywords brings them back
  * Looks, personality and relationships are not tracked: they come from the character cards and the story.
+ * Alongside it, the story so far: one beat per reply, retold as chapters.
  *
- * After each reply a background model updates the characters involved and moves the ones who are away
- * along off-screen. Before each reply the characters in the scene or recently mentioned are fed to the
- * main model, with a list of everyone else's names. Every update remembers the message that caused it, so
- * deleting or swiping that message undoes it.
+ * After each reply a background model updates the characters involved, moves the ones who are away along
+ * off-screen and writes the story beat; now and then a follow-up call sums up old memories and writes a
+ * chapter. Before each reply the main model gets the characters in the scene or recently mentioned, what
+ * everyone else is doing, archived memories brought back by what was just said, and the story so far.
+ * Every update remembers the message that caused it, so deleting or swiping that message undoes it.
  */
 
 import {
@@ -41,6 +44,11 @@ const MAX_JOURNAL = 200;      // undo entries kept (older ones can no longer be 
 const MAX_ARCHIVE = 300;      // archived memories kept per chat (the oldest go first)
 const ARCHIVE_IN_NOTES = 3;   // archived memories a mention can bring back into the main model's notes
 const ARCHIVE_CHARS = 2000;   // and at most this much text of them
+const BEATS_PER_CHAPTER = 20; // story beats retold as one chapter at a time
+const MAX_CHAPTERS = 8;       // more chapters than this and the oldest are retold as one
+const CHAPTERS_TO_FOLD = 4;   // how many of the oldest chapters go into it
+const STORY_CHARS = 6000;     // most of the story so far sent to the main model (newest parts kept)
+const STORY_PROMPT_KEY = 'rpg-companion-story';
 
 const listeners = [];
 let updateQueue = Promise.resolve();
@@ -77,6 +85,9 @@ export function getCast() {
     cast.journal ??= [];
     cast.forgotten ??= [];
     cast.archive ??= [];
+    cast.story ??= { beats: [], chapters: [] };
+    cast.story.beats ??= [];
+    cast.story.chapters ??= [];
     return cast;
 }
 
@@ -202,6 +213,16 @@ function undoEntry(cast, entry) {
         else cast.characters[key] = before;
     }
     if (entry.archived?.length) cast.archive = cast.archive.filter((a) => !entry.archived.includes(a.id));
+    if (entry.story) {
+        const story = cast.story;
+        if (entry.story.beat) story.beats = story.beats.filter((b) => b.id !== entry.story.beat);
+        const chapter = entry.story.chapter;
+        if (chapter) {
+            story.chapters = story.chapters.filter((c) => c.id !== chapter.id);
+            if (chapter.kind === 'beats') story.beats.unshift(...chapter.replaced);
+            else story.chapters.unshift(...chapter.replaced);
+        }
+    }
 }
 
 /**
@@ -246,6 +267,27 @@ function compact(character) {
     if (character.events?.length) out.what_happened = plain(character.events);
     if (character.steps?.length) out.doing_now = plain(character.steps);
     return out;
+}
+
+/**
+ * The label in front of a message for the background model. Replies are "Story" unless their writer is
+ * a tracked character: a narrator card's name in front of every reply gets blended into character names.
+ */
+function speaker(cast, message, userName) {
+    if (message.is_user) return userName;
+    return message.name && findCharacter(cast, message.name) ? message.name : 'Story';
+}
+
+/** All the story text an update reads for a message (its read range), without speaker names. */
+function castStoryWindow(messageIndex) {
+    const range = castReadRange();
+    const first = range === 0 ? 0 : Math.max(0, messageIndex - range + 1);
+    return chat.slice(first, messageIndex + 1).map((m) => messageText(m)).join('\n');
+}
+
+/** The text of a message and the one before it (what an update read as new), without speaker names. */
+function storyText(messageIndex) {
+    return chat.slice(Math.max(0, messageIndex - 1), messageIndex + 1).map((m) => messageText(m)).join('\n');
 }
 
 function messageText(message) {
@@ -315,8 +357,9 @@ const UPDATE_SCHEMA = {
     value: {
         type: 'object',
         additionalProperties: false,
-        required: ['here', 'away', 'dead', 'summaries'],
+        required: ['story_beat', 'here', 'away', 'dead'],
         properties: {
+            story_beat: { type: 'string' },
             here: { type: 'array', items: { type: 'string' } },
             away: {
                 type: 'array',
@@ -328,6 +371,18 @@ const UPDATE_SCHEMA = {
                 },
             },
             dead: { type: 'array', items: { type: 'string' } },
+        },
+    },
+};
+
+// The follow-up call for the rare long-term jobs: summing up old memories and retelling beats as chapters
+const FOLD_SCHEMA = {
+    name: 'cast_fold',
+    value: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['summaries', 'chapter'],
+        properties: {
             summaries: {
                 type: 'array',
                 items: {
@@ -337,6 +392,7 @@ const UPDATE_SCHEMA = {
                     properties: { name: { type: 'string' }, text: { type: 'string' }, keywords: { type: 'array', items: { type: 'string' } } },
                 },
             },
+            chapter: { type: 'string' },
         },
     },
 };
@@ -383,7 +439,6 @@ async function buildUpdatePrompt(messageIndex) {
     const here = characters.filter((c) => c.status === 'present');
     const away = characters.filter((c) => c.status === 'away');
     const dead = characters.filter((c) => c.status === 'dead');
-    const needsSummary = characters.filter((c) => (c.events?.length || 0) > MAX_EVENTS).map((c) => c.name);
     // Away characters with nothing in "Doing now" must be given an activity this time
     const idle = away.filter((c) => !c.steps?.length).map((c) => c.name);
     const scene = sceneInfo();
@@ -410,7 +465,7 @@ HERE: in the same scene as ${userName} at the end of the NEW messages. The story
 AWAY: anywhere else. You write their off-screen life.
 Being talked about, remembered or thought of does not make anyone here.
 
-Major characters only: named people who matter to the story (they deal with ${userName} in a meaningful way, keep coming back, or move the plot). The story's main character always counts. Never ${userName}, never passing extras (waiters, guards, crowds), never anyone under "forgotten". Use the exact ledger name for a known character, even when the story uses a nickname or title.
+Major characters only: named people who matter to the story (they deal with ${userName} in a meaningful way, keep coming back, or move the plot). The names in front of the messages only say who wrote them: a narrator, game master or storyteller is never tracked, and the card's own character only counts when they appear in the story as a person. Never ${userName}, never passing extras (waiters, guards, crowds), never anyone under "forgotten". Use the exact ledger name for a known character, even when the story uses a nickname or title.
 </ledger_rules>
 
 <off_screen_lives>
@@ -424,14 +479,14 @@ Away characters are the leads of their own stories, not extras waiting in the wi
 </off_screen_lives>
 
 <reply_format>
-{"here": [...], "away": [...], "dead": [...], "summaries": [...]}
+{"story_beat": "...", "here": [...], "away": [...], "dead": [...]}
+- "story_beat": what happened in the main story in the NEW messages, in one sentence (two at most): past tense, third person, naming who did what (${userName} by name). "" if nothing happened.
 - "here": every major character with ${userName} at the end of the NEW messages, including those already here and those who just came back from away. Anyone you leave out is moved to away. Nothing else is written for them.
 - "away": one entry for each away character whose off-screen life moves on, and one for each character who LEFT the scene in the NEW messages (with what they went off to do).
   - "what_happened": "" unless their current activity is over. Then close it in two or three past-tense sentences: what they did, how it turned out, and what it means to them.
-  - "doing_now": "" if their current Doing now is still true. Otherwise the new activity in one or two present-tense sentences: what they are doing, how, and why or how they feel about it. When you close an activity, always give the next one.
+  - "doing_now": "" if their current Doing now is still true (never repeat or reword it). Otherwise the new activity in one or two present-tense sentences: what they are doing, how, and why or how they feel about it. When you close an activity, always give the next one.
   - Ten turns of shopping is one activity, not ten. If their Doing now has ${MAX_STEPS} or more lines, close it.
 - "dead": characters who died in the NEW messages.
-- "summaries": only for the characters named under "This update": retell their ${EVENTS_TO_FOLD} oldest What happened entries as one first-person paragraph (three to five sentences) that keeps what still matters to them. The entries themselves are kept in an archive: "keywords" lists three to eight names of the people, places and things in them (not the character's own name), so a later mention brings them back.
 - Use [] for an empty list. Plain text only, without "(off-screen)" marks.
 </reply_format>
 
@@ -440,7 +495,7 @@ Made-up names; only the shape matters.
 Ledger: here: Aldo. Away: Brina, Doing now: "I'm bribing the harbor clerk for the shipping lists."
 NEW messages: Aldo storms out to fetch the healer, and ${userName} waits alone until nightfall.
 Reply:
-{"here": [], "away": [{"name": "Aldo", "what_happened": "", "doing_now": "I'm running through the market to drag the healer back, shoving past anyone slow enough to be in my way."}, {"name": "Brina", "what_happened": "I got the shipping lists for two silver and a promise I don't mean to keep. The clerk will want more by the next tide, but now I have the name of the ship.", "doing_now": "I'm rowing out to the Gull's Wake after dark to see what it is really carrying."}], "dead": [], "summaries": []}
+{"story_beat": "Aldo stormed out to fetch the healer, and ${userName} waited alone until nightfall.", "here": [], "away": [{"name": "Aldo", "what_happened": "", "doing_now": "I'm running through the market to drag the healer back, shoving past anyone slow enough to be in my way."}, {"name": "Brina", "what_happened": "I got the shipping lists for two silver and a promise I don't mean to keep. The clerk will want more by the next tide, but now I have the name of the ship.", "doing_now": "I'm rowing out to the Gull's Wake after dark to see what it is really carrying."}], "dead": []}
 </example>`;
 
     const ledger = {
@@ -450,10 +505,9 @@ Reply:
     if (dead.length) ledger.dead = dead.map((c) => c.name);
     if (cast.forgotten.length) ledger.forgotten = [...cast.forgotten];
 
-    const format = (messages) => messages.map((m) => `${m.is_user ? userName : (m.name || 'Narrator')}: ${messageText(m)}`).join('\n\n');
+    const format = (messages) => messages.map((m) => `${speaker(cast, m, userName)}: ${messageText(m)}`).join('\n\n');
     const notes = [];
     if (idle.length) notes.push(`Nothing in Doing now yet; give each one an activity: ${idle.join(', ')}.`);
-    if (needsSummary.length) notes.push(`Summaries needed for: ${needsSummary.join(', ')}.`);
 
     // Cache-friendly order: what stays the same between updates first (cards, then the story, which in
     // "whole story" mode only grows at the end), what changes every time last
@@ -490,7 +544,7 @@ export function parseUpdate(text) {
     } catch {
         return null;
     }
-    if (Array.isArray(data?.characters)) return { updates: data.characters, here: null };
+    if (Array.isArray(data?.characters)) return { updates: data.characters, here: null, story: null };
     if (!data || typeof data !== 'object' || !['here', 'away', 'returned', 'dead'].some((k) => k in data)) return null;
 
     const list = (value) => (Array.isArray(value) ? value : []);
@@ -529,7 +583,8 @@ export function parseUpdate(text) {
     }
     // A "here" list that was all junk says nothing about who is in the scene, so nobody is moved out
     const hereKnown = Array.isArray(data.here) && (here.length > 0 || rawHere.length === 0);
-    return { updates: [...byName.values()], here: hereKnown ? here : null };
+    const story = { beat: typeof data.story_beat === 'string' ? data.story_beat : '', chapter: '' };
+    return { updates: [...byName.values()], here: hereKnown ? here : null, story };
 }
 
 const STATUSES = ['present', 'away', 'dead'];
@@ -540,12 +595,19 @@ export const OFFSCREEN_PREFIX = '(off-screen) ';
  * update can be undone with its message.
  * @returns {number} How many characters changed
  */
-export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
+export function applyCastUpdate(updates, messageIndex, { here = null, story = null, verifyNames = false } = {}) {
     const cast = getCast();
     const userKey = castKey(getContext().name1);
     const before = {};
     const archived = [];
     let changed = 0;
+    // A model reply can name someone who is not in the story at all (a misremembered surname, say). A new
+    // character from a reply is only added when the story Cast read, or the status panel, names them.
+    let known = null;
+    const inStory = (name) => {
+        known ??= `${castStoryWindow(messageIndex)}\n${statusPanelCharacters()}`;
+        return new RegExp(`(^|[^\\p{L}])${escapeRegex(name)}($|[^\\p{L}])`, 'iu').test(known);
+    };
 
     for (const update of updates) {
         const name = String(update?.name || '').trim();
@@ -554,6 +616,10 @@ export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
         let character = findCharacter(cast, name);
         // Forgotten by the user: never brought back by an update
         if (!character && isForgotten(cast, name)) continue;
+        // The card's name is on every reply, so a narrator card would look like a character: only add it
+        // when the story itself names them
+        if (!character && castKey(name) === castKey(getContext().name2) && !isMentioned({ name, aliases: [] }, storyText(messageIndex))) continue;
+        if (!character && verifyNames && !inStory(name)) continue;
         if (character?.locked) continue;
         if (character && castKey(character.name) !== castKey(name) && !(character.aliases || []).some((a) => castKey(a) === castKey(name))) {
             if (!(castKey(character.name) in before)) before[castKey(character.name)] = structuredClone(character);
@@ -617,22 +683,186 @@ export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
     // "here" lists everyone in the scene, so anyone else who was present has stepped out of it. Older
     // replies only named characters whose status changed, so nobody else is moved for those.
     const touched = new Set(Object.keys(before));
-    const inScene = Array.isArray(here) ? here.map((name) => findCharacter(cast, name)).filter(Boolean) : null;
+    let inScene = Array.isArray(here) ? here.map((name) => findCharacter(cast, name)).filter(Boolean) : null;
+    // A "here" list naming anyone Cast does not know is garbled ("Kael Tester"), so nobody is moved out
+    if (inScene && inScene.length < here.length) inScene = null;
+    // RPG Companion's own tracker read the same reply: whoever it lists as present stays present
+    const panel = inScene ? statusPanelCharacters() : '';
     for (const [key, character] of Object.entries(cast.characters)) {
         if (!inScene || inScene.includes(character) || touched.has(key) || character.locked || character.status !== 'present') continue;
+        if (panel && isMentioned(character, panel)) continue;
         before[key] = structuredClone(character);
         character.status = 'away';
     }
 
-    if (Object.keys(before).length) {
+    const storyChange = story ? applyStory(cast, story, messageIndex) : null;
+
+    if (Object.keys(before).length || storyChange) {
         // The cast moved on, so going back to before the last tidy would lose this update
         delete cast.tidyUndo;
         const meanwhile = meanwhileOf(before, cast);
-        cast.journal.push({ messageIndex, signature: messageSignature(messageIndex), before, ...(meanwhile.length ? { meanwhile } : {}), ...(archived.length ? { archived } : {}) });
+        cast.journal.push({ messageIndex, signature: messageSignature(messageIndex), before, ...(meanwhile.length ? { meanwhile } : {}), ...(archived.length ? { archived } : {}), ...(storyChange ? { story: storyChange } : {}) });
         if (cast.journal.length > MAX_JOURNAL) cast.journal.splice(0, cast.journal.length - MAX_JOURNAL);
         saveCast();
     }
     return changed;
+}
+
+/* ---------- Long-term jobs (a follow-up call) ---------- */
+
+/** What needs summing up or retelling now: characters with too many memories, and a chapter's beats. */
+function pendingFolds(cast) {
+    const summaries = Object.values(cast.characters).filter((c) => !c.locked && (c.events?.length || 0) > MAX_EVENTS);
+    const chapter = pendingStoryFold(cast);
+    return summaries.length || chapter ? { summaries, chapter } : null;
+}
+
+/**
+ * The follow-up request for the long-term jobs. They come up about once every twenty replies, and the
+ * regular update gets them wrong when it has to do them on top of everything else, so they get their own
+ * small call that lists exactly what to retell.
+ */
+function buildFoldPrompt({ summaries, chapter }) {
+    const system = `You keep the long-term memory of an ongoing roleplay story. You never write story text. You reply with one JSON object and nothing else.
+
+Do only the jobs listed in the request:
+- Character summary: retell the listed memories of one character as one paragraph in that character's own voice, in FIRST PERSON ("I", "me", "my"), past tense, three to five sentences. Keep what still matters to them: names, places, deals, debts, injuries, promises, and how they feel about it. "keywords": three to eight names of the people, places and things in those memories (never the character's own name); a later mention of one brings the full memories back.
+- Chapter: retell the listed story beats (or earlier chapters) as one chapter of the story: four to six sentences, past tense, third person, keeping who, where and what changed.
+Use only what is listed. Add nothing, and leave nothing out that matters.
+
+Reply: {"summaries": [{"name": "...", "text": "...", "keywords": ["..."]}], "chapter": "..."}
+Use [] or "" for a job that was not asked for.`;
+    const parts = [];
+    for (const c of summaries) {
+        parts.push(`<summary_needed name="${c.name}">\n${c.events.slice(0, EVENTS_TO_FOLD).map((e, i) => `${i + 1}. ${e.replace(OFFSCREEN_PREFIX, '')}`).join('\n')}\n</summary_needed>`);
+    }
+    if (chapter) {
+        parts.push(`<chapter_needed>\nRetell these ${chapter.kind === 'beats' ? 'story beats' : 'earlier chapters'} as one chapter:\n${chapter.items.map((x, i) => `${i + 1}. ${x.text}`).join('\n')}\n</chapter_needed>`);
+    }
+    parts.push('Do the listed jobs. JSON only.');
+    return [
+        { role: 'system', content: system },
+        { role: 'user', content: parts.join('\n\n') },
+    ];
+}
+
+function parseFold(text) {
+    if (typeof text !== 'string') return null;
+    const cleaned = text.replace(/```(?:json)?/gi, '').trim();
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start < 0 || end <= start) return null;
+    try {
+        const data = JSON.parse(cleaned.slice(start, end + 1));
+        const summaries = (Array.isArray(data?.summaries) ? data.summaries : [])
+            .filter((x) => typeof x?.name === 'string' && typeof x?.text === 'string' && x.text.trim())
+            .map((x) => ({ name: x.name, summary: x.text, keywords: Array.isArray(x.keywords) ? x.keywords.filter((k) => typeof k === 'string') : [] }));
+        return { summaries, chapter: typeof data?.chapter === 'string' ? data.chapter : '' };
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Runs the long-term jobs for a message's update, as part of it: they are undone with the message. A
+ * failure is only logged; the jobs are still pending and run again after the next reply.
+ */
+async function runFolds(messageIndex, chatId, signature) {
+    const jobs = pendingFolds(getCast());
+    if (!jobs) return;
+    try {
+        const response = await requestCast(buildFoldPrompt(jobs), { task: 'fold', schema: FOLD_SCHEMA });
+        if (getContext().chatId !== chatId || messageSignature(messageIndex) !== signature) return;
+        const fold = parseFold(response);
+        if (!fold) throw new Error('The reply was not in the right format');
+        // Only the characters that were asked about, and a chapter only when one was asked for
+        const asked = new Set(jobs.summaries.map((c) => castKey(c.name)));
+        const updates = fold.summaries.filter((u) => {
+            const character = findCharacter(getCast(), u.name);
+            return character && asked.has(castKey(character.name));
+        });
+        applyCastUpdate(updates, messageIndex, { story: jobs.chapter ? { beat: '', chapter: fold.chapter } : null });
+    } catch (error) {
+        console.warn('[RPG Companion] Cast: summing up old memories failed (will try again):', error?.message || error);
+    }
+}
+
+/* ---------- Story so far ---------- */
+
+function newId(prefix) {
+    return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/** What the next update should retell as one chapter, if anything: too many chapters first, then beats. */
+function pendingStoryFold(cast) {
+    const { beats, chapters } = cast.story;
+    if (chapters.length > MAX_CHAPTERS) return { kind: 'chapters', items: chapters.slice(0, CHAPTERS_TO_FOLD) };
+    if (beats.length >= BEATS_PER_CHAPTER) return { kind: 'beats', items: beats.slice(0, BEATS_PER_CHAPTER) };
+    return null;
+}
+
+/**
+ * Adds an update's story beat, and its chapter when one was asked for (replacing what it retells).
+ * @returns {Object|null} What changed, kept in the journal so the update can be undone
+ */
+function applyStory(cast, { beat, chapter }, messageIndex) {
+    const change = {};
+    const fold = pendingStoryFold(cast);
+    const text = typeof chapter === 'string' ? chapter.trim() : '';
+    if (fold && text) {
+        const id = newId('c');
+        if (fold.kind === 'beats') {
+            change.chapter = { id, kind: 'beats', replaced: cast.story.beats.splice(0, fold.items.length) };
+            cast.story.chapters.push({ id, text });
+        } else {
+            change.chapter = { id, kind: 'chapters', replaced: cast.story.chapters.splice(0, fold.items.length) };
+            cast.story.chapters.unshift({ id, text, part: true });
+        }
+    }
+    const line = typeof beat === 'string' ? beat.trim() : '';
+    if (line) {
+        change.beat = newId('b');
+        cast.story.beats.push({ id: change.beat, text: line, messageIndex });
+    }
+    return Object.keys(change).length ? change : null;
+}
+
+/** The story so far: chapters (oldest first) and the beats since the last one. */
+export function getStory() {
+    const { story } = getCast();
+    return { chapters: [...story.chapters], beats: [...story.beats] };
+}
+
+/** Changes a chapter or beat by hand (an empty text removes it). Hand edits are never rolled back. */
+export function editStory(kind, id, text) {
+    const cast = getCast();
+    const list = kind === 'chapter' ? cast.story.chapters : cast.story.beats;
+    const item = list.find((x) => x.id === id);
+    if (!item) return;
+    const value = String(text ?? '').trim();
+    if (value) item.text = value;
+    else list.splice(list.indexOf(item), 1);
+    saveCast();
+    refreshCastPrompt();
+}
+
+/** The story so far for the main model, newest parts kept when it is long. */
+export function buildStoryNotes() {
+    const story = chat_metadata?.[METADATA_KEY]?.story;
+    if (!story || (!story.chapters?.length && !story.beats?.length)) return '';
+    let number = 0;
+    const lines = [
+        ...story.chapters.map((c) => `${c.part ? 'Earlier' : `Chapter ${++number}`}: ${c.text}`),
+        ...(story.beats.length ? [`Since then: ${story.beats.map((b) => b.text).join(' ')}`] : []),
+    ];
+    const kept = [];
+    let used = 0;
+    for (const line of lines.reverse()) {
+        if (used + line.length > STORY_CHARS && kept.length) break;
+        kept.unshift(line);
+        used += line.length;
+    }
+    return `<story_so_far>\nWhat has happened in this story so far, for continuity. Use it quietly: never quote, list or recap it in the reply.\n${kept.join('\n')}\n</story_so_far>`;
 }
 
 /* ---------- Archive ---------- */
@@ -807,7 +1037,8 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
                 castStatus.errorTask = 'update';
                 return;
             }
-            applyCastUpdate(parsed.updates, messageIndex, { here: parsed.here });
+            applyCastUpdate(parsed.updates, messageIndex, { here: parsed.here, story: parsed.story, verifyNames: true });
+            await runFolds(messageIndex, chatId, signature);
             castStatus.lastOk = Date.now();
             castStatus.lastError = null;
             refreshCastPrompt();
@@ -853,7 +1084,7 @@ async function buildTidyPrompt(characters) {
     const last = chat.length - 1;
     const first = range === 0 ? 0 : Math.max(0, last - range + 1);
     const story = chat.slice(first).filter((m) => !m.is_system)
-        .map((m) => `${m.is_user ? userName : (m.name || 'Narrator')}: ${messageText(m)}`).join('\n\n');
+        .map((m) => `${speaker(getCast(), m, userName)}: ${messageText(m)}`).join('\n\n');
     let cards = '';
     try {
         cards = String(await getCharacterCardsInfo() || '').trim().slice(0, CARDS_LIMIT);
@@ -1065,6 +1296,9 @@ export function refreshCastPrompt() {
     const notes = enabled ? buildCastNotes() : '';
     const depth = Math.max(0, Number(extensionSettings.castPromptDepth ?? 2));
     setExtensionPrompt(PROMPT_KEY, notes, extension_prompt_types.IN_CHAT, depth, false, extension_prompt_roles.SYSTEM);
+    // The story so far sits with the main prompt, before the chat
+    const story = enabled && extensionSettings.castStoryInject !== false ? buildStoryNotes() : '';
+    setExtensionPrompt(STORY_PROMPT_KEY, story, extension_prompt_types.IN_PROMPT, 0, false, extension_prompt_roles.SYSTEM);
 }
 
 /* ---------- Events ---------- */
