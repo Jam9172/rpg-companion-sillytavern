@@ -47,6 +47,7 @@ export const defaultSettings = {
     castStrictJson: true, // Cast: ask for replies that match Cast's JSON schema
     castMeanwhile: true, // Cast: show what changed off-screen under each reply
     castStoryInject: true, // Cast: send the story so far (chapters and beats) to the main model
+    castElsewhere: true, // Cast: an Elsewhere button with what the away characters are doing
     enableHtmlPrompt: false, // Enable immersive HTML prompt injection
     enableSpotifyMusic: false, // Enable Spotify music integration (asks AI for Spotify URLs)
     customSpotifyPrompt: '', // Custom Spotify prompt text (empty = use default)

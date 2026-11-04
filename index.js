@@ -159,6 +159,7 @@ import { initQuoteFix } from './src/systems/features/quoteFix.js';
 import { initCast, refreshCastPrompt } from './src/systems/features/cast.js';
 import { initCastTab, renderCast } from './src/systems/rendering/cast.js';
 import { initMeanwhile, renderAllMeanwhile } from './src/systems/rendering/meanwhile.js';
+import { initElsewhere, renderElsewhere } from './src/systems/rendering/elsewhere.js';
 import { DEFAULT_HTML_PROMPT } from './src/systems/generation/promptBuilder.js';
 import { openEncounterModal } from './src/systems/ui/encounterUI.js';
 
@@ -427,6 +428,7 @@ async function initUI() {
         saveSettings();
         refreshCastPrompt();
         renderAllMeanwhile();
+        renderElsewhere();
         // Rebuild the panel tabs so the Cast tab appears or goes
         if (window.innerWidth > 1000) {
             removeDesktopTabs();
@@ -1482,6 +1484,7 @@ jQuery(async () => {
             initCast();
             initCastTab();
             initMeanwhile();
+            initElsewhere();
 
             eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (messageId) => {
                 if (!extensionSettings.enabled) {

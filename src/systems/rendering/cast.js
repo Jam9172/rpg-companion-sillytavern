@@ -11,6 +11,7 @@ import { listCharacters, editCharacter, deleteCharacter, listForgotten, remember
 import { saveSettings } from '../../core/persistence.js';
 import { castConnectionProfiles, castReasoning } from '../features/castRequest.js';
 import { renderAllMeanwhile } from './meanwhile.js';
+import { renderElsewhere } from './elsewhere.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
 
@@ -156,6 +157,10 @@ function modelSettings() {
             <label class="checkbox_label rpg-cast-model-check" title="${escapeHtml(t('cast.meanwhile.help', 'A small fold under each reply with what changed off-screen: who left or came back, and what the away characters started and finished.'))}">
                 <input type="checkbox" class="rpg-cast-meanwhile-toggle"${extensionSettings.castMeanwhile !== false ? ' checked' : ''}>
                 <span>${escapeHtml(t('cast.meanwhile.toggle', 'Show "Meanwhile" under replies'))}</span>
+            </label>
+            <label class="checkbox_label rpg-cast-model-check" title="${escapeHtml(t('cast.elsewhere.help', 'A button at the top right of the chat that shows what every away character is doing right now.'))}">
+                <input type="checkbox" class="rpg-cast-elsewhere-toggle"${extensionSettings.castElsewhere !== false ? ' checked' : ''}>
+                <span>${escapeHtml(t('cast.elsewhere.toggle', 'Show the "Elsewhere" button'))}</span>
             </label>
         </details>`;
 }
@@ -380,6 +385,11 @@ export function initCastTab() {
     });
     $doc.on('click', '#rpg-cast .rpg-cast-story-remove', function () {
         editStory($(this).data('kind'), String($(this).data('id')), '');
+    });
+    $doc.on('change', '#rpg-cast .rpg-cast-elsewhere-toggle', function () {
+        extensionSettings.castElsewhere = this.checked;
+        saveSettings();
+        renderElsewhere();
     });
     $doc.on('change', '#rpg-cast .rpg-cast-meanwhile-toggle', function () {
         extensionSettings.castMeanwhile = this.checked;

@@ -35,6 +35,7 @@ export let extensionSettings = {
     castStrictJson: true, // Cast: ask for replies that match Cast's JSON schema
     castMeanwhile: true, // Cast: show what changed off-screen under each reply
     castStoryInject: true, // Cast: send the story so far (chapters and beats) to the main model
+    castElsewhere: true, // Cast: an Elsewhere button with what the away characters are doing
     narratorMode: false, // Use character card as narrator instead of fixed character references
     customNarratorPrompt: '', // Custom narrator mode prompt text (empty = use default)
     customContextInstructionsPrompt: '', // Custom context instructions prompt text (empty = use default)

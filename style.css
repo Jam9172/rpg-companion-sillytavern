@@ -15762,3 +15762,233 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     font-style: italic;
     opacity: 0.9;
 }
+
+/* ==========================================================================
+   Elsewhere: a button at the top right of the chat opening what every away
+   character is doing right now (a centred overlay; a full-screen sheet on
+   phones). Closes with ×, Escape or a click on the dimmed backdrop.
+   ========================================================================== */
+#rpg-elsewhere-button {
+    position: fixed;
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0.375rem 0.625rem;
+    border: 1px solid var(--forge-brass, #D9A35B);
+    border-radius: 999px;
+    background: var(--forge-card, #1E100D);
+    color: var(--forge-brass, #D9A35B);
+    font-family: var(--forge-heading, 'Cinzel', serif);
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#rpg-elsewhere-button svg {
+    flex: none;
+}
+
+#rpg-elsewhere-button:hover,
+#rpg-elsewhere-button:focus-visible,
+#rpg-elsewhere-button[aria-expanded="true"] {
+    color: var(--rpg-highlight, #E8622C);
+    border-color: var(--rpg-highlight, #E8622C);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55), 0 0 12px color-mix(in srgb, var(--rpg-highlight, #E8622C) 35%, transparent);
+}
+
+#rpg-elsewhere-button .rpg-elsewhere-count,
+#rpg-elsewhere-panel .rpg-elsewhere-head .rpg-elsewhere-count {
+    display: grid;
+    place-items: center;
+    min-width: 1.375rem;
+    height: 1.375rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--forge-brass, #D9A35B);
+    color: var(--forge-card, #1E100D);
+    font-family: var(--forge-body-font, 'Alegreya Sans', system-ui, sans-serif);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+#rpg-elsewhere-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    display: none;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+#rpg-elsewhere-backdrop.is-shown {
+    display: block;
+}
+
+#rpg-elsewhere-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 9999;
+    display: none;
+    width: min(760px, calc(100vw - 64px));
+    max-height: min(86vh, 900px);
+    overflow-y: auto;
+    padding: 0 18px 18px;
+    border: 1px solid var(--rpg-border, #4A2219);
+    border-radius: 14px;
+    background: var(--rpg-bg, #120908);
+    color: var(--rpg-text, #F1E3D6);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+    transform: translate(-50%, -50%);
+    scrollbar-color: auto;
+}
+
+#rpg-elsewhere-panel.is-shown {
+    display: block;
+}
+
+/* Phones: a full-screen sheet */
+#rpg-elsewhere-panel.is-sheet {
+    inset: 0;
+    /* Sized outright like the Thoughts sheet: stretching between top and bottom does not take in WebKit */
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+    border: none;
+    border-radius: 0;
+    transform: none;
+    z-index: 100000;
+}
+
+.rpg-elsewhere-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 -18px;
+    padding: 14px 18px 10px;
+    background: var(--rpg-bg, #120908);
+    border-bottom: 1px solid var(--rpg-border, #4A2219);
+}
+
+.rpg-elsewhere-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--forge-brass, #D9A35B);
+    font-family: var(--forge-heading, 'Cinzel', serif);
+    font-size: 1.15rem;
+    letter-spacing: 0.06em;
+}
+
+.rpg-elsewhere-close {
+    margin: 0 0 0 auto;
+    padding: 0 0.4rem;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 1.5rem;
+    line-height: 1;
+    opacity: 0.75;
+    cursor: pointer;
+}
+
+.rpg-elsewhere-close:hover {
+    opacity: 1;
+}
+
+.rpg-elsewhere-note {
+    margin: 0.6rem 0 0.8rem;
+    font-size: 0.85em;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.rpg-elsewhere-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: 12px;
+}
+
+.rpg-elsewhere-card {
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--rpg-border, #4A2219);
+    border-left: 3px solid var(--forge-brass, #D9A35B);
+    border-radius: 10px;
+    background: var(--forge-card, rgba(255, 255, 255, 0.03));
+}
+
+.rpg-elsewhere-card > header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.rpg-elsewhere-name {
+    color: var(--forge-brass, #D9A35B);
+    font-family: var(--forge-heading, 'Cinzel', serif);
+    font-size: 1.05rem;
+}
+
+.rpg-elsewhere-seen {
+    flex: none;
+    font-size: 0.75em;
+    opacity: 0.65;
+}
+
+.rpg-elsewhere-before {
+    margin: 0 0 0.35rem;
+    padding: 0 0 0 1rem;
+    font-size: 0.85em;
+    opacity: 0.6;
+}
+
+.rpg-elsewhere-now,
+.rpg-elsewhere-last {
+    margin: 0.25rem 0 0;
+    line-height: 1.45;
+}
+
+.rpg-elsewhere-now {
+    font-style: italic;
+}
+
+.rpg-elsewhere-last {
+    font-size: 0.85em;
+    opacity: 0.75;
+}
+
+.rpg-elsewhere-tag {
+    display: inline-block;
+    margin-right: 0.45em;
+    padding: 0 0.4em;
+    border: 1px solid color-mix(in srgb, var(--forge-muted, #b7a088) 50%, transparent);
+    border-radius: 4px;
+    font-size: 0.72em;
+    font-style: normal;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    vertical-align: 0.1em;
+}
+
+.rpg-elsewhere-now .rpg-elsewhere-tag {
+    border-color: color-mix(in srgb, var(--forge-ember, #E8622C) 60%, transparent);
+    color: var(--forge-ember, #E8622C);
+}
+
+/* Phones: the button is a round icon with its count */
+@media (max-width: 1000px) {
+    #rpg-elsewhere-button .rpg-elsewhere-button-label {
+        display: none;
+    }
+}
