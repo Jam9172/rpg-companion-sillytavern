@@ -149,7 +149,7 @@ function modelSettings() {
                 <input type="checkbox" class="rpg-cast-strict"${extensionSettings.castStrictJson !== false ? ' checked' : ''}>
                 <span>${escapeHtml(t('cast.model.strict', 'Strict JSON (replies always match Cast\'s format)'))}</span>
             </label>
-            <p class="rpg-cast-range-note">${escapeHtml(t('cast.model.note', 'Reasoning and temperature are set by Cast on OpenRouter, Connection Profiles and the External API. Other connections follow their preset.'))}</p>
+            <p class="rpg-cast-range-note">${escapeHtml(t('cast.model.note', 'Reasoning and temperature are set by Cast on Connection Profiles, OpenRouter and the External API (OpenRouter, NanoGPT or any OpenAI-style API). Other connections follow their preset. A connection that turns the reasoning setting down gets the model default.'))}</p>
             <label class="checkbox_label rpg-cast-model-check" title="${escapeHtml(t('cast.story.injectHelp', 'Send the story so far (chapters and the latest beats) to the main model, so it keeps the whole story in mind. Turn it off if Memory Books already gives it summaries.'))}">
                 <input type="checkbox" class="rpg-cast-story-toggle"${extensionSettings.castStoryInject !== false ? ' checked' : ''}>
                 <span>${escapeHtml(t('cast.story.inject', 'Send "Story so far" to the main model'))}</span>

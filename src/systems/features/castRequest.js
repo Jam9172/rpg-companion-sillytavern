@@ -6,10 +6,11 @@
  * never shown), so Cast sets it per request instead of following the chat preset:
  *   - a Connection Profile picked in the Cast tab: that profile's model and preset, with Cast's settings
  *   - the main connection on OpenRouter: sent directly, with Cast's settings
- *   - RPG Companion's External API: Cast's settings added to its request
+ *   - RPG Companion's External API (OpenRouter, NanoGPT or any OpenAI-style API): Cast's settings added
+ *     to its request
  *   - anything else: SillyTavern's own quiet generation (reasoning follows the preset)
  * With strict JSON on, the reply has to match the task's schema; a connection that rejects schemas is
- * retried once without.
+ * retried without, and one that rejects Cast's reasoning setting is retried with the model's default.
  */
 
 import { main_api } from '../../../../../../../script.js';
@@ -20,6 +21,7 @@ import { generateWithExternalAPI } from '../generation/apiClient.js';
 import { safeGenerateRaw } from '../../utils/responseExtractor.js';
 
 export const CAST_REASONING = ['off', 'low', 'default'];
+// The effort word sent straight to a provider (OpenRouter, NanoGPT and OpenAI-style APIs all take these)
 const EFFORT = { off: 'none', low: 'low' };
 // Room for the reply; reasoning counts against it
 const MAX_TOKENS = {
@@ -46,10 +48,45 @@ export function castConnectionProfiles() {
     }
 }
 
-/** The picked profile, or '' for RPG Companion's own connection (also when the profile is gone). */
+/** The picked profile ({id, api}), or null for RPG Companion's own connection (also when the profile is gone). */
 function castProfile() {
     const id = extensionSettings.castConnection || '';
-    return id && castConnectionProfiles().some((p) => p.id === id) ? id : '';
+    if (!id) return null;
+    try {
+        const profile = getContext().ConnectionManagerRequestService.getSupportedProfiles().find((p) => p?.id === id);
+        return profile ? { id, api: String(profile.api || '') } : null;
+    } catch {
+        return null;
+    }
+}
+
+// Cast's requests run in the background. TauriTavern only reports a failed request as an error when it is
+// marked quiet; otherwise the error comes back as the reply's text.
+const QUIET = { type: 'quiet' };
+
+/**
+ * Reasoning fields for a request that goes through SillyTavern's (or TauriTavern's) own backend, which
+ * turns them into what the profile's provider expects.
+ * - Off: 'none', except on NanoGPT, where the backend only takes SillyTavern's scale ('min' is NanoGPT's
+ *   none, and TauriTavern rejects 'none').
+ * - Low: TauriTavern only turns DeepSeek's thinking on when the thinking is asked back, so ask for it there
+ *   (the reply's text stays separate from it).
+ */
+function backendReasoning(reasoning, api) {
+    if (reasoning === 'default') return {};
+    if (reasoning === 'off') return { reasoning_effort: api === 'nanogpt' ? 'min' : 'none', include_reasoning: false };
+    return { reasoning_effort: 'low', include_reasoning: api === 'deepseek' };
+}
+
+/** Reasoning fields for RPG Companion's External API, which calls the provider directly. */
+function externalReasoning(reasoning, baseUrl) {
+    if (reasoning === 'default') return {};
+    const effort = EFFORT[reasoning];
+    // OpenRouter takes a reasoning object; NanoGPT and OpenAI-style APIs a top-level reasoning_effort
+    // (NanoGPT also leaves the thinking out of the reply with reasoning.exclude)
+    if (/openrouter\.ai/i.test(baseUrl)) return { reasoning: { effort, exclude: true } };
+    if (/nano-gpt\.com/i.test(baseUrl)) return { reasoning_effort: effort, reasoning: { exclude: true } };
+    return { reasoning_effort: effort };
 }
 
 function asText(content) {
@@ -57,20 +94,18 @@ function asText(content) {
     return String(content ?? '');
 }
 
-async function send(messages, { maxTokens, overrides, jsonSchema }) {
+async function send(messages, { maxTokens, temperature, reasoning, jsonSchema }) {
     const context = getContext();
     const profile = castProfile();
     if (profile) {
-        const result = await context.ConnectionManagerRequestService.sendRequest(profile, messages, maxTokens,
+        const result = await context.ConnectionManagerRequestService.sendRequest(profile.id, messages, maxTokens,
             { stream: false, extractData: true, includePreset: true },
-            { ...overrides, ...(jsonSchema ? { json_schema: jsonSchema } : {}) });
+            { ...QUIET, temperature, ...backendReasoning(reasoning, profile.api), ...(jsonSchema ? { json_schema: jsonSchema } : {}) });
         return asText(result?.content);
     }
 
     if (extensionSettings.generationMode === 'external') {
-        const isOpenRouter = /openrouter\.ai/i.test(extensionSettings.externalApiSettings?.baseUrl || '');
-        const extra = { max_tokens: maxTokens, temperature: overrides.temperature };
-        if (overrides.reasoning_effort && isOpenRouter) extra.reasoning = { effort: overrides.reasoning_effort, exclude: true };
+        const extra = { max_tokens: maxTokens, temperature, ...externalReasoning(reasoning, extensionSettings.externalApiSettings?.baseUrl || '') };
         if (jsonSchema) extra.response_format = { type: 'json_schema', json_schema: { name: jsonSchema.name, strict: true, schema: jsonSchema.value } };
         return asText(await generateWithExternalAPI(messages, extra));
     }
@@ -85,7 +120,9 @@ async function send(messages, { maxTokens, overrides, jsonSchema }) {
             provider: oai_settings.openrouter_providers,
             allow_fallbacks: oai_settings.openrouter_allow_fallbacks,
             quantizations: oai_settings.openrouter_quantizations,
-            ...overrides,
+            ...QUIET,
+            temperature,
+            ...backendReasoning(reasoning, 'openrouter'),
             ...(jsonSchema ? { json_schema: jsonSchema } : {}),
         }, {}, true);
         return asText(result?.content);
@@ -104,24 +141,36 @@ export async function requestCast(messages, { task, schema }) {
     // A tidy has to catch contradictions across the whole memory, and summing up has to keep what matters;
     // both miss things without some thinking and run rarely, so they always reason at least a little
     const reasoning = task !== 'update' && castReasoning() === 'off' ? 'low' : castReasoning();
-    const maxTokens = MAX_TOKENS[task][reasoning];
-    const overrides = { temperature: TEMPERATURE[task] };
-    if (reasoning !== 'default') {
-        overrides.reasoning_effort = EFFORT[reasoning];
-        overrides.include_reasoning = false;
-    }
-    const jsonSchema = extensionSettings.castStrictJson !== false && schema
-        ? { name: schema.name, strict: true, value: schema.value }
-        : null;
+    let options = {
+        // The token room stays the one for the picked setting, also when a retry falls back to the default
+        maxTokens: MAX_TOKENS[task][reasoning],
+        temperature: TEMPERATURE[task],
+        reasoning,
+        jsonSchema: extensionSettings.castStrictJson !== false && schema
+            ? { name: schema.name, strict: true, value: schema.value }
+            : null,
+    };
 
-    try {
-        const text = await send(messages, { maxTokens, overrides, jsonSchema });
-        if (text.trim() || !jsonSchema) return text;
-        throw new Error('Empty reply');
-    } catch (error) {
-        if (!jsonSchema) throw error;
-        // Some connections reject schemas, or return nothing with them: try once without
-        console.warn('[RPG Companion] Cast: strict JSON failed, retrying without it:', error?.message || error);
-        return await send(messages, { maxTokens, overrides, jsonSchema: null });
+    // At most three tries: as set, then without whatever the connection turned down
+    for (let attempt = 1; ; attempt++) {
+        try {
+            const text = await send(messages, options);
+            if (text.trim() || !options.jsonSchema) return text;
+            throw new Error('Empty reply');
+        } catch (error) {
+            const message = String(error?.message || error);
+            if (attempt >= 3) throw error;
+            if (options.reasoning !== 'default' && /reason|thinking/i.test(message)) {
+                // e.g. "Unsupported xAI reasoning_effort: none", or a model that always thinks
+                console.warn('[RPG Companion] Cast: the connection turned down the reasoning setting, retrying with the model default:', message);
+                options = { ...options, reasoning: 'default' };
+            } else if (options.jsonSchema) {
+                // Some connections reject schemas, or return nothing with them
+                console.warn('[RPG Companion] Cast: strict JSON failed, retrying without it:', message);
+                options = { ...options, jsonSchema: null };
+            } else {
+                throw error;
+            }
+        }
     }
 }
