@@ -30,6 +30,9 @@ export let extensionSettings = {
     castEnabled: true, // Cast: a background model keeps every character's lasting memory and feeds it to the chat
     castUpdateDepth: 4, // Cast: messages the background model reads for each update
     castPromptDepth: 2, // Cast: how deep in the chat the cast notes are placed
+    castConnection: '', // Cast: Connection Profile id for the background model ('' = RPG Companion's connection)
+    castReasoning: 'off', // Cast: how much the background model reasons before answering ('off', 'low', 'default')
+    castStrictJson: true, // Cast: ask for replies that match Cast's JSON schema
     narratorMode: false, // Use character card as narrator instead of fixed character references
     customNarratorPrompt: '', // Custom narrator mode prompt text (empty = use default)
     customContextInstructionsPrompt: '', // Custom context instructions prompt text (empty = use default)

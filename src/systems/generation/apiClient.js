@@ -47,10 +47,11 @@ let originalPresetName = null;
  * Used when generationMode is 'external'.
  *
  * @param {Array<{role: string, content: string}>} messages - Array of message objects for the API
+ * @param {Object} [extraBody] - Extra request fields (Cast's reply length, temperature, reasoning, JSON schema)
  * @returns {Promise<string>} The generated response content
  * @throws {Error} If the API call fails or configuration is invalid
  */
-export async function generateWithExternalAPI(messages) {
+export async function generateWithExternalAPI(messages, extraBody = {}) {
     const { baseUrl, model, maxTokens, temperature } = extensionSettings.externalApiSettings || {};
     // Retrieve API key from secure storage (not shared extension settings)
     const apiKey = localStorage.getItem('rpg_companion_external_api_key');
@@ -86,7 +87,8 @@ export async function generateWithExternalAPI(messages) {
                 model: model.trim(),
                 messages: messages,
                 max_tokens: maxTokens || 2048,
-                temperature: temperature ?? 0.7
+                temperature: temperature ?? 0.7,
+                ...extraBody
             })
         });
 

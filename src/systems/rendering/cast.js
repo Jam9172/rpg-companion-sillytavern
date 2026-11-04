@@ -9,6 +9,7 @@ import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus, tidyCast, canUndoTidy, undoTidy } from '../features/cast.js';
 import { saveSettings } from '../../core/persistence.js';
+import { castConnectionProfiles, castReasoning } from '../features/castRequest.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
 
@@ -84,6 +85,41 @@ function rangePicker() {
             </select>
         </label>
         ${current === 0 ? `<p class="rpg-cast-range-note">${escapeHtml(t('cast.range.wholeNote', 'Reads the whole chat on every update: best memory, but long stories cost a lot of tokens and can pass your tracker model\'s context limit.'))}</p>` : ''}`;
+}
+
+// Whether the Background model fold is open, so a re-render keeps it that way
+let modelOpen = false;
+
+/** The background model's settings: connection, reasoning and strict JSON. */
+function modelSettings() {
+    const profiles = castConnectionProfiles();
+    const connection = profiles.some((p) => p.id === extensionSettings.castConnection) ? extensionSettings.castConnection : '';
+    const reasoning = castReasoning();
+    const option = (value, label, selected) => `<option value="${escapeHtml(value)}"${value === selected ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+    return `
+        <details class="rpg-cast-model"${modelOpen ? ' open' : ''}>
+            <summary>${escapeHtml(t('cast.model.title', 'Background model'))}</summary>
+            <label class="rpg-cast-model-row" title="${escapeHtml(t('cast.model.connectionHelp', 'Which connection Cast uses. A Connection Profile lets Cast use its own model, separate from the chat.'))}">
+                <span class="rpg-cast-label">${escapeHtml(t('cast.model.connection', 'Connection'))}</span>
+                <select class="rpg-cast-connection">
+                    ${option('', t('cast.model.sameConnection', 'Same as RPG Companion'), connection)}
+                    ${profiles.map((p) => option(p.id, p.name, connection)).join('')}
+                </select>
+            </label>
+            <label class="rpg-cast-model-row" title="${escapeHtml(t('cast.model.reasoningHelp', 'How much the model thinks before each update. Thinking is never shown and costs reply tokens; Off is fastest and cheapest. Tidy always thinks at least a little.'))}">
+                <span class="rpg-cast-label">${escapeHtml(t('cast.model.reasoning', 'Reasoning'))}</span>
+                <select class="rpg-cast-reasoning">
+                    ${option('off', t('cast.model.reasoningOff', 'Off (fastest, cheapest)'), reasoning)}
+                    ${option('low', t('cast.model.reasoningLow', 'Low'), reasoning)}
+                    ${option('default', t('cast.model.reasoningDefault', 'Model default'), reasoning)}
+                </select>
+            </label>
+            <label class="checkbox_label rpg-cast-model-check">
+                <input type="checkbox" class="rpg-cast-strict"${extensionSettings.castStrictJson !== false ? ' checked' : ''}>
+                <span>${escapeHtml(t('cast.model.strict', 'Strict JSON (replies always match Cast\'s format)'))}</span>
+            </label>
+            <p class="rpg-cast-range-note">${escapeHtml(t('cast.model.note', 'Reasoning and temperature are set by Cast on OpenRouter, Connection Profiles and the External API. Other connections follow their preset.'))}</p>
+        </details>`;
 }
 
 // Cards the user opened or closed, by name, so a re-render keeps them that way
@@ -185,6 +221,7 @@ export function renderCast() {
         </div>
         ${statusBar()}
         ${rangePicker()}
+        ${modelSettings()}
         ${characters.length
             ? `<div class="rpg-cast-list">${characters.map(card).join('')}</div>`
             : `<p class="rpg-cast-empty">${escapeHtml(t('cast.empty', 'No characters yet. Everyone the story meets is remembered here as it goes on.'))}</p>`}
@@ -238,6 +275,21 @@ export function initCastTab() {
         extensionSettings.castUpdateDepth = Number.isFinite(number) && number >= 0 ? (number === 0 ? 0 : Math.max(2, number)) : 4;
         saveSettings();
         renderCast();
+    });
+    document.addEventListener('toggle', (e) => {
+        if (e.target instanceof HTMLDetailsElement && e.target.matches('#rpg-cast .rpg-cast-model')) modelOpen = e.target.open;
+    }, true);
+    $doc.on('change', '#rpg-cast .rpg-cast-connection', function () {
+        extensionSettings.castConnection = this.value;
+        saveSettings();
+    });
+    $doc.on('change', '#rpg-cast .rpg-cast-reasoning', function () {
+        extensionSettings.castReasoning = this.value;
+        saveSettings();
+    });
+    $doc.on('change', '#rpg-cast .rpg-cast-strict', function () {
+        extensionSettings.castStrictJson = this.checked;
+        saveSettings();
     });
     const listKey = (kind) => (kind === 'step' ? 'steps' : 'events');
     $doc.on('keydown', '#rpg-cast .rpg-cast-memory', function (e) {
