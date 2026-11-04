@@ -1426,11 +1426,15 @@ export function buildCastNotes() {
 export function refreshCastPrompt() {
     const enabled = extensionSettings.enabled && extensionSettings.castEnabled !== false;
     const notes = enabled ? buildCastNotes() : '';
-    const depth = Math.max(0, Number(extensionSettings.castPromptDepth ?? 2));
-    setExtensionPrompt(PROMPT_KEY, notes, extension_prompt_types.IN_CHAT, depth, false, extension_prompt_roles.SYSTEM);
-    // The story so far sits with the main prompt, before the chat
     const story = enabled && extensionSettings.castStoryInject !== false ? buildStoryNotes() : '';
-    setExtensionPrompt(STORY_PROMPT_KEY, story, extension_prompt_types.IN_PROMPT, 0, false, extension_prompt_roles.SYSTEM);
+    const depth = Math.max(0, Number(extensionSettings.castPromptDepth ?? 2));
+    // Both go near the end of the prompt, story first. They change after every reply, and a provider's
+    // prompt cache only reuses what comes before the first change, so this way the main prompt, the cards
+    // and nearly all of the chat are read from the cache instead of again.
+    setExtensionPrompt(PROMPT_KEY, [story, notes].filter(Boolean).join('\n'), extension_prompt_types.IN_CHAT, depth, false, extension_prompt_roles.SYSTEM);
+    // The story used to sit with the main prompt, before the chat, where each new beat made the whole chat
+    // be read again: make sure nothing is left there
+    setExtensionPrompt(STORY_PROMPT_KEY, '', extension_prompt_types.IN_PROMPT, 0, false, extension_prompt_roles.SYSTEM);
 }
 
 /* ---------- Events ---------- */
