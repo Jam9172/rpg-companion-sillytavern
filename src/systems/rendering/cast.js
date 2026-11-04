@@ -10,6 +10,7 @@ import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus, tidyCast, canUndoTidy, undoTidy } from '../features/cast.js';
 import { saveSettings } from '../../core/persistence.js';
 import { castConnectionProfiles, castReasoning } from '../features/castRequest.js';
+import { renderAllMeanwhile } from './meanwhile.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
 
@@ -98,7 +99,7 @@ function modelSettings() {
     const option = (value, label, selected) => `<option value="${escapeHtml(value)}"${value === selected ? ' selected' : ''}>${escapeHtml(label)}</option>`;
     return `
         <details class="rpg-cast-model"${modelOpen ? ' open' : ''}>
-            <summary>${escapeHtml(t('cast.model.title', 'Background model'))}</summary>
+            <summary>${escapeHtml(t('cast.settings.title', 'Settings'))}</summary>
             <label class="rpg-cast-model-row" title="${escapeHtml(t('cast.model.connectionHelp', 'Which connection Cast uses. A Connection Profile lets Cast use its own model, separate from the chat.'))}">
                 <span class="rpg-cast-label">${escapeHtml(t('cast.model.connection', 'Connection'))}</span>
                 <select class="rpg-cast-connection">
@@ -119,6 +120,10 @@ function modelSettings() {
                 <span>${escapeHtml(t('cast.model.strict', 'Strict JSON (replies always match Cast\'s format)'))}</span>
             </label>
             <p class="rpg-cast-range-note">${escapeHtml(t('cast.model.note', 'Reasoning and temperature are set by Cast on OpenRouter, Connection Profiles and the External API. Other connections follow their preset.'))}</p>
+            <label class="checkbox_label rpg-cast-model-check" title="${escapeHtml(t('cast.meanwhile.help', 'A small fold under each reply with what changed off-screen: who left or came back, and what the away characters started and finished.'))}">
+                <input type="checkbox" class="rpg-cast-meanwhile-toggle"${extensionSettings.castMeanwhile !== false ? ' checked' : ''}>
+                <span>${escapeHtml(t('cast.meanwhile.toggle', 'Show "Meanwhile" under replies'))}</span>
+            </label>
         </details>`;
 }
 
@@ -290,6 +295,11 @@ export function initCastTab() {
     $doc.on('change', '#rpg-cast .rpg-cast-strict', function () {
         extensionSettings.castStrictJson = this.checked;
         saveSettings();
+    });
+    $doc.on('change', '#rpg-cast .rpg-cast-meanwhile-toggle', function () {
+        extensionSettings.castMeanwhile = this.checked;
+        saveSettings();
+        renderAllMeanwhile();
     });
     const listKey = (kind) => (kind === 'step' ? 'steps' : 'events');
     $doc.on('keydown', '#rpg-cast .rpg-cast-memory', function (e) {

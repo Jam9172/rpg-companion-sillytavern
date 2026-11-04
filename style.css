@@ -15553,3 +15553,103 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     margin: 0;
     font-style: italic;
 }
+
+/* ==========================================================================
+   Meanwhile: what changed off-screen during a reply, folded under it
+   ========================================================================== */
+.rpg-meanwhile {
+    margin: 0.5em 0 0.15em;
+    padding: 0.3em 0.6em;
+    border-left: 2px solid var(--forge-brass, rgba(217, 163, 91, 0.8));
+    border-radius: 0 6px 6px 0;
+    background: color-mix(in srgb, var(--forge-brass, #D9A35B) 6%, transparent);
+    font-size: 0.85em;
+    line-height: 1.45;
+}
+
+.rpg-meanwhile > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.45em;
+    cursor: pointer;
+    list-style: none;
+    color: var(--forge-brass, #D9A35B);
+    font-family: var(--forge-heading, inherit);
+    letter-spacing: 0.04em;
+    opacity: 0.85;
+}
+
+.rpg-meanwhile > summary::-webkit-details-marker {
+    display: none;
+}
+
+.rpg-meanwhile > summary::after {
+    content: '\f078';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.7em;
+    margin-left: auto;
+    transition: transform 0.15s ease;
+}
+
+.rpg-meanwhile[open] > summary::after {
+    transform: rotate(180deg);
+}
+
+.rpg-meanwhile > summary:hover {
+    opacity: 1;
+}
+
+.rpg-meanwhile-count {
+    min-width: 1.4em;
+    padding: 0 0.35em;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--forge-brass, #D9A35B) 18%, transparent);
+    font-family: var(--mainFontFamily, inherit);
+    font-size: 0.85em;
+    text-align: center;
+}
+
+.rpg-meanwhile ul {
+    margin: 0.4em 0 0.15em;
+    padding: 0;
+    list-style: none;
+}
+
+.rpg-meanwhile li {
+    margin: 0 0 0.35em;
+}
+
+.rpg-meanwhile li.is-status {
+    opacity: 0.75;
+    font-style: italic;
+}
+
+.rpg-meanwhile-kind {
+    display: inline-block;
+    margin-right: 0.4em;
+    padding: 0 0.4em;
+    border: 1px solid color-mix(in srgb, var(--forge-muted, #b7a088) 50%, transparent);
+    border-radius: 4px;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+}
+
+.rpg-meanwhile-kind.is-now {
+    border-color: color-mix(in srgb, var(--forge-ember, #E8622C) 60%, transparent);
+    color: var(--forge-ember, #E8622C);
+}
+
+.rpg-meanwhile-name {
+    margin-right: 0.35em;
+    font-weight: 700;
+}
+
+.rpg-meanwhile-text {
+    display: block;
+    margin-top: 0.1em;
+    font-style: italic;
+    opacity: 0.9;
+}

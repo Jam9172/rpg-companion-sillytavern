@@ -603,11 +603,54 @@ export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
     if (Object.keys(before).length) {
         // The cast moved on, so going back to before the last tidy would lose this update
         delete cast.tidyUndo;
-        cast.journal.push({ messageIndex, signature: messageSignature(messageIndex), before });
+        const meanwhile = meanwhileOf(before, cast);
+        cast.journal.push({ messageIndex, signature: messageSignature(messageIndex), before, ...(meanwhile.length ? { meanwhile } : {}) });
         if (cast.journal.length > MAX_JOURNAL) cast.journal.splice(0, cast.journal.length - MAX_JOURNAL);
         saveCast();
     }
     return changed;
+}
+
+/**
+ * What an update changed that the user cannot see in the story: who left or came back, who died, and
+ * what the away characters started and finished. Shown as "Meanwhile" under the reply.
+ * @returns {Array<{name: string, kind: 'left'|'back'|'died'|'doing'|'done', text?: string}>}
+ */
+function meanwhileOf(before, cast) {
+    const plain = (line) => line.replace(OFFSCREEN_PREFIX, '');
+    const lines = [];
+    for (const [key, old] of Object.entries(before)) {
+        const now = cast.characters[key];
+        if (!now) continue;
+        if (old?.status === 'present' && now.status === 'away') lines.push({ name: now.name, kind: 'left' });
+        if (old?.status === 'away' && now.status === 'present') lines.push({ name: now.name, kind: 'back' });
+        if (old?.status !== 'dead' && now.status === 'dead') lines.push({ name: now.name, kind: 'died' });
+        const oldEvents = new Set(old?.events || []);
+        const oldSteps = new Set(old?.steps || []);
+        // A summary that replaced old entries is bookkeeping, not news
+        const summary = now.events.length && !oldEvents.has(now.events[0]) && (old?.events?.length || 0) > MAX_EVENTS ? now.events[0] : null;
+        for (const event of now.events) {
+            if (!oldEvents.has(event) && event !== summary && event.startsWith(OFFSCREEN_PREFIX)) lines.push({ name: now.name, kind: 'done', text: plain(event) });
+        }
+        for (const step of now.steps) {
+            if (!oldSteps.has(step)) lines.push({ name: now.name, kind: 'doing', text: plain(step) });
+        }
+    }
+    return lines;
+}
+
+/**
+ * The Meanwhile lines for a message: what its update changed off-screen, as long as the message is still
+ * the one that update read (not deleted, swiped away or edited out of the journal).
+ */
+export function getMeanwhile(messageIndex) {
+    const cast = chat_metadata?.[METADATA_KEY];
+    if (!cast?.journal?.length) return [];
+    const signature = messageSignature(messageIndex);
+    return cast.journal
+        .filter((e) => e.messageIndex === messageIndex && e.signature === signature && e.meanwhile)
+        .flatMap((e) => e.meanwhile)
+        .filter((line) => cast.characters[castKey(line.name)] || line.kind === 'died');
 }
 
 async function waitForTrackers(maxMs = 120000) {
