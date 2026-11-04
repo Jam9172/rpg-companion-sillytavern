@@ -304,6 +304,96 @@ export function castReadRange() {
     return value === 0 ? 0 : Math.max(2, Math.round(value));
 }
 
+/* ---------- Story time ---------- */
+
+const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+/** Minutes after midnight from "21:40", "8:49 PM" or "08.49pm", or null. */
+function clockMinutes(text) {
+    const m = String(text || '').match(/(\d{1,2})[:.](\d{2})\s*([AaPp]\.?\s?[Mm]\.?)?/);
+    if (!m) return null;
+    let hours = Number(m[1]) % 24;
+    if (m[3]) hours = (hours % 12) + (/p/i.test(m[3]) ? 12 : 0);
+    return hours * 60 + Number(m[2]);
+}
+
+/**
+ * The story's date and time from RPG Companion's Info Box (JSON or text), or null when it has neither.
+ * The end of the time range counts, since that is where the reply left off.
+ * @returns {{date: string, time: number|null, label: string}|null}
+ */
+export function storyClock() {
+    const raw = lastGeneratedData?.infoBox || committedTrackerData?.infoBox;
+    if (!raw) return null;
+    let date = '';
+    let start = '';
+    let end = '';
+    try {
+        const data = JSON.parse(raw);
+        date = String(data?.date?.value || '');
+        start = String(data?.time?.start || '');
+        end = String(data?.time?.end || '');
+    } catch {
+        for (const line of String(raw).split('\n')) {
+            const dateMatch = line.match(/(?:Date:|🗓️:)\s*(.+)/);
+            if (dateMatch && !date) date = dateMatch[1].trim();
+            const timeMatch = line.match(/(?:Time:|🕒:)\s*(.+)/);
+            if (timeMatch && !start) [start = '', end = ''] = timeMatch[1].split('→').map((t) => t.trim());
+        }
+    }
+    const time = clockMinutes(end) ?? clockMinutes(start);
+    if (time === null && !date) return null;
+    return { date, time, label: [end || start, date].filter(Boolean).join(', ') };
+}
+
+/** Days between two Info Box dates: by day number in the same month, else by weekday; null if unknown. */
+function daysBetween(a, b) {
+    if (a === b) return 0;
+    if (!a || !b) return null;
+    const dayMonth = (d) => {
+        const m = d.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(\p{L}+)/u) || d.match(/(\p{L}+)\s+(\d{1,2})(?:st|nd|rd|th)?\b/u);
+        if (!m) return null;
+        return /^\d/.test(m[1]) ? { day: Number(m[1]), month: m[2].toLowerCase() } : { day: Number(m[2]), month: m[1].toLowerCase() };
+    };
+    const x = dayMonth(a);
+    const y = dayMonth(b);
+    if (x && y && x.month === y.month && y.day >= x.day) return y.day - x.day;
+    const weekday = (d) => WEEKDAYS.findIndex((w) => d.toLowerCase().includes(w));
+    const w0 = weekday(a);
+    const w1 = weekday(b);
+    if (w0 >= 0 && w1 >= 0) return (w1 - w0 + 7) % 7 || 7;
+    return null;
+}
+
+/**
+ * How much story time passed between two clocks, in words ("about 3 hours (22:05 → 01:10, ...)"), or ''
+ * when the Info Box cannot tell (no times, or a clock that went backwards on the same day).
+ */
+export function elapsedStoryTime(before, now) {
+    if (!before || !now || before.time === null || now.time === null) return '';
+    let days = daysBetween(before.date, now.date);
+    let minutes = now.time - before.time;
+    if (days === 0 && minutes < 0) return '';
+    if (days === null) days = minutes < 0 ? 1 : 0;
+    minutes += days * 1440;
+    if (minutes < 0) return '';
+    const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+    let words;
+    if (minutes < 5) words = 'only a few minutes';
+    else if (minutes < 60) words = `about ${plural(Math.max(5, Math.round(minutes / 5) * 5), 'minute')}`;
+    else if (minutes < 1440) words = `about ${plural(Math.round(minutes / 60), 'hour')}`;
+    else words = `about ${plural(Math.round(minutes / 1440), 'day')}`;
+    return `${words} (${before.label} → ${now.label})`;
+}
+
+/** The story clock kept with the newest update that has one. */
+function lastClock(cast) {
+    for (let i = cast.journal.length - 1; i >= 0; i--) {
+        if (cast.journal[i].clock) return cast.journal[i].clock;
+    }
+    return null;
+}
+
 /** The in-story date, time and place from RPG Companion's Info Box, if it has one. */
 function sceneInfo() {
     const info = lastGeneratedData?.infoBox || committedTrackerData?.infoBox;
@@ -508,6 +598,8 @@ Reply:
     const format = (messages) => messages.map((m) => `${speaker(cast, m, userName)}: ${messageText(m)}`).join('\n\n');
     const notes = [];
     if (idle.length) notes.push(`Nothing in Doing now yet; give each one an activity: ${idle.join(', ')}.`);
+    const elapsed = elapsedStoryTime(lastClock(cast), storyClock());
+    if (elapsed) notes.push(`Story time since the last update: ${elapsed}. Move the away characters along by that much.`);
 
     // Cache-friendly order: what stays the same between updates first (cards, then the story, which in
     // "whole story" mode only grows at the end), what changes every time last
@@ -595,7 +687,7 @@ export const OFFSCREEN_PREFIX = '(off-screen) ';
  * update can be undone with its message.
  * @returns {number} How many characters changed
  */
-export function applyCastUpdate(updates, messageIndex, { here = null, story = null, verifyNames = false } = {}) {
+export function applyCastUpdate(updates, messageIndex, { here = null, story = null, verifyNames = false, clock = null } = {}) {
     const cast = getCast();
     const userKey = castKey(getContext().name1);
     const before = {};
@@ -697,11 +789,11 @@ export function applyCastUpdate(updates, messageIndex, { here = null, story = nu
 
     const storyChange = story ? applyStory(cast, story, messageIndex) : null;
 
-    if (Object.keys(before).length || storyChange) {
+    if (Object.keys(before).length || storyChange || clock) {
         // The cast moved on, so going back to before the last tidy would lose this update
         delete cast.tidyUndo;
         const meanwhile = meanwhileOf(before, cast);
-        cast.journal.push({ messageIndex, signature: messageSignature(messageIndex), before, ...(meanwhile.length ? { meanwhile } : {}), ...(archived.length ? { archived } : {}), ...(storyChange ? { story: storyChange } : {}) });
+        cast.journal.push({ messageIndex, signature: messageSignature(messageIndex), before, ...(meanwhile.length ? { meanwhile } : {}), ...(archived.length ? { archived } : {}), ...(storyChange ? { story: storyChange } : {}), ...(clock ? { clock } : {}) });
         if (cast.journal.length > MAX_JOURNAL) cast.journal.splice(0, cast.journal.length - MAX_JOURNAL);
         saveCast();
     }
@@ -1017,6 +1109,8 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
             await waitForTrackers();
             const chatId = getContext().chatId;
             const signature = messageSignature(messageIndex);
+            // The story's date and time now (from the Info Box), kept with the update for the next one
+            const clock = storyClock();
 
             let response;
             try {
@@ -1037,7 +1131,7 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
                 castStatus.errorTask = 'update';
                 return;
             }
-            applyCastUpdate(parsed.updates, messageIndex, { here: parsed.here, story: parsed.story, verifyNames: true });
+            applyCastUpdate(parsed.updates, messageIndex, { here: parsed.here, story: parsed.story, verifyNames: true, clock });
             await runFolds(messageIndex, chatId, signature);
             castStatus.lastOk = Date.now();
             castStatus.lastError = null;
