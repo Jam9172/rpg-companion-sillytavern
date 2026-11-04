@@ -7,7 +7,7 @@
 import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
-import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus, tidyCast, canUndoTidy, undoTidy } from '../features/cast.js';
+import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus, tidyCast, canUndoTidy, undoTidy, listArchive, editArchiveKeywords, deleteArchive } from '../features/cast.js';
 import { saveSettings } from '../../core/persistence.js';
 import { castConnectionProfiles, castReasoning } from '../features/castRequest.js';
 import { renderAllMeanwhile } from './meanwhile.js';
@@ -153,6 +153,32 @@ function memoryLine(text, kind, index, offscreenTitle) {
         </li>`;
 }
 
+/** A character's archived memories: older What happened entries a mention of their keywords brings back. */
+function archiveFold(character, offscreenTitle) {
+    const archive = listArchive(character.name);
+    if (!archive.length) return '';
+    const key = `archive:${character.name}`;
+    const keysTitle = escapeHtml(t('cast.archive.keysHelp', 'Keywords: when one comes up in the story, this memory goes back into the chat. Separate them with commas.'));
+    const removeTitle = escapeHtml(t('cast.archive.remove', 'Remove this memory from the archive'));
+    const entries = archive.slice().reverse().map((a) => `
+        <div class="rpg-cast-archive-entry" data-id="${escapeHtml(a.id)}">
+            <div class="rpg-cast-archive-head">
+                <i class="fa-solid fa-key" aria-hidden="true"></i>
+                <span class="rpg-cast-archive-keys" contenteditable="true" spellcheck="false" title="${keysTitle}">${escapeHtml(a.keywords.join(', '))}</span>
+                <button type="button" class="rpg-cast-archive-delete" title="${removeTitle}" aria-label="${removeTitle}">×</button>
+            </div>
+            <ul class="rpg-cast-events">${a.entries.map((e) => {
+                const offscreen = e.startsWith(OFFSCREEN_PREFIX);
+                return `<li class="rpg-cast-event${offscreen ? ' is-offscreen' : ''}"${offscreen ? ` title="${offscreenTitle}"` : ''}>${offscreen ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>' : ''}<span>${escapeHtml(offscreen ? e.slice(OFFSCREEN_PREFIX.length) : e)}</span></li>`;
+            }).join('')}</ul>
+        </div>`).join('');
+    return `
+        <details class="rpg-cast-archive" data-key="${escapeHtml(key)}"${openState.get(key) ? ' open' : ''}>
+            <summary><span class="rpg-cast-label">${escapeHtml(t('cast.archive.title', 'Archive'))}</span><span class="rpg-cast-archive-count">${archive.length}</span></summary>
+            ${entries}
+        </details>`;
+}
+
 function card(character) {
     const [statusKey, statusFallback] = STATUS_LABELS[character.status] || STATUS_LABELS.away;
     const open = openState.has(character.name) ? openState.get(character.name) : character.status === 'present';
@@ -180,6 +206,7 @@ function card(character) {
                     <span class="rpg-cast-label">${escapeHtml(t('cast.events', 'What happened'))}</span>
                     ${events ? `<ul class="rpg-cast-events">${events}</ul>` : empty(t('cast.eventsNone', 'Nothing yet'))}
                 </div>
+                ${archiveFold(character, offscreenTitle)}
                 <div class="rpg-cast-actions">
                     <button type="button" class="rpg-cast-delete">${escapeHtml(t('cast.delete', 'Forget this character'))}</button>
                 </div>
@@ -249,6 +276,9 @@ export function initCastTab() {
         if (e.target instanceof HTMLDetailsElement && e.target.matches('#rpg-cast .rpg-cast-card')) {
             openState.set(e.target.dataset.name, e.target.open);
         }
+        if (e.target instanceof HTMLDetailsElement && e.target.matches('#rpg-cast .rpg-cast-archive')) {
+            openState.set(e.target.dataset.key, e.target.open);
+        }
     }, true);
     // The lock sits inside the summary: do not fold the card when it is clicked
     $doc.on('click', '#rpg-cast .rpg-cast-lock', function (e) {
@@ -300,6 +330,19 @@ export function initCastTab() {
         extensionSettings.castMeanwhile = this.checked;
         saveSettings();
         renderAllMeanwhile();
+    });
+    $doc.on('keydown', '#rpg-cast .rpg-cast-archive-keys', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.blur();
+        }
+    });
+    $doc.on('blur', '#rpg-cast .rpg-cast-archive-keys', function () {
+        const id = String($(this).closest('.rpg-cast-archive-entry').data('id'));
+        editArchiveKeywords(id, this.textContent.split(','));
+    });
+    $doc.on('click', '#rpg-cast .rpg-cast-archive-delete', function () {
+        deleteArchive(String($(this).closest('.rpg-cast-archive-entry').data('id')));
     });
     const listKey = (kind) => (kind === 'step' ? 'steps' : 'events');
     $doc.on('keydown', '#rpg-cast .rpg-cast-memory', function (e) {

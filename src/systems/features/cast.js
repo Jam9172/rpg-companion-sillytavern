@@ -38,6 +38,9 @@ const EVENTS_TO_FOLD = 6;     // how many of the oldest events go into that summ
 const EVENTS_IN_PROMPT = 3;   // recent events shown to the main model per character
 const CARDS_LIMIT = 6000;     // characters of card descriptions sent to the background model
 const MAX_JOURNAL = 200;      // undo entries kept (older ones can no longer be rolled back)
+const MAX_ARCHIVE = 300;      // archived memories kept per chat (the oldest go first)
+const ARCHIVE_IN_NOTES = 3;   // archived memories a mention can bring back into the main model's notes
+const ARCHIVE_CHARS = 2000;   // and at most this much text of them
 
 const listeners = [];
 let updateQueue = Promise.resolve();
@@ -73,6 +76,7 @@ export function getCast() {
     cast.characters ??= {};
     cast.journal ??= [];
     cast.forgotten ??= [];
+    cast.archive ??= [];
     return cast;
 }
 
@@ -166,6 +170,7 @@ export function deleteCharacter(name) {
     delete cast.characters[key];
     if (!cast.forgotten.some((n) => castKey(n) === key)) cast.forgotten.push(character.name);
     for (const entry of cast.journal) delete entry.before[key];
+    cast.archive = cast.archive.filter((a) => a.character !== key);
     saveCast();
     refreshCastPrompt();
 }
@@ -190,6 +195,15 @@ function messageSignature(index) {
     return `${message.send_date ?? ''}|${message.swipe_id ?? 0}`;
 }
 
+/** Puts back what one update changed: the characters as they were, and none of what it archived. */
+function undoEntry(cast, entry) {
+    for (const [key, before] of Object.entries(entry.before)) {
+        if (before === null) delete cast.characters[key];
+        else cast.characters[key] = before;
+    }
+    if (entry.archived?.length) cast.archive = cast.archive.filter((a) => !entry.archived.includes(a.id));
+}
+
 /**
  * Undoes updates whose message is gone: deleted, swiped to another reply, or cut off by going back.
  * Newest updates are undone first, so earlier ones stay intact.
@@ -211,10 +225,7 @@ export function reconcileCast() {
             changed = true;
             break;
         }
-        for (const [key, before] of Object.entries(entry.before)) {
-            if (before === null) delete cast.characters[key];
-            else cast.characters[key] = before;
-        }
+        undoEntry(cast, entry);
         cast.journal.pop();
         changed = true;
     }
@@ -322,8 +333,8 @@ const UPDATE_SCHEMA = {
                 items: {
                     type: 'object',
                     additionalProperties: false,
-                    required: ['name', 'text'],
-                    properties: { name: { type: 'string' }, text: { type: 'string' } },
+                    required: ['name', 'text', 'keywords'],
+                    properties: { name: { type: 'string' }, text: { type: 'string' }, keywords: { type: 'array', items: { type: 'string' } } },
                 },
             },
         },
@@ -420,7 +431,7 @@ Away characters are the leads of their own stories, not extras waiting in the wi
   - "doing_now": "" if their current Doing now is still true. Otherwise the new activity in one or two present-tense sentences: what they are doing, how, and why or how they feel about it. When you close an activity, always give the next one.
   - Ten turns of shopping is one activity, not ten. If their Doing now has ${MAX_STEPS} or more lines, close it.
 - "dead": characters who died in the NEW messages.
-- "summaries": only for the characters named under "This update": retell their ${EVENTS_TO_FOLD} oldest What happened entries as one first-person paragraph (three to five sentences) that keeps what still matters to them.
+- "summaries": only for the characters named under "This update": retell their ${EVENTS_TO_FOLD} oldest What happened entries as one first-person paragraph (three to five sentences) that keeps what still matters to them. The entries themselves are kept in an archive: "keywords" lists three to eight names of the people, places and things in them (not the character's own name), so a later mention brings them back.
 - Use [] for an empty list. Plain text only, without "(off-screen)" marks.
 </reply_format>
 
@@ -511,7 +522,10 @@ export function parseUpdate(text) {
     for (const entry of list(data.returned)) add(nameOf(entry), { status: 'present' });
     for (const entry of list(data.dead)) add(nameOf(entry), { status: 'dead' });
     for (const entry of list(data.summaries)) {
-        if (nameOf(entry) && typeof entry?.text === 'string') add(nameOf(entry), { summary: entry.text });
+        if (nameOf(entry) && typeof entry?.text === 'string') {
+            const keywords = Array.isArray(entry.keywords) ? entry.keywords.filter((k) => typeof k === 'string') : [];
+            add(nameOf(entry), { summary: entry.text, keywords });
+        }
     }
     // A "here" list that was all junk says nothing about who is in the scene, so nobody is moved out
     const hereKnown = Array.isArray(data.here) && (here.length > 0 || rawHere.length === 0);
@@ -530,6 +544,7 @@ export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
     const cast = getCast();
     const userKey = castKey(getContext().name1);
     const before = {};
+    const archived = [];
     let changed = 0;
 
     for (const update of updates) {
@@ -580,10 +595,19 @@ export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
         // The model forgot to finish a long activity: keep only the latest steps
         if (character.steps.length > MAX_STEPS) character.steps = character.steps.slice(-MAX_STEPS);
 
-        // The oldest entries retold as one summary, which takes their place
+        // The oldest entries retold as one summary, which takes their place in What happened; the
+        // entries themselves go to the archive, where a mention of what is in them brings them back
         const summary = typeof update.summary === 'string' ? update.summary.trim() : '';
         if (summary && character.events.length > MAX_EVENTS) {
-            character.events = [summary, ...character.events.slice(EVENTS_TO_FOLD)];
+            const folded = character.events.slice(0, EVENTS_TO_FOLD);
+            archived.push(archiveMemories(cast, character, folded, update.keywords, messageIndex));
+            // A summary of off-screen entries is off-screen too
+            const mark = folded.every((e) => e.startsWith(OFFSCREEN_PREFIX)) ? OFFSCREEN_PREFIX : '';
+            character.events = [mark + summary, ...character.events.slice(EVENTS_TO_FOLD)];
+        } else if (character.events.length > MAX_EVENTS + EVENTS_TO_FOLD) {
+            // The model never summed them up: archive the oldest anyway, so What happened stays short
+            archived.push(archiveMemories(cast, character, character.events.slice(0, EVENTS_TO_FOLD), [], messageIndex));
+            character.events = character.events.slice(EVENTS_TO_FOLD);
         }
 
         if (isHere) character.lastSeen = messageIndex;
@@ -604,11 +628,93 @@ export function applyCastUpdate(updates, messageIndex, { here = null } = {}) {
         // The cast moved on, so going back to before the last tidy would lose this update
         delete cast.tidyUndo;
         const meanwhile = meanwhileOf(before, cast);
-        cast.journal.push({ messageIndex, signature: messageSignature(messageIndex), before, ...(meanwhile.length ? { meanwhile } : {}) });
+        cast.journal.push({ messageIndex, signature: messageSignature(messageIndex), before, ...(meanwhile.length ? { meanwhile } : {}), ...(archived.length ? { archived } : {}) });
         if (cast.journal.length > MAX_JOURNAL) cast.journal.splice(0, cast.journal.length - MAX_JOURNAL);
         saveCast();
     }
     return changed;
+}
+
+/* ---------- Archive ---------- */
+
+// Capitalised words that start sentences rather than name anything
+const NOT_KEYWORDS = new Set(['the', 'then', 'when', 'after', 'before', 'but', 'and', 'so', 'now', 'there', 'that', 'this', 'they', 'she', 'he', 'it', 'we', 'my', 'his', 'her', 'their', 'our', 'one', 'once', 'while', 'with', 'by', 'at', 'in', 'on', 'for', 'if', 'what', 'who', 'where', 'why', 'how', 'all', 'some', 'no', 'not', 'even', 'still', 'just']);
+
+/** Names of people, places and things in the entries, for when the model gave no keywords. */
+function keywordsFrom(entries, ownNames) {
+    const found = new Map();
+    for (const entry of entries) {
+        for (const match of entry.replace(OFFSCREEN_PREFIX, '').matchAll(/\b\p{Lu}[\p{L}'-]+(?:\s+\p{Lu}[\p{L}'-]+)*/gu)) {
+            const word = match[0].replace(/'s$/, '');
+            const key = word.toLowerCase();
+            if (word.length < 3 || NOT_KEYWORDS.has(key) || ownNames.has(key) || key === 'i') continue;
+            found.set(key, word);
+        }
+    }
+    return [...found.values()].slice(0, 8);
+}
+
+/**
+ * Moves memories into the archive, tagged with keywords (people, places, things in them, never the
+ * character's own name, which would bring them back all the time).
+ * @returns {string} The archive entry's id
+ */
+function archiveMemories(cast, character, entries, keywords, messageIndex) {
+    const ownNames = new Set([character.name, ...(character.aliases || []), ...character.name.split(/\s+/)].map((n) => n.toLowerCase()));
+    const seen = new Set();
+    let tags = (Array.isArray(keywords) ? keywords : [])
+        .map((k) => String(k).trim())
+        .filter((k) => k.length >= 2 && !ownNames.has(k.toLowerCase()) && !seen.has(k.toLowerCase()) && seen.add(k.toLowerCase()))
+        .slice(0, 10);
+    if (!tags.length) tags = keywordsFrom(entries, ownNames);
+    const id = `a${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    cast.archive.push({ id, character: castKey(character.name), name: character.name, entries: [...entries], keywords: tags, messageIndex, created: Date.now() });
+    if (cast.archive.length > MAX_ARCHIVE) cast.archive.splice(0, cast.archive.length - MAX_ARCHIVE);
+    return id;
+}
+
+/** A character's archived memories, oldest first. */
+export function listArchive(name) {
+    const cast = getCast();
+    const character = findCharacter(cast, name);
+    if (!character) return [];
+    return cast.archive.filter((a) => a.character === castKey(character.name));
+}
+
+/** Changes an archived memory's keywords by hand. */
+export function editArchiveKeywords(id, keywords) {
+    const entry = getCast().archive.find((a) => a.id === id);
+    if (!entry) return;
+    entry.keywords = keywords.map((k) => String(k).trim()).filter(Boolean).slice(0, 10);
+    saveCast();
+    refreshCastPrompt();
+}
+
+/** Removes an archived memory by hand. */
+export function deleteArchive(id) {
+    const cast = getCast();
+    cast.archive = cast.archive.filter((a) => a.id !== id);
+    saveCast();
+    refreshCastPrompt();
+}
+
+/** Archived memories whose keywords appear in the text, newest first, within the notes' budget. */
+export function recallArchive(text) {
+    const cast = chat_metadata?.[METADATA_KEY];
+    if (!cast?.archive?.length || !text) return [];
+    const hits = [];
+    let used = 0;
+    for (const entry of [...cast.archive].reverse()) {
+        if (!cast.characters[entry.character]) continue;
+        const hit = entry.keywords.some((k) => new RegExp(`(^|[^\\p{L}])${escapeRegex(k)}($|[^\\p{L}])`, 'iu').test(text));
+        if (!hit) continue;
+        const size = entry.entries.join(' ').length;
+        if (used + size > ARCHIVE_CHARS && hits.length) continue;
+        hits.push(entry);
+        used += size;
+        if (hits.length >= ARCHIVE_IN_NOTES) break;
+    }
+    return hits;
 }
 
 /**
@@ -728,11 +834,7 @@ export function refreshCast() {
     const signature = messageSignature(latest);
     let undone = false;
     while (cast.journal.length && cast.journal.at(-1).signature === signature) {
-        const entry = cast.journal.pop();
-        for (const [key, before] of Object.entries(entry.before)) {
-            if (before === null) delete cast.characters[key];
-            else cast.characters[key] = before;
-        }
+        undoEntry(cast, cast.journal.pop());
         undone = true;
     }
     if (undone) saveCast();
@@ -942,6 +1044,14 @@ export function buildCastNotes() {
         notes += elsewhere.map((c) => `- ${c.name}: ${c.steps.at(-1).replace(OFFSCREEN_PREFIX, '')}`).join('\n') + '\n';
     }
     if (named.length) notes += `Also in the story: ${named.map((c) => c.name).join(', ')}\n`;
+    const recalled = recallArchive(lookback);
+    if (recalled.length) {
+        notes += 'Older memories, brought back by what was just said:\n';
+        notes += recalled.map((a) => {
+            const marked = a.entries.every((e) => e.startsWith(OFFSCREEN_PREFIX));
+            return `- ${a.name}: ${marked ? OFFSCREEN_PREFIX : ''}${a.entries.map((e) => e.replace(OFFSCREEN_PREFIX, '')).join(' ')}`;
+        }).join('\n') + '\n';
+    }
     if (elsewhere.length || named.length) {
         notes += `Characters who are away have their own lives and concerns. Bring one into the story only when it fits naturally (word of them reaches ${userName}, a chance meeting, a consequence of what they are doing), never just to involve them. Do not have them come looking for ${userName} or step in on ${userName}'s behalf without a reason of their own, and do not make them fixated on ${userName}.\n`;
     }

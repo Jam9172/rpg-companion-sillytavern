@@ -15350,6 +15350,64 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
     color: var(--forge-brass, #D9A35B);
 }
 
+/* Cast: a character's archive of older memories, folded under What happened */
+.rpg-cast-archive {
+    margin-top: 0.5rem;
+}
+
+.rpg-cast-archive > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+}
+
+.rpg-cast-archive-count {
+    padding: 0 0.4em;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--forge-brass, #D9A35B) 18%, transparent);
+    font-size: 0.75em;
+}
+
+.rpg-cast-archive-entry {
+    margin: 0.4rem 0 0.2rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px dashed var(--rpg-border, rgba(255, 255, 255, 0.2));
+    border-radius: 6px;
+}
+
+.rpg-cast-archive-head {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8em;
+    opacity: 0.85;
+}
+
+.rpg-cast-archive-keys {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 0.2em;
+    border-radius: 4px;
+    color: var(--forge-brass, inherit);
+}
+
+.rpg-cast-archive-delete {
+    flex: none;
+    margin: 0;
+    padding: 0 0.35rem;
+    border: none;
+    background: none;
+    color: inherit;
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+.rpg-cast-archive-delete:hover {
+    opacity: 1;
+    color: var(--forge-danger, #e5432f);
+}
+
 /* Cast: the Background model fold under Reads */
 .rpg-cast-model {
     margin-top: 0.5rem;
