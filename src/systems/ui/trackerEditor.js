@@ -69,6 +69,8 @@ function set_ids_names(list_with_stats, index, value) {
 }
 
 
+let trackerEditorHandlersBound = false;
+
 /**
  * Initialize the tracker editor modal
  */
@@ -80,6 +82,11 @@ export function initTrackerEditor() {
         console.error('[RPG Companion] Tracker editor modal not found in template');
         return;
     }
+
+    // Every handler below is on the document, so it keeps working for the menu that turning the extension
+    // off and on again puts back; binding them again would make each button fire twice
+    if (trackerEditorHandlersBound) return;
+    trackerEditorHandlersBound = true;
 
     // Tab switching
     $(document).on('click', '.rpg-editor-tab', function () {

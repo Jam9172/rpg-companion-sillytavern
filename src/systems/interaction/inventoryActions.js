@@ -464,11 +464,18 @@ export function switchViewMode(field, mode) {
  * Initializes all event listeners for inventory interactions.
  * Uses event delegation to handle dynamically created elements.
  */
+let inventoryHandlersBound = false;
+
 export function initInventoryEventListeners() {
     // Load collapsed state from settings
     if (extensionSettings.collapsedInventoryLocations) {
         collapsedLocations = extensionSettings.collapsedInventoryLocations;
     }
+
+    // Every handler below is on the document and keeps working for the panel that turning the extension
+    // off and on again puts back; binding them again would add or remove every item twice
+    if (inventoryHandlersBound) return;
+    inventoryHandlersBound = true;
 
     // Add item button - shows inline form
     $(document).on('click', '.rpg-inventory-add-btn[data-action="add-item"]', function(e) {

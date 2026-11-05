@@ -35,6 +35,8 @@ Output only the final, modified prompt; do not output anything else.`,
     combatNarrative: 'Build novel prose. Break patterns from your previous responses by varying sentence structures, rhythms, formats, and openings. Track whether a sentence shape, cadence, sensory detail, or a descriptor appeared recently, and replace it with a different one or skip it entirely. If you mentioned a physical feature, mannerism, or expression once, move on. Don\'t fixate on the same traits every turn. Well-placed humor, unconventional similes, and subverted turns of phrase are encouraged. Avoid GPTisms, purple prose, and anaphoras, especially the negatives with "no/not/wasn\'t/didn\'t." Refrain from describing actions or emotions via negation; focus on what does happen, not what doesn\'t. Absolutely no asterisks, ellipses, or em-dashes. Explicit content is allowed, no plot armor. Do not play for {userName}. Keep your response length under 150 words. Never end on handover cues; finish naturally.\nCRITICAL: Do not repeat, echo, parrot, or restate distinctive words, phrases, and dialogues from the user\'s last message. If reacting to speech, show interpretation or response, not repetition.\nEXAMPLE: "Are you a gooner?" User asks.\nBAD: "Gooner?"\nGOOD: A flat look. "What type of question is that?"'
 };
 
+let promptsEditorHandlersBound = false;
+
 /**
  * Initialize the prompts editor modal
  */
@@ -45,6 +47,11 @@ export function initPromptsEditor() {
         console.error('[RPG Companion] Prompts editor modal not found in template');
         return;
     }
+
+    // Every handler below is on the document, so it keeps working for the menu that turning the extension
+    // off and on again puts back; binding them again would make each button fire twice
+    if (promptsEditorHandlersBound) return;
+    promptsEditorHandlersBound = true;
 
     // Save button
     $(document).on('click', '#rpg-prompts-save', function() {

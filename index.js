@@ -301,8 +301,14 @@ async function initUI() {
     // Load the HTML template using SillyTavern's template system
     const templateHtml = await renderExtensionTemplateAsync(extensionName, 'template');
 
-    // Append panel to body - positioning handled by CSS
-    $('body').append(templateHtml);
+    // Append panel to body - positioning handled by CSS. Turning the extension off only removes the panel,
+    // so the menus from the last time (Settings, Edit Trackers, ...) are still there: take them out first,
+    // or turning it back on would leave two of each, every button firing twice
+    const $template = $(templateHtml);
+    $template.filter('[id]').each(function() {
+        $(`#${this.id}`).remove();
+    });
+    $('body').append($template);
 
     // Add mobile toggle button (FAB - Floating Action Button)
     const theme = extensionSettings.theme || 'default';

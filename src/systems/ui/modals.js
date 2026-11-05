@@ -521,6 +521,17 @@ export function setupSettingsPopup() {
         // console.log('[RPG Companion] Cache cleared successfully');
     });
 
+    // Clear Cast button: Cast's memory and the story so far for this chat, nothing of the trackers
+    $('#rpg-clear-cast').on('click', async function() {
+        const confirmed = await callGenericPopup(
+            i18n.getTranslation('template.settingsModal.advanced.clearCastConfirm')
+                || 'Clear Cast\'s memory for this chat? Every character and the story so far are removed; the trackers stay. It cannot be undone.',
+            POPUP_TYPE.CONFIRM);
+        if (!confirmed) return;
+        // Also re-draws the Cast tab, the Meanwhile folds and Elsewhere, and takes Cast out of the prompt
+        clearCast();
+    });
+
     return settingsModal;
 }
 

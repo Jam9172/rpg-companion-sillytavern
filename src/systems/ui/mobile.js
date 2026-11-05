@@ -212,7 +212,8 @@ export function setupMobileToggle() {
     });
 
     // Mouse move - only track if mouse is down
-    $(document).on('mousemove', function(e) {
+    // Namespaced and replaced: turning the extension off and on runs this again for a new button
+    $(document).off('mousemove.rpgFabToggle').on('mousemove.rpgFabToggle', function(e) {
         if (!mouseDown) return;
 
         const deltaX = e.clientX - touchStartX;
@@ -256,7 +257,7 @@ export function setupMobileToggle() {
     });
 
     // Mouse up - save position or let click handler toggle
-    $(document).on('mouseup', function(e) {
+    $(document).off('mouseup.rpgFabToggle').on('mouseup.rpgFabToggle', function(e) {
         if (!mouseDown) return;
 
         mouseDown = false;
@@ -386,7 +387,7 @@ export function setupMobileToggle() {
     let wasMobile = window.innerWidth <= 1000;
     let resizeTimer;
 
-    $(window).on('resize', function() {
+    $(window).off('resize.rpgFabToggle').on('resize.rpgFabToggle', function() {
         clearTimeout(resizeTimer);
 
         const isMobile = window.innerWidth <= 1000;
@@ -1005,7 +1006,7 @@ export function setupRefreshButtonDrag() {
         isDragging = false;
     });
 
-    $(document).on('mousemove', function(e) {
+    $(document).off('mousemove.rpgRefreshDrag').on('mousemove.rpgRefreshDrag', function(e) {
         if (!mouseDown) return;
 
         const deltaX = e.clientX - touchStartX;
@@ -1041,7 +1042,7 @@ export function setupRefreshButtonDrag() {
         }
     });
 
-    $(document).on('mouseup', function(e) {
+    $(document).off('mouseup.rpgRefreshDrag').on('mouseup.rpgRefreshDrag', function(e) {
         if (mouseDown && isDragging) {
             const offset = $refreshBtn.offset();
             const newPosition = {
