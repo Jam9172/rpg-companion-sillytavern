@@ -16027,3 +16027,284 @@ body:not(.forge-no-focus-ring) .rpg-panel[data-theme="forge"] :is(button, a, sum
         display: none;
     }
 }
+
+/* ==========================================================================
+   Arcane Forge: the Settings and Edit Trackers menus
+   Both menus used the old default look in Forge (a see-through grey box with
+   a blue border, blue dividers, 11px help text, small number boxes). Here
+   they get the Forge palette, read from Arcane Forge UI's colour pickers when
+   it is on (--forge-ui-*), and sizes in em, so its text size setting counts.
+   ========================================================================== */
+#rpg-settings-popup[data-theme="forge"] .rpg-settings-popup-content,
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-settings-popup-content {
+    --rpg-bg: var(--forge-ui-bg, #120908);
+    --rpg-accent: var(--forge-ui-card, #1E100D);
+    --rpg-text: var(--forge-ui-text, #F1E3D6);
+    --rpg-highlight: var(--forge-ui-ember, #E8622C);
+    --rpg-border: var(--forge-ui-border, #4A2219);
+    --rpg-shadow: rgba(0, 0, 0, 0.7);
+    --menu-brass: var(--forge-ui-brass, #D9A35B);
+    --menu-muted: var(--forge-ui-muted, #B79A88);
+    --menu-inset: var(--forge-ui-inset, #170C0A);
+    --menu-card: var(--forge-ui-card, #1E100D);
+    /* Solid, so the chat behind no longer shows through */
+    background: var(--forge-ui-bg, #120908);
+    color: var(--rpg-text);
+    border: 1px solid var(--rpg-border);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px color-mix(in srgb, var(--menu-brass) 12%, transparent);
+}
+
+/* Header and footer: the card colour with a brass hairline */
+#rpg-settings-popup[data-theme="forge"] .rpg-settings-popup-header,
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-settings-popup-header,
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-settings-popup-footer {
+    background: var(--menu-card);
+    border-color: color-mix(in srgb, var(--menu-brass) 30%, var(--rpg-border));
+}
+
+#rpg-settings-popup[data-theme="forge"] .rpg-settings-popup-header h3,
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-settings-popup-header h3 {
+    color: var(--menu-brass);
+}
+
+/* The close button: a plain ×, ember on hover */
+#rpg-settings-popup[data-theme="forge"] #rpg-close-settings,
+#rpg-tracker-editor-popup[data-theme="forge"] #rpg-close-tracker-editor {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--menu-muted);
+    box-shadow: none;
+}
+
+/* The Settings menu focuses its close button when it opens: show that with colour, not a box */
+#rpg-settings-popup[data-theme="forge"] #rpg-close-settings:focus-visible,
+#rpg-tracker-editor-popup[data-theme="forge"] #rpg-close-tracker-editor:focus-visible {
+    outline: none;
+    color: var(--rpg-highlight);
+    background: none;
+    border-color: transparent;
+}
+
+#rpg-settings-popup[data-theme="forge"] #rpg-close-settings:hover,
+#rpg-tracker-editor-popup[data-theme="forge"] #rpg-close-tracker-editor:hover {
+    color: var(--rpg-highlight);
+    border-color: var(--rpg-border);
+    background: var(--menu-inset);
+}
+
+/* Section dividers */
+#rpg-settings-popup[data-theme="forge"] .rpg-settings-group,
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-editor-section {
+    border-color: var(--rpg-border);
+}
+
+#rpg-settings-popup[data-theme="forge"] hr,
+#rpg-settings-popup[data-theme="forge"] [style*="border-top"],
+#rpg-tracker-editor-popup[data-theme="forge"] [style*="border-top"] {
+    border-color: var(--rpg-border) !important;
+}
+
+/* Help text: readable size and the muted Forge colour (the markup sets 11px grey inline) */
+#rpg-settings-popup[data-theme="forge"] small,
+#rpg-settings-popup[data-theme="forge"] .notes,
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-editor-hint,
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-editor-note,
+#rpg-tracker-editor-popup[data-theme="forge"] small {
+    font-size: 0.86em !important;
+    line-height: 1.4;
+    color: var(--menu-muted) !important;
+    font-style: normal;
+}
+
+/* Every text box, number box and dropdown the same size */
+#rpg-settings-popup[data-theme="forge"] :is(input[type="text"], input[type="password"], input[type="number"], input[type="url"], select, textarea),
+#rpg-tracker-editor-popup[data-theme="forge"] :is(input[type="text"], input[type="number"], select, textarea) {
+    box-sizing: border-box;
+    min-height: 2.4em;
+    padding: 0.4em 0.65em;
+    font-size: 1em;
+    line-height: 1.3;
+    background: var(--menu-inset);
+    color: var(--rpg-text);
+    border: 1px solid var(--rpg-border);
+    border-radius: 6px;
+}
+
+#rpg-settings-popup[data-theme="forge"] :is(input, select, textarea):focus-visible,
+#rpg-tracker-editor-popup[data-theme="forge"] :is(input, select, textarea):focus-visible {
+    outline: none;
+    border-color: var(--menu-brass);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--menu-brass) 25%, transparent);
+}
+
+/* Checkboxes and radios in the ember colour */
+#rpg-settings-popup[data-theme="forge"] :is(input[type="checkbox"], input[type="radio"]),
+#rpg-tracker-editor-popup[data-theme="forge"] :is(input[type="checkbox"], input[type="radio"]) {
+    accent-color: var(--rpg-highlight);
+}
+
+/* Buttons: one secondary style for the plain ones; Clear Extension Cache keeps the danger colour */
+#rpg-settings-popup[data-theme="forge"] :is(.rpg-btn-reset-fab, .rpg-btn-customize-prompts, #rpg-test-external-api, .menu_button),
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-btn-secondary {
+    background: linear-gradient(180deg, var(--forge-ui-track, #3A1B15), color-mix(in srgb, var(--rpg-highlight) 5%, var(--menu-card)));
+    border: 1px solid color-mix(in srgb, var(--rpg-highlight) 30%, var(--rpg-border));
+    border-radius: 8px;
+    color: var(--rpg-text);
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    font-variant: normal;
+    box-shadow: none;
+}
+
+#rpg-settings-popup[data-theme="forge"] :is(.rpg-btn-reset-fab, .rpg-btn-customize-prompts, #rpg-test-external-api, .menu_button):hover,
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-btn-secondary:hover {
+    border-color: var(--menu-brass);
+    color: var(--forge-ui-bright, #FCEBDD);
+    transform: none;
+}
+
+#rpg-settings-popup[data-theme="forge"] #rpg-test-external-api {
+    min-height: 2.4em;
+}
+
+#rpg-settings-popup[data-theme="forge"] .rpg-btn-clear-cache {
+    background: color-mix(in srgb, var(--forge-ui-danger, #E5432F) 12%, var(--menu-card));
+    border: 1px solid color-mix(in srgb, var(--forge-ui-danger, #E5432F) 55%, var(--rpg-border));
+    border-radius: 8px;
+    color: color-mix(in srgb, var(--forge-ui-danger, #E5432F) 70%, var(--rpg-text));
+    font-size: 1em;
+}
+
+#rpg-settings-popup[data-theme="forge"] .rpg-btn-clear-cache:hover {
+    background: color-mix(in srgb, var(--forge-ui-danger, #E5432F) 20%, var(--menu-card));
+    border-color: var(--forge-ui-danger, #E5432F);
+    transform: none;
+}
+
+/* Edit Trackers: taller, so more than a few rows fit between the tabs and the buttons */
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-settings-popup-content {
+    max-height: min(94vh, 1100px);
+    max-width: min(720px, calc(100vw - 32px));
+}
+
+/* Tabs on one line each */
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-editor-tabs {
+    border-bottom: 1px solid var(--rpg-border);
+    background: var(--menu-card);
+}
+
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-editor-tab {
+    min-width: 0;
+    padding: 0.7em 0.4em;
+    gap: 0.4em;
+    background: transparent;
+    color: var(--menu-muted);
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-editor-tab:hover {
+    color: var(--rpg-text);
+    background: var(--menu-inset);
+}
+
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-editor-tab.active {
+    color: var(--menu-brass);
+    border-bottom-color: var(--rpg-highlight);
+    background: var(--menu-inset);
+}
+
+/* Rows of stats, attributes, fields and relationships: inset cards */
+#rpg-tracker-editor-popup[data-theme="forge"] :is(.rpg-editor-stat-item, .rpg-editor-field-item, .rpg-relationship-item, .rpg-editor-widget-row) {
+    background: var(--menu-inset);
+    border: 1px solid var(--rpg-border);
+    border-radius: 8px;
+}
+
+/* Delete buttons: one compact square everywhere (the character stats one stretched across the row) */
+#rpg-tracker-editor-popup[data-theme="forge"] :is(.rpg-stat-remove, .rpg-attr-remove, .rpg-field-remove, .rpg-char-stat-remove, .rpg-remove-relationship) {
+    flex: 0 0 auto;
+    width: 2.2em;
+    min-width: 2.2em;
+    height: 2.2em;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--forge-ui-danger, #E5432F) 14%, var(--menu-card));
+    border: 1px solid color-mix(in srgb, var(--forge-ui-danger, #E5432F) 50%, var(--rpg-border));
+    border-radius: 6px;
+    color: color-mix(in srgb, var(--forge-ui-danger, #E5432F) 75%, var(--rpg-text));
+}
+
+#rpg-tracker-editor-popup[data-theme="forge"] :is(.rpg-stat-remove, .rpg-attr-remove, .rpg-field-remove, .rpg-char-stat-remove, .rpg-remove-relationship):hover {
+    background: color-mix(in srgb, var(--forge-ui-danger, #E5432F) 28%, var(--menu-card));
+    border-color: var(--forge-ui-danger, #E5432F);
+}
+
+/* The preset row's buttons */
+#rpg-tracker-editor-popup[data-theme="forge"] .rpg-preset-row button,
+#rpg-tracker-editor-popup[data-theme="forge"] [id^="rpg-preset-"]:is(button) {
+    border-color: color-mix(in srgb, var(--rpg-highlight) 30%, var(--rpg-border));
+}
+
+/* Phones: the menus' text at the normal chat size (it was shrunk to ~13px), and tracker rows kept on one
+   line instead of a checkbox, a name box and a delete button stacked on three */
+@media (max-width: 1000px) {
+    #rpg-settings-popup[data-theme="forge"] .rpg-settings-popup-body,
+    #rpg-tracker-editor-popup[data-theme="forge"] .rpg-settings-popup-body {
+        font-size: var(--mainFontSize, 1rem);
+    }
+
+    /* The phone rules shrink labels and boxes with !important, so these need it too */
+    #rpg-settings-popup[data-theme="forge"] .rpg-settings-popup-body :is(label, .checkbox_label span, h5),
+    #rpg-tracker-editor-popup[data-theme="forge"] .rpg-settings-popup-body :is(label, h5),
+    #rpg-settings-popup[data-theme="forge"] .rpg-settings-popup-body :is(input[type="text"], input[type="password"], input[type="number"], select),
+    #rpg-tracker-editor-popup[data-theme="forge"] .rpg-settings-popup-body :is(input[type="text"], input[type="number"], select),
+    #rpg-tracker-editor-popup[data-theme="forge"] .rpg-settings-popup-content > :not(.rpg-settings-popup-body) select {
+        font-size: 1em !important;
+    }
+
+    #rpg-tracker-editor-popup[data-theme="forge"] .rpg-editor-tab {
+        flex-direction: column;
+        gap: 0.2em;
+        padding: 0.55em 0.2em;
+        font-size: 0.8em;
+        line-height: 1.15;
+        white-space: normal;
+        text-align: center;
+    }
+
+    #rpg-tracker-editor-popup[data-theme="forge"] .rpg-editor-stat-item {
+        flex-wrap: nowrap;
+    }
+
+    #rpg-tracker-editor-popup[data-theme="forge"] :is(.rpg-stat-name, .rpg-attr-name, .rpg-char-stat-label) {
+        flex: 1 1 auto;
+        width: auto;
+        min-width: 0;
+    }
+
+    #rpg-tracker-editor-popup[data-theme="forge"] .rpg-relationship-item {
+        grid-template-columns: minmax(0, 1fr) 3.2em auto;
+    }
+
+    #rpg-tracker-editor-popup[data-theme="forge"] .rpg-relationship-emoji {
+        width: 100%;
+        text-align: center;
+    }
+
+    #rpg-tracker-editor-popup[data-theme="forge"] :is(.rpg-stat-remove, .rpg-attr-remove, .rpg-field-remove, .rpg-char-stat-remove, .rpg-remove-relationship) {
+        padding: 0 !important;
+        font-size: 0.9em !important;
+    }
+}
+
+/* RPG Companion's menus (Settings, Edit Trackers, Customize Prompts) above the floating RPG button on
+   phones, which sat on top of them; among themselves the page order still decides, as before */
+.rpg-settings-popup {
+    z-index: 10010;
+}
