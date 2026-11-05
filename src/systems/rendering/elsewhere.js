@@ -24,7 +24,9 @@ const plain = (line) => String(line || '').replace(OFFSCREEN_PREFIX, '');
 /** Away characters with something in Doing now, the longest unseen first. */
 function awayCharacters() {
     return listCharacters()
-        .filter((c) => c.status === 'away' && c.steps?.length)
+        // Everyone away, also those without a "Doing now" yet (just left, or the model closed their activity
+        // without starting the next): leaving them out hid the button after most updates
+        .filter((c) => c.status === 'away')
         .sort((a, b) => (a.lastSeen ?? 0) - (b.lastSeen ?? 0));
 }
 
@@ -37,7 +39,7 @@ function seenLabel(character) {
 }
 
 function card(character) {
-    const steps = character.steps.map(plain);
+    const steps = (character.steps || []).map(plain);
     const now = steps.at(-1);
     const before = steps.slice(0, -1);
     const last = character.events?.length ? plain(character.events.at(-1)) : '';
@@ -45,7 +47,7 @@ function card(character) {
         <article class="rpg-elsewhere-card">
             <header><span class="rpg-elsewhere-name">${escapeHtml(character.name)}</span><span class="rpg-elsewhere-seen">${escapeHtml(seenLabel(character))}</span></header>
             ${before.length ? `<ul class="rpg-elsewhere-before">${before.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>` : ''}
-            <p class="rpg-elsewhere-now"><span class="rpg-elsewhere-tag">${escapeHtml(t('elsewhere.now', 'Now'))}</span>${escapeHtml(now)}</p>
+            <p class="rpg-elsewhere-now${now ? '' : ' is-pending'}"><span class="rpg-elsewhere-tag">${escapeHtml(t('elsewhere.now', 'Now'))}</span>${escapeHtml(now || t('cast.stepsPending', 'Picked up on the next update'))}</p>
             ${last ? `<p class="rpg-elsewhere-last"><span class="rpg-elsewhere-tag">${escapeHtml(t('elsewhere.last', 'Last'))}</span>${escapeHtml(last)}</p>` : ''}
         </article>`;
 }

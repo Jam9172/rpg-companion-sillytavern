@@ -16771,3 +16771,9 @@ body.rpg-compact-phone #rpg-plot-buttons .rpg-btn-text {
 #rpg-phone-bar > #rpg-elsewhere-button.rpg-docked .rpg-elsewhere-button-label {
     display: none;
 }
+
+/* Elsewhere: an away character without a "Doing now" yet shows the pending note, quieter */
+#rpg-elsewhere-panel .rpg-elsewhere-now.is-pending {
+    font-style: italic;
+    opacity: 0.7;
+}
