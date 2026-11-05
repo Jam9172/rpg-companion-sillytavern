@@ -240,6 +240,9 @@ async function addExtensionSettings() {
         if (!extensionSettings.enabled && wasEnabled) {
             // Disabling extension - remove UI elements
             clearExtensionPrompts();
+            refreshCastPrompt(); // Cast's notes and the story so far leave the prompt too
+            renderAllMeanwhile(); // and the Meanwhile folds and Elsewhere leave the chat
+            renderElsewhere();
             updateChatThoughts(); // Remove thought bubbles
             cleanupCheckpointUI(); // Remove checkpoint buttons and indicators
             clearThoughtBasedExpressionsCache();
@@ -262,6 +265,10 @@ async function addExtensionSettings() {
             updateChatThoughts(); // Create thought bubbles if data exists
             injectCheckpointButton(); // Re-add checkpoint buttons
             updateAllCheckpointIndicators(); // Update button states
+            refreshCastPrompt();
+            renderAllMeanwhile();
+            renderElsewhere();
+            renderCast();
         }
     });
 
@@ -957,6 +964,8 @@ async function initUI() {
         renderUserStats(); // Some themes show the user as a portrait banner
         renderThoughts(); // Some themes use full-size portraits
         renderQuests(); // Some themes show all quests on one page
+        renderAllMeanwhile(); // Cast's parts outside the panel take the theme's colours
+        renderElsewhere();
     });
 
     // Custom color pickers
@@ -967,6 +976,8 @@ async function initUI() {
             applyCustomTheme();
             updateSettingsPopupTheme(getSettingsModal()); // Update popup theme instantly
             updateChatThoughts(); // Update thought bubbles
+            renderAllMeanwhile();
+            renderElsewhere();
         }
     });
 
@@ -978,6 +989,8 @@ async function initUI() {
             applyCustomTheme();
             updateSettingsPopupTheme(getSettingsModal());
             updateChatThoughts();
+            renderAllMeanwhile();
+            renderElsewhere();
         }
     }).on('change', function() {
         saveSettings();
@@ -990,6 +1003,8 @@ async function initUI() {
             applyCustomTheme();
             updateSettingsPopupTheme(getSettingsModal()); // Update popup theme instantly
             updateChatThoughts(); // Update thought bubbles
+            renderAllMeanwhile();
+            renderElsewhere();
         }
     });
 
@@ -1001,6 +1016,8 @@ async function initUI() {
             applyCustomTheme();
             updateSettingsPopupTheme(getSettingsModal());
             updateChatThoughts();
+            renderAllMeanwhile();
+            renderElsewhere();
         }
     }).on('change', function() {
         saveSettings();
@@ -1013,6 +1030,8 @@ async function initUI() {
             applyCustomTheme();
             updateSettingsPopupTheme(getSettingsModal()); // Update popup theme instantly
             updateChatThoughts(); // Update thought bubbles
+            renderAllMeanwhile();
+            renderElsewhere();
         }
     });
 
@@ -1024,6 +1043,8 @@ async function initUI() {
             applyCustomTheme();
             updateSettingsPopupTheme(getSettingsModal());
             updateChatThoughts();
+            renderAllMeanwhile();
+            renderElsewhere();
         }
     }).on('change', function() {
         saveSettings();
@@ -1036,6 +1057,8 @@ async function initUI() {
             applyCustomTheme();
             updateSettingsPopupTheme(getSettingsModal()); // Update popup theme instantly
             updateChatThoughts(); // Update thought bubbles
+            renderAllMeanwhile();
+            renderElsewhere();
         }
     });
 
@@ -1047,6 +1070,8 @@ async function initUI() {
             applyCustomTheme();
             updateSettingsPopupTheme(getSettingsModal());
             updateChatThoughts();
+            renderAllMeanwhile();
+            renderElsewhere();
         }
     }).on('change', function() {
         saveSettings();

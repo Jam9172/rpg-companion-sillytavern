@@ -30,6 +30,7 @@ import {
 import { getContext } from '../../../../../../extensions.js';
 import { extensionSettings, isGenerating, lastGeneratedData, committedTrackerData } from '../../core/state.js';
 import { getCharacterCardsInfo } from '../generation/promptBuilder.js';
+import { evaluateSuppression } from '../generation/suppression.js';
 import { requestCast } from './castRequest.js';
 
 const PROMPT_KEY = 'rpg-companion-cast';
@@ -891,12 +892,12 @@ function parseFold(text) {
  * Runs the long-term jobs for a message's update, as part of it: they are undone with the message. A
  * failure is only logged; the jobs are still pending and run again after the next reply.
  */
-async function runFolds(messageIndex, chatId, signature) {
+async function runFolds(messageIndex, chatId, signature, ledger) {
     const jobs = pendingFolds(getCast());
     if (!jobs) return;
     try {
         const response = await requestCast(buildFoldPrompt(jobs), { task: 'fold', schema: FOLD_SCHEMA });
-        if (getContext().chatId !== chatId || messageSignature(messageIndex) !== signature) return;
+        if (getContext().chatId !== chatId || messageSignature(messageIndex) !== signature || chat_metadata[METADATA_KEY] !== ledger) return;
         const fold = parseFold(response);
         if (!fold) throw new Error('The reply was not in the right format');
         // Only the characters that were asked about, and a chapter only when one was asked for
@@ -1141,6 +1142,8 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
             await waitForTrackers();
             const chatId = getContext().chatId;
             const signature = messageSignature(messageIndex);
+            // Clear Extension Cache starts a new ledger: a result for the old one is dropped
+            const ledger = getCast();
             // The story's date and time now (from the Info Box), kept with the update for the next one
             const clock = storyClock();
 
@@ -1154,7 +1157,7 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
                 return;
             }
             // The chat or the message changed while we waited: drop this result
-            if (getContext().chatId !== chatId || messageSignature(messageIndex) !== signature) return;
+            if (getContext().chatId !== chatId || messageSignature(messageIndex) !== signature || chat_metadata[METADATA_KEY] !== ledger) return;
 
             const parsed = parseUpdate(response);
             if (!parsed) {
@@ -1164,7 +1167,7 @@ export function updateCastFromMessage(messageIndex, { force = false } = {}) {
                 return;
             }
             applyCastUpdate(parsed.updates, messageIndex, { here: parsed.here, story: parsed.story, verifyNames: true, clock });
-            await runFolds(messageIndex, chatId, signature);
+            await runFolds(messageIndex, chatId, signature, ledger);
             castStatus.lastOk = Date.now();
             castStatus.lastError = null;
             refreshCastPrompt();
@@ -1305,6 +1308,7 @@ export function tidyCast() {
         notify();
         try {
             const chatId = getContext().chatId;
+            const ledger = chat_metadata[METADATA_KEY];
             let response;
             try {
                 response = await requestCast(await buildTidyPrompt(characters), { task: 'tidy', schema: TIDY_SCHEMA });
@@ -1314,7 +1318,7 @@ export function tidyCast() {
                 castStatus.errorTask = 'tidy';
                 return;
             }
-            if (getContext().chatId !== chatId) return;
+            if (getContext().chatId !== chatId || chat_metadata[METADATA_KEY] !== ledger) return;
 
             const snapshot = structuredClone(cast.characters);
             const result = applyTidy(response, characters);
@@ -1422,9 +1426,13 @@ export function buildCastNotes() {
     return notes;
 }
 
-/** Puts the current cast notes in the main prompt (or clears them). */
-export function refreshCastPrompt() {
-    const enabled = extensionSettings.enabled && extensionSettings.castEnabled !== false;
+/**
+ * Puts the current cast notes in the main prompt (or clears them).
+ * @param {{skip?: boolean}} [options] - skip: leave them out of this generation (guided or impersonation
+ *   generations, when RPG Companion is set to skip its injections for them)
+ */
+export function refreshCastPrompt({ skip = false } = {}) {
+    const enabled = extensionSettings.enabled && extensionSettings.castEnabled !== false && !skip;
     const notes = enabled ? buildCastNotes() : '';
     const story = enabled && extensionSettings.castStoryInject !== false ? buildStoryNotes() : '';
     const depth = Math.max(0, Number(extensionSettings.castPromptDepth ?? 2));
@@ -1437,6 +1445,20 @@ export function refreshCastPrompt() {
     setExtensionPrompt(STORY_PROMPT_KEY, '', extension_prompt_types.IN_PROMPT, 0, false, extension_prompt_roles.SYSTEM);
 }
 
+/**
+ * Forgets this chat's whole cast: every character, the archive, the story so far and the undo history
+ * (RPG Companion's Clear Extension Cache). An update still running for the old cast is dropped.
+ */
+export function clearCast() {
+    delete chat_metadata[METADATA_KEY];
+    castStatus.lastError = null;
+    castStatus.errorTask = null;
+    castStatus.lastTidy = null;
+    saveChatDebounced();
+    refreshCastPrompt();
+    notify();
+}
+
 /* ---------- Events ---------- */
 
 export function initCast() {
@@ -1446,11 +1468,16 @@ export function initCast() {
     });
     // Notes follow the user's newest message (for who is mentioned) and every generation start
     eventSource.on(event_types.MESSAGE_SENT, refreshCastPrompt);
-    eventSource.on(event_types.GENERATION_AFTER_COMMANDS, (_type, _options, dryRun) => {
-        if (!dryRun) refreshCastPrompt();
+    eventSource.on(event_types.GENERATION_AFTER_COMMANDS, (_type, options, dryRun) => {
+        if (dryRun) return;
+        // Follows RPG Companion's "Skip injections for guided generations" setting like its other prompts
+        // do, and image prompts get none
+        const skip = Boolean(options?.quietImage) || evaluateSuppression(extensionSettings, getContext(), options).shouldSuppress;
+        refreshCastPrompt({ skip });
     });
     eventSource.on(event_types.MESSAGE_DELETED, reconcileCast);
     eventSource.on(event_types.MESSAGE_SWIPED, reconcileCast);
+    eventSource.on(event_types.MESSAGE_SWIPE_DELETED, reconcileCast);
     eventSource.on(event_types.CHAT_CHANGED, () => {
         reconcileCast();
         refreshCastPrompt();

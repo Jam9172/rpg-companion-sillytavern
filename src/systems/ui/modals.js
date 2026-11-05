@@ -29,6 +29,8 @@ import {
     addDiceQuickReply as addDiceQuickReplyCore
 } from '../features/dice.js';
 import { i18n } from '../../core/i18n.js';
+import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
+import { clearCast } from '../features/cast.js';
 
 /**
  * Modern DiceModal ES6 Class
@@ -355,8 +357,15 @@ export function setupSettingsPopup() {
     });
 
     // Clear cache button
-    $('#rpg-clear-cache').on('click', function() {
+    $('#rpg-clear-cache').on('click', async function() {
         // console.log('[RPG Companion] Clear Cache button clicked');
+
+        // It also forgets Cast's memory of this chat, which took the whole story to build: ask first
+        const confirmed = await callGenericPopup(
+            i18n.getTranslation('template.settingsModal.advanced.clearCacheConfirm')
+                || 'Clear all RPG Companion data for this chat? This removes the trackers and Cast\'s memory of every character and the story so far. It cannot be undone.',
+            POPUP_TYPE.CONFIRM);
+        if (!confirmed) return;
 
         // Clear the data (set to null so panels show "not generated yet")
         lastGeneratedData.userStats = null;
@@ -491,6 +500,10 @@ export function setupSettingsPopup() {
             },
             characters: {}
         };
+
+        // Cast: every character's memory, the archive and the story so far (also re-draws the Cast tab,
+        // the Meanwhile folds and Elsewhere, and takes them out of the prompt)
+        clearCast();
 
         // Save everything
         saveChatData();

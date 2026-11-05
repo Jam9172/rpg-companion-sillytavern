@@ -8,6 +8,7 @@ import { chat, eventSource, event_types } from '../../../../../../../script.js';
 import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { getMeanwhile, onCastChanged } from '../features/cast.js';
+import { applyCastTheme, castThemeStyle } from '../ui/theme.js';
 
 // Folds the user opened, by message index, so a redraw keeps them open
 const open = new Set();
@@ -30,7 +31,7 @@ function line(item) {
 }
 
 /** Draws (or removes) the Meanwhile fold of one message. */
-export function renderMeanwhile(messageIndex) {
+export function renderMeanwhile(messageIndex, style = null) {
     const mes = document.querySelector(`#chat .mes[mesid="${messageIndex}"]`);
     if (!mes) return;
     const existing = mes.querySelector(':scope .rpg-meanwhile');
@@ -41,8 +42,13 @@ export function renderMeanwhile(messageIndex) {
         return;
     }
     const html = `<summary><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>${escapeHtml(t('meanwhile.title', 'Meanwhile'))}</span><span class="rpg-meanwhile-count">${items.length}</span></summary><ul>${items.map(line).join('')}</ul>`;
-    if (existing?.dataset.html === html) return;
+    const theme = style || castThemeStyle();
+    if (existing?.dataset.html === html) {
+        applyCastTheme(existing, theme);
+        return;
+    }
     const fold = existing || document.createElement('details');
+    applyCastTheme(fold, theme);
     fold.className = 'rpg-meanwhile';
     fold.dataset.mesid = String(messageIndex);
     fold.dataset.html = html;
@@ -57,7 +63,8 @@ export function renderMeanwhile(messageIndex) {
 
 /** Draws the Meanwhile folds of every message on screen. */
 export function renderAllMeanwhile() {
-    document.querySelectorAll('#chat .mes[mesid]').forEach((mes) => renderMeanwhile(Number(mes.getAttribute('mesid'))));
+    const style = castThemeStyle();
+    document.querySelectorAll('#chat .mes[mesid]').forEach((mes) => renderMeanwhile(Number(mes.getAttribute('mesid')), style));
 }
 
 export function initMeanwhile() {
@@ -69,7 +76,7 @@ export function initMeanwhile() {
     }, true);
     onCastChanged(renderAllMeanwhile);
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (index) => renderMeanwhile(Number(index)));
-    for (const event of [event_types.MESSAGE_SWIPED, event_types.MESSAGE_UPDATED, event_types.MESSAGE_EDITED, event_types.MORE_MESSAGES_LOADED, event_types.MESSAGE_DELETED]) {
+    for (const event of [event_types.MESSAGE_SWIPED, event_types.MESSAGE_SWIPE_DELETED, event_types.MESSAGE_UPDATED, event_types.MESSAGE_EDITED, event_types.MORE_MESSAGES_LOADED, event_types.MESSAGE_DELETED]) {
         eventSource.on(event, () => setTimeout(renderAllMeanwhile, 0));
     }
     eventSource.on(event_types.CHAT_CHANGED, () => {

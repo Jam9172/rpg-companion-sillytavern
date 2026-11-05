@@ -8,6 +8,7 @@ import { chat, eventSource, event_types } from '../../../../../../../script.js';
 import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { listCharacters, onCastChanged, OFFSCREEN_PREFIX } from '../features/cast.js';
+import { applyCastTheme, castThemeStyle } from '../ui/theme.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
 let isOpen = false;
@@ -91,6 +92,10 @@ export function renderElsewhere() {
         $('#rpg-elsewhere-panel').on('click', '.rpg-elsewhere-close', () => setOpen(false));
     }
     $('#rpg-elsewhere-button').attr('data-theme', theme).find('.rpg-elsewhere-count').text(away.length);
+    // The panel's theme variables do not reach here: take its colours and fonts
+    const style = castThemeStyle();
+    applyCastTheme(document.getElementById('rpg-elsewhere-button'), style);
+    applyCastTheme(document.getElementById('rpg-elsewhere-panel'), style);
     $('#rpg-elsewhere-panel')
         .attr('data-theme', theme)
         .toggleClass('is-sheet', phone)

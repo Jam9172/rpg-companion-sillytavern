@@ -6,6 +6,57 @@
 import { extensionSettings, $panelContainer } from '../../core/state.js';
 import { syncAlternatePresentCharactersTheme } from './alternatePresentCharacters.js';
 
+// The colour and font variables Cast's parts outside the panel are drawn with (Meanwhile, Elsewhere)
+const CAST_THEME_VARS = ['--rpg-bg', '--rpg-accent', '--rpg-text', '--rpg-highlight', '--rpg-border',
+    '--forge-brass', '--forge-ember', '--forge-card', '--forge-muted', '--forge-heading', '--forge-body-font'];
+
+/**
+ * The current theme's colours and fonts for Cast's parts that sit outside the panel (the Meanwhile folds
+ * in the chat and the Elsewhere button and panel), where the panel's theme variables do not reach. Read
+ * from the panel, so the custom colours count too. Every variable is in the result; an empty value means
+ * the stylesheet's own (Arcane Forge) default.
+ * @returns {Object<string, string>}
+ */
+export function castThemeStyle() {
+    const out = Object.fromEntries(CAST_THEME_VARS.map((name) => [name, '']));
+    if (extensionSettings.theme === 'forge') {
+        // The stylesheet's defaults are Arcane Forge's, and Arcane Forge UI's colour pickers set --forge-*
+        // on the page itself, so those already reach here and follow the pickers live. Only the panel
+        // colours need pointing at the pickers, as the panel does.
+        Object.assign(out, {
+            '--rpg-bg': 'var(--forge-ui-bg, #120908)',
+            '--rpg-accent': 'var(--forge-ui-card, #1E100D)',
+            '--rpg-text': 'var(--forge-ui-text, #F1E3D6)',
+            '--rpg-highlight': 'var(--forge-ui-ember, #E8622C)',
+            '--rpg-border': 'var(--forge-ui-border, #4A2219)',
+        });
+        return out;
+    }
+    const panel = document.getElementById('rpg-companion-panel');
+    if (!panel) return out;
+    const css = getComputedStyle(panel);
+    const value = (name) => css.getPropertyValue(name).trim();
+    for (const name of ['--rpg-bg', '--rpg-accent', '--rpg-text', '--rpg-highlight', '--rpg-border']) out[name] = value(name);
+    // Other themes have one accent colour and the panel's own font
+    const accent = out['--rpg-highlight'] || 'currentColor';
+    out['--forge-brass'] = accent;
+    out['--forge-ember'] = accent;
+    out['--forge-card'] = out['--rpg-accent'];
+    out['--forge-muted'] = `color-mix(in srgb, ${out['--rpg-text'] || 'currentColor'} 70%, transparent)`;
+    out['--forge-heading'] = css.fontFamily;
+    out['--forge-body-font'] = css.fontFamily;
+    return out;
+}
+
+/** Puts castThemeStyle()'s variables on an element (an empty one is removed). */
+export function applyCastTheme(element, style = castThemeStyle()) {
+    if (!element) return;
+    for (const [name, value] of Object.entries(style)) {
+        if (value) element.style.setProperty(name, value);
+        else element.style.removeProperty(name);
+    }
+}
+
 /**
  * Converts hex color and opacity percentage to rgba string
  * @param {string} hex - Hex color (e.g., '#ff0000')
