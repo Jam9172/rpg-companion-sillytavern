@@ -11,6 +11,7 @@ import { listCharacters, onCastChanged, OFFSCREEN_PREFIX } from '../features/cas
 import { applyCastTheme, castThemeStyle } from '../ui/theme.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
+const tf = (key, fallback, vars) => t(key, fallback).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
 let isOpen = false;
 
 function escapeHtml(text) {
@@ -29,7 +30,9 @@ function awayCharacters() {
 function seenLabel(character) {
     const replies = Math.max(0, chat.length - 1 - (character.lastSeen ?? chat.length - 1));
     if (!replies) return t('elsewhere.justLeft', 'just left');
-    return `${t('elsewhere.seen', 'last seen')} ${replies} ${replies === 1 ? t('elsewhere.message', 'message') : t('elsewhere.messages', 'messages')} ${t('elsewhere.ago', 'ago')}`;
+    return replies === 1
+        ? tf('elsewhere.seenOne', 'last seen {n} message ago', { n: 1 })
+        : tf('elsewhere.seenMany', 'last seen {n} messages ago', { n: replies });
 }
 
 function card(character) {
@@ -92,6 +95,9 @@ export function renderElsewhere() {
         $('#rpg-elsewhere-panel').on('click', '.rpg-elsewhere-close', () => setOpen(false));
     }
     $('#rpg-elsewhere-button').attr('data-theme', theme).find('.rpg-elsewhere-count').text(away.length);
+    // The button and panel stay once made: keep their words in the current language
+    $('#rpg-elsewhere-button').attr('title', t('elsewhere.help', 'What the characters who are away are doing right now')).find('.rpg-elsewhere-button-label').text(title);
+    $('#rpg-elsewhere-panel').attr('aria-label', title);
     // The panel's theme variables do not reach here: take its colours and fonts
     const style = castThemeStyle();
     applyCastTheme(document.getElementById('rpg-elsewhere-button'), style);

@@ -222,6 +222,14 @@ function updateDynamicLabels() {
 
     // Update mobile tab labels
     updateMobileTabLabels();
+
+    // Cast, Meanwhile, Elsewhere and the thought labels are drawn from code, so draw them again in the new language
+    if (extensionSettings.enabled) {
+        renderCast();
+        renderAllMeanwhile();
+        renderElsewhere();
+        updateChatThoughts();
+    }
 }
 
 /**

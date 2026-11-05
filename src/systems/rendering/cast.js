@@ -14,6 +14,8 @@ import { renderAllMeanwhile } from './meanwhile.js';
 import { renderElsewhere } from './elsewhere.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
+// A whole sentence with {placeholders} filled in, so each language can put the number where it belongs
+const tf = (key, fallback, vars) => t(key, fallback).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
 
 // Read ranges offered in the picker (0 = the whole story)
 const RANGE_PRESETS = [4, 10, 25, 50, 100, 0];
@@ -21,16 +23,16 @@ const RANGE_PRESETS = [4, 10, 25, 50, 100, 0];
 function rangeLabel(value) {
     return value === 0
         ? t('cast.range.whole', 'Whole story')
-        : `${t('cast.range.last', 'Last')} ${value} ${t('cast.range.messages', 'messages')}`;
+        : tf('cast.range.lastN', 'Last {n} messages', { n: value });
 }
 
 function timeAgo(time) {
     const seconds = Math.round((Date.now() - time) / 1000);
     if (seconds < 45) return t('cast.time.now', 'just now');
     const minutes = Math.round(seconds / 60);
-    if (minutes < 60) return `${minutes} ${t('cast.time.minutes', 'min ago')}`;
+    if (minutes < 60) return tf('cast.time.minutesAgo', '{n} min ago', { n: minutes });
     const hours = Math.round(minutes / 60);
-    return `${hours} ${t('cast.time.hours', 'h ago')}`;
+    return tf('cast.time.hoursAgo', '{n} h ago', { n: hours });
 }
 
 /** The Refresh button and a line saying how the last background update went. */
@@ -43,12 +45,12 @@ function statusBar() {
     let line;
     if (status.running) line = `<span class="rpg-cast-state is-running">${escapeHtml(tidying ? t('cast.state.tidying', 'Tidying…') : t('cast.state.running', 'Updating…'))}</span>`;
     else if (status.lastError) line = `<span class="rpg-cast-state is-error" title="${escapeHtml(status.lastError)}">${escapeHtml(status.errorTask === 'tidy' ? t('cast.state.tidyFailed', 'Tidy failed') : t('cast.state.failed', 'Last update failed'))}: ${escapeHtml(status.lastError)}</span>`;
-    else if (tidy) line = `<span class="rpg-cast-state">${escapeHtml(t('cast.state.tidied', 'Tidied'))} ${tidy.count} ${escapeHtml(tidy.count === 1 ? t('cast.character', 'character') : t('cast.characters', 'characters'))} ${escapeHtml(timeAgo(tidy.at))}</span>`;
-    else if (status.lastOk) line = `<span class="rpg-cast-state">${escapeHtml(t('cast.state.ok', 'Updated'))} ${escapeHtml(timeAgo(status.lastOk))}</span>`;
+    else if (tidy) line = `<span class="rpg-cast-state">${escapeHtml(tidy.count === 1 ? tf('cast.state.tidiedOne', 'Tidied {n} character {time}', { n: tidy.count, time: timeAgo(tidy.at) }) : tf('cast.state.tidiedMany', 'Tidied {n} characters {time}', { n: tidy.count, time: timeAgo(tidy.at) }))}</span>`;
+    else if (status.lastOk) line = `<span class="rpg-cast-state">${escapeHtml(tf('cast.state.okAt', 'Updated {time}', { time: timeAgo(status.lastOk) }))}</span>`;
     else line = `<span class="rpg-cast-state">${escapeHtml(t('cast.state.idle', 'Updates after each reply'))}</span>`;
     const fixes = tidy && !status.running && !status.lastError
         ? (tidy.fixes.length
-            ? `<details class="rpg-cast-fixes"><summary>${tidy.fixes.length} ${escapeHtml(tidy.fixes.length === 1 ? t('cast.fix', 'fix') : t('cast.fixes', 'fixes'))}</summary><ul>${tidy.fixes.map((f) => `<li>${escapeHtml(f)}</li>`).join('')}</ul></details>`
+            ? `<details class="rpg-cast-fixes"><summary>${escapeHtml(tidy.fixes.length === 1 ? tf('cast.fixOne', '{n} fix', { n: 1 }) : tf('cast.fixMany', '{n} fixes', { n: tidy.fixes.length }))}</summary><ul>${tidy.fixes.map((f) => `<li>${escapeHtml(f)}</li>`).join('')}</ul></details>`
             : `<p class="rpg-cast-fixes">${escapeHtml(t('cast.noFixes', 'No mistakes found.'))}</p>`)
         : '';
     const undo = canUndoTidy() && !status.running
@@ -97,14 +99,14 @@ let storyOpen = false;
 function storyFold() {
     const { chapters, beats } = getStory();
     const count = [
-        chapters.length ? `${chapters.length} ${chapters.length === 1 ? t('cast.story.chapter', 'chapter') : t('cast.story.chapters', 'chapters')}` : '',
-        beats.length ? `${beats.length} ${beats.length === 1 ? t('cast.story.beat', 'beat') : t('cast.story.beats', 'beats')}` : '',
+        chapters.length ? (chapters.length === 1 ? tf('cast.story.chapterOne', '{n} chapter', { n: 1 }) : tf('cast.story.chapterMany', '{n} chapters', { n: chapters.length })) : '',
+        beats.length ? (beats.length === 1 ? tf('cast.story.beatOne', '{n} beat', { n: 1 }) : tf('cast.story.beatMany', '{n} beats', { n: beats.length })) : '',
     ].filter(Boolean).join(' · ');
     const removeTitle = escapeHtml(t('cast.story.remove', 'Remove this line'));
     let number = 0;
     const chapterHtml = chapters.map((c) => `
         <div class="rpg-cast-chapter">
-            <span class="rpg-cast-label">${escapeHtml(c.part ? t('cast.story.earlier', 'Earlier') : `${t('cast.story.chapterTitle', 'Chapter')} ${++number}`)}</span>
+            <span class="rpg-cast-label">${escapeHtml(c.part ? t('cast.story.earlier', 'Earlier') : tf('cast.story.chapterN', 'Chapter {n}', { n: ++number }))}</span>
             <p class="rpg-cast-story-text" contenteditable="true" spellcheck="false" data-kind="chapter" data-id="${escapeHtml(c.id)}">${escapeHtml(c.text)}</p>
         </div>`).join('');
     const beatHtml = beats.length ? `
@@ -290,7 +292,7 @@ export function renderCast() {
     const characters = listCharacters();
     const here = characters.filter((c) => c.status === 'present').length;
     const summary = characters.length
-        ? `${characters.length} ${t('cast.known', 'known')} · ${here} ${t('cast.here', 'here')}`
+        ? tf('cast.knownHere', '{known} known · {here} here', { known: characters.length, here })
         : '';
 
     $cast.html(`
@@ -459,7 +461,7 @@ export function initCastTab() {
     });
     $doc.on('click', '#rpg-cast .rpg-cast-delete', async function () {
         const name = nameOf(this);
-        const ok = await callGenericPopup(`${t('cast.deleteConfirm', 'Forget')} ${escapeHtml(name)}? ${t('cast.deleteNote', 'Their memory is removed from this chat, and Cast will not track them again unless you bring them back under Forgotten.')}`, POPUP_TYPE.CONFIRM);
+        const ok = await callGenericPopup(`${tf('cast.deleteAsk', 'Forget {name}?', { name: escapeHtml(name) })} ${t('cast.deleteNote', 'Their memory is removed from this chat, and Cast will not track them again unless you bring them back under Forgotten.')}`, POPUP_TYPE.CONFIRM);
         if (!ok) return;
         deleteCharacter(name);
     });
