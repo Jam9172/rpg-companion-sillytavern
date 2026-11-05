@@ -160,6 +160,7 @@ import { initCast, refreshCastPrompt } from './src/systems/features/cast.js';
 import { initCastTab, renderCast } from './src/systems/rendering/cast.js';
 import { initMeanwhile, renderAllMeanwhile } from './src/systems/rendering/meanwhile.js';
 import { initElsewhere, renderElsewhere } from './src/systems/rendering/elsewhere.js';
+import { initScrollEdges } from './src/systems/ui/scrollEdges.js';
 import { DEFAULT_HTML_PROMPT } from './src/systems/generation/promptBuilder.js';
 import { openEncounterModal } from './src/systems/ui/encounterUI.js';
 
@@ -309,6 +310,7 @@ async function initUI() {
         $(`#${this.id}`).remove();
     });
     $('body').append($template);
+    initScrollEdges();
 
     // Add mobile toggle button (FAB - Floating Action Button)
     const theme = extensionSettings.theme || 'default';

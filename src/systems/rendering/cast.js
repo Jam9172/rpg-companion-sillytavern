@@ -130,6 +130,7 @@ function modelSettings() {
     return `
         <details class="rpg-cast-model"${modelOpen ? ' open' : ''}>
             <summary>${escapeHtml(t('cast.settings.title', 'Settings'))}</summary>
+            ${rangePicker()}
             <label class="rpg-cast-model-row" title="${escapeHtml(t('cast.model.connectionHelp', 'Which connection Cast uses. A Connection Profile lets Cast use its own model, separate from the chat.'))}">
                 <span class="rpg-cast-label">${escapeHtml(t('cast.model.connection', 'Connection'))}</span>
                 <select class="rpg-cast-connection">
@@ -298,13 +299,12 @@ export function renderCast() {
             <span class="rpg-cast-count">${escapeHtml(summary)}</span>
         </div>
         ${statusBar()}
-        ${rangePicker()}
-        ${modelSettings()}
         ${storyFold()}
         ${characters.length
             ? `<div class="rpg-cast-list">${characters.map(card).join('')}</div>`
             : `<p class="rpg-cast-empty">${escapeHtml(t('cast.empty', 'No characters yet. Everyone the story meets is remembered here as it goes on.'))}</p>`}
         ${forgottenLine()}
+        ${modelSettings()}
     `);
 }
 
