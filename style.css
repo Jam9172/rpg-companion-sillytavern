@@ -16507,3 +16507,10 @@ body:has(.rpg-panel[data-theme="forge"]):has(:is(#rpg-thoughts-button, #rpg-else
         padding: 0.4em 0.5em;
     }
 }
+
+/* The placeholder portrait (a silhouette, inline SVG) is drawn whole at the top of its box instead of
+   cropped like a photo, which left only a cut-off circle behind the name bar */
+:is(.rpg-panel, .rpg-thoughts-overlay, #rpg-thoughts-overlay, .rpg-thought-panel, #rpg-thought-panel, .rpg-whisper-item, #rpg-elsewhere-panel) img[src^="data:image/svg+xml"] {
+    object-fit: contain !important;
+    object-position: center top !important;
+}
