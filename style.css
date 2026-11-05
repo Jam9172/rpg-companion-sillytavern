@@ -16545,3 +16545,128 @@ body:has(.rpg-panel[data-theme="forge"]):has(:is(#rpg-thoughts-button, #rpg-else
         animation-iteration-count: 1 !important;
     }
 }
+
+/* ==========================================================================
+   Arcane Forge: the Customize Prompts menu
+   It still had the old default look in Forge (see-through, blue border, grey
+   dividers). Same treatment as the Settings and Edit Trackers menus above:
+   solid, the Forge palette from Arcane Forge UI's colour pickers, sizes in em.
+   ========================================================================== */
+#rpg-prompts-editor-popup[data-theme="forge"] .rpg-settings-popup-content {
+    --rpg-bg: var(--forge-ui-bg, #120908);
+    --rpg-accent: var(--forge-ui-card, #1E100D);
+    --rpg-text: var(--forge-ui-text, #F1E3D6);
+    --rpg-highlight: var(--forge-ui-ember, #E8622C);
+    --rpg-border: var(--forge-ui-border, #4A2219);
+    --rpg-shadow: rgba(0, 0, 0, 0.7);
+    --menu-brass: var(--forge-ui-brass, #D9A35B);
+    --menu-muted: var(--forge-ui-muted, #B79A88);
+    --menu-inset: var(--forge-ui-inset, #170C0A);
+    --menu-card: var(--forge-ui-card, #1E100D);
+    background: var(--forge-ui-bg, #120908);
+    color: var(--rpg-text);
+    border: 1px solid var(--rpg-border);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px color-mix(in srgb, var(--menu-brass) 12%, transparent);
+    max-height: min(94vh, 1100px);
+    max-width: min(760px, calc(100vw - 32px));
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] :is(.rpg-settings-popup-header, .rpg-settings-popup-footer) {
+    background: var(--menu-card);
+    border-color: color-mix(in srgb, var(--menu-brass) 30%, var(--rpg-border));
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] .rpg-settings-popup-header h3 {
+    color: var(--menu-brass);
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] #rpg-close-prompts-editor {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--menu-muted);
+    box-shadow: none;
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] #rpg-close-prompts-editor:focus-visible {
+    outline: none;
+    color: var(--rpg-highlight);
+    background: none;
+    border-color: transparent;
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] #rpg-close-prompts-editor:hover {
+    color: var(--rpg-highlight);
+    border-color: var(--rpg-border);
+    background: var(--menu-inset);
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] .rpg-prompt-editor-section {
+    border-color: var(--rpg-border);
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] .rpg-prompt-editor-section label {
+    color: var(--rpg-text);
+    font-size: 1.02em;
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] small {
+    font-size: 0.86em !important;
+    line-height: 1.4;
+    color: var(--menu-muted) !important;
+    font-style: normal;
+}
+
+/* The prompt boxes: the inset colour, and a size that follows the text size setting */
+#rpg-prompts-editor-popup[data-theme="forge"] .rpg-prompt-textarea {
+    background: var(--menu-inset);
+    color: var(--rpg-text);
+    border: 1px solid var(--rpg-border);
+    border-radius: 6px;
+    font-size: 0.86em;
+    padding: 0.7em 0.8em;
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] .rpg-prompt-textarea:focus-visible {
+    outline: none;
+    border-color: var(--menu-brass);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--menu-brass) 25%, transparent);
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] :is(.rpg-restore-prompt-btn, .rpg-btn-secondary) {
+    background: linear-gradient(180deg, var(--forge-ui-track, #3A1B15), color-mix(in srgb, var(--rpg-highlight) 5%, var(--menu-card)));
+    border: 1px solid color-mix(in srgb, var(--rpg-highlight) 30%, var(--rpg-border));
+    border-radius: 8px;
+    color: var(--rpg-text);
+    font-family: inherit;
+    font-size: 0.95em;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    font-variant: normal;
+    box-shadow: none;
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] :is(.rpg-restore-prompt-btn, .rpg-btn-secondary):hover {
+    border-color: var(--menu-brass);
+    color: var(--forge-ui-bright, #FCEBDD);
+    transform: none;
+}
+
+/* Cast's group heading: a brass rule above it, like a new chapter of the menu */
+#rpg-prompts-editor-popup .rpg-prompt-editor-group {
+    margin: 8px 0 6px;
+    padding-top: 18px;
+    border-top: 2px solid var(--rpg-border);
+}
+
+#rpg-prompts-editor-popup[data-theme="forge"] .rpg-prompt-editor-group {
+    color: var(--menu-brass);
+    border-top-color: color-mix(in srgb, var(--menu-brass) 40%, var(--rpg-border));
+}
+
+/* Phones: Save Changes filled the row and then some, so it ran off the right edge (every theme) */
+#rpg-prompts-editor-popup .rpg-footer-right #rpg-prompts-save {
+    flex: 1 1 auto;
+    min-width: 0;
+}

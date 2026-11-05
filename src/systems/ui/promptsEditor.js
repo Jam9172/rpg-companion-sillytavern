@@ -5,9 +5,10 @@
 import { extensionSettings } from '../../core/state.js';
 import { saveSettings } from '../../core/persistence.js';
 import { DEFAULT_HTML_PROMPT, DEFAULT_DIALOGUE_COLORING_PROMPT, DEFAULT_DECEPTION_PROMPT, DEFAULT_OMNISCIENCE_FILTER_PROMPT, DEFAULT_CYOA_PROMPT, DEFAULT_SPOTIFY_PROMPT, DEFAULT_NARRATOR_PROMPT, DEFAULT_CONTEXT_INSTRUCTIONS_PROMPT } from '../generation/promptBuilder.js';
+import { DEFAULT_CAST_PROMPTS, CAST_PROMPT_SETTINGS } from '../features/castPrompts.js';
+import { refreshCastPrompt } from '../features/cast.js';
 
 let $editorModal = null;
-let tempPrompts = null; // Temporary prompts for cancel functionality
 
 // Default prompts
 const DEFAULT_PROMPTS = {
@@ -34,6 +35,30 @@ Output only the final, modified prompt; do not output anything else.`,
     trackerContinuation: 'After updating the trackers, continue directly from where the last message in the chat history left off. Ensure the trackers you provide naturally reflect and influence the narrative. Character behavior, dialogue, and story events should acknowledge these conditions when relevant, such as fatigue affecting the protagonist\'s performance, low hygiene influencing their social interactions, environmental factors shaping the scene, a character\'s emotional state coloring their responses, and so on. Remember, all placeholders (e.g., "Location", "Mood Emoji") MUST be replaced with actual content.',
     combatNarrative: 'Build novel prose. Break patterns from your previous responses by varying sentence structures, rhythms, formats, and openings. Track whether a sentence shape, cadence, sensory detail, or a descriptor appeared recently, and replace it with a different one or skip it entirely. If you mentioned a physical feature, mannerism, or expression once, move on. Don\'t fixate on the same traits every turn. Well-placed humor, unconventional similes, and subverted turns of phrase are encouraged. Avoid GPTisms, purple prose, and anaphoras, especially the negatives with "no/not/wasn\'t/didn\'t." Refrain from describing actions or emotions via negation; focus on what does happen, not what doesn\'t. Absolutely no asterisks, ellipses, or em-dashes. Explicit content is allowed, no plot armor. Do not play for {userName}. Keep your response length under 150 words. Never end on handover cues; finish naturally.\nCRITICAL: Do not repeat, echo, parrot, or restate distinctive words, phrases, and dialogues from the user\'s last message. If reacting to speech, show interpretation or response, not repetition.\nEXAMPLE: "Are you a gooner?" User asks.\nBAD: "Gooner?"\nGOOD: A flat look. "What type of question is that?"'
 };
+
+// Cast's prompts (instructions only: their reply formats stay fixed in cast.js)
+Object.assign(DEFAULT_PROMPTS, DEFAULT_CAST_PROMPTS);
+
+// Where each prompt's custom text is kept ('' = the default). Its textarea is #rpg-prompt-<key in kebab-case>.
+const PROMPT_SETTINGS = {
+    html: 'customHtmlPrompt',
+    dialogueColoring: 'customDialogueColoringPrompt',
+    deception: 'customDeceptionPrompt',
+    omniscience: 'customOmnisciencePrompt',
+    cyoa: 'customCYOAPrompt',
+    spotify: 'customSpotifyPrompt',
+    narrator: 'customNarratorPrompt',
+    contextInstructions: 'customContextInstructionsPrompt',
+    plotRandom: 'customPlotRandomPrompt',
+    plotNatural: 'customPlotNaturalPrompt',
+    avatar: 'avatarLLMCustomInstruction',
+    trackerInstructions: 'customTrackerInstructionsPrompt',
+    trackerContinuation: 'customTrackerContinuationPrompt',
+    combatNarrative: 'customCombatNarrativePrompt',
+    ...CAST_PROMPT_SETTINGS,
+};
+
+const textarea = (key) => $(`#rpg-prompt-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`);
 
 let promptsEditorHandlersBound = false;
 
@@ -97,42 +122,12 @@ export function initPromptsEditor() {
 }
 
 /**
- * Open the prompts editor modal
+ * Open the prompts editor modal: each box shows the custom text, or the default when there is none
  */
 function openPromptsEditor() {
-    // Create temporary copy for cancel functionality
-    tempPrompts = {
-        html: extensionSettings.customHtmlPrompt || '',
-        dialogueColoring: extensionSettings.customDialogueColoringPrompt || '',
-        deception: extensionSettings.customDeceptionPrompt || '',
-        omniscience: extensionSettings.customOmnisciencePrompt || '',
-        cyoa: extensionSettings.customCYOAPrompt || '',
-        spotify: extensionSettings.customSpotifyPrompt || '',
-        narrator: extensionSettings.customNarratorPrompt || '',
-        contextInstructions: extensionSettings.customContextInstructionsPrompt || '',
-        plotRandom: extensionSettings.customPlotRandomPrompt || '',
-        plotNatural: extensionSettings.customPlotNaturalPrompt || '',
-        avatar: extensionSettings.avatarLLMCustomInstruction || '',
-        trackerInstructions: extensionSettings.customTrackerInstructionsPrompt || '',
-        trackerContinuation: extensionSettings.customTrackerContinuationPrompt || '',
-        combatNarrative: extensionSettings.customCombatNarrativePrompt || ''
-    };
-
-    // Load current values or defaults
-    $('#rpg-prompt-html').val(extensionSettings.customHtmlPrompt || DEFAULT_PROMPTS.html);
-    $('#rpg-prompt-dialogue-coloring').val(extensionSettings.customDialogueColoringPrompt || DEFAULT_PROMPTS.dialogueColoring);
-    $('#rpg-prompt-deception').val(extensionSettings.customDeceptionPrompt || DEFAULT_PROMPTS.deception);
-    $('#rpg-prompt-omniscience').val(extensionSettings.customOmnisciencePrompt || DEFAULT_PROMPTS.omniscience);
-    $('#rpg-prompt-cyoa').val(extensionSettings.customCYOAPrompt || DEFAULT_PROMPTS.cyoa);
-    $('#rpg-prompt-spotify').val(extensionSettings.customSpotifyPrompt || DEFAULT_PROMPTS.spotify);
-    $('#rpg-prompt-narrator').val(extensionSettings.customNarratorPrompt || DEFAULT_PROMPTS.narrator);
-    $('#rpg-prompt-context-instructions').val(extensionSettings.customContextInstructionsPrompt || DEFAULT_PROMPTS.contextInstructions);
-    $('#rpg-prompt-plot-random').val(extensionSettings.customPlotRandomPrompt || DEFAULT_PROMPTS.plotRandom);
-    $('#rpg-prompt-plot-natural').val(extensionSettings.customPlotNaturalPrompt || DEFAULT_PROMPTS.plotNatural);
-    $('#rpg-prompt-avatar').val(extensionSettings.avatarLLMCustomInstruction || DEFAULT_PROMPTS.avatar);
-    $('#rpg-prompt-tracker-instructions').val(extensionSettings.customTrackerInstructionsPrompt || DEFAULT_PROMPTS.trackerInstructions);
-    $('#rpg-prompt-tracker-continuation').val(extensionSettings.customTrackerContinuationPrompt || DEFAULT_PROMPTS.trackerContinuation);
-    $('#rpg-prompt-combat-narrative').val(extensionSettings.customCombatNarrativePrompt || DEFAULT_PROMPTS.combatNarrative);
+    for (const [key, setting] of Object.entries(PROMPT_SETTINGS)) {
+        textarea(key).val(extensionSettings[setting] || DEFAULT_PROMPTS[key]);
+    }
 
     // Set theme to match current extension theme
     const theme = extensionSettings.theme || 'default';
@@ -145,11 +140,6 @@ function openPromptsEditor() {
  * Close the prompts editor modal
  */
 function closePromptsEditor() {
-    // Restore from temp if canceling
-    if (tempPrompts) {
-        tempPrompts = null;
-    }
-
     $editorModal.removeClass('is-open').addClass('is-closing');
     setTimeout(() => {
         $editorModal.removeClass('is-closing').hide();
@@ -157,120 +147,45 @@ function closePromptsEditor() {
 }
 
 /**
- * Save all prompts from the editor
+ * Save all prompts from the editor. A Cast prompt left as its default is saved as empty, so it keeps
+ * following the default when a later version improves it.
  */
 function savePrompts() {
-    extensionSettings.customHtmlPrompt = $('#rpg-prompt-html').val().trim();
-    extensionSettings.customDialogueColoringPrompt = $('#rpg-prompt-dialogue-coloring').val().trim();
-    extensionSettings.customDeceptionPrompt = $('#rpg-prompt-deception').val().trim();
-    extensionSettings.customOmnisciencePrompt = $('#rpg-prompt-omniscience').val().trim();
-    extensionSettings.customCYOAPrompt = $('#rpg-prompt-cyoa').val().trim();
-    extensionSettings.customSpotifyPrompt = $('#rpg-prompt-spotify').val().trim();
-    extensionSettings.customNarratorPrompt = $('#rpg-prompt-narrator').val().trim();
-    extensionSettings.customContextInstructionsPrompt = $('#rpg-prompt-context-instructions').val().trim();
-    extensionSettings.customPlotRandomPrompt = $('#rpg-prompt-plot-random').val().trim();
-    extensionSettings.customPlotNaturalPrompt = $('#rpg-prompt-plot-natural').val().trim();
-    extensionSettings.avatarLLMCustomInstruction = $('#rpg-prompt-avatar').val().trim();
-    extensionSettings.customTrackerInstructionsPrompt = $('#rpg-prompt-tracker-instructions').val().trim();
-    extensionSettings.customTrackerContinuationPrompt = $('#rpg-prompt-tracker-continuation').val().trim();
-    extensionSettings.customCombatNarrativePrompt = $('#rpg-prompt-combat-narrative').val().trim();
+    for (const [key, setting] of Object.entries(PROMPT_SETTINGS)) {
+        const value = String(textarea(key).val() ?? '').trim();
+        extensionSettings[setting] = key in CAST_PROMPT_SETTINGS && value === DEFAULT_PROMPTS[key].trim() ? '' : value;
+    }
 
     saveSettings();
+    refreshCastPrompt();
 }
 
 /**
  * Restore a specific prompt to its default
- * @param {string} promptType - Type of prompt to restore (html, plotRandom, plotNatural, avatar)
+ * @param {string} promptType - Key of the prompt to restore (html, plotRandom, castUpdate, ...)
  */
 function restorePromptToDefault(promptType) {
-    const defaultValue = DEFAULT_PROMPTS[promptType] || '';
-    $(`#rpg-prompt-${promptType.replace(/([A-Z])/g, '-$1').toLowerCase()}`).val(defaultValue);
+    if (!(promptType in PROMPT_SETTINGS)) return;
+    textarea(promptType).val(DEFAULT_PROMPTS[promptType] || '');
 
     // Also update the setting immediately
-    switch(promptType) {
-        case 'html':
-            extensionSettings.customHtmlPrompt = '';
-            break;
-        case 'dialogueColoring':
-            extensionSettings.customDialogueColoringPrompt = '';
-            break;
-        case 'deception':
-            extensionSettings.customDeceptionPrompt = '';
-            break;
-        case 'omniscience':
-            extensionSettings.customOmnisciencePrompt = '';
-            break;
-        case 'cyoa':
-            extensionSettings.customCYOAPrompt = '';
-            break;
-        case 'spotify':
-            extensionSettings.customSpotifyPrompt = '';
-            break;
-        case 'narrator':
-            extensionSettings.customNarratorPrompt = '';
-            break;
-        case 'contextInstructions':
-            extensionSettings.customContextInstructionsPrompt = '';
-            break;
-        case 'plotRandom':
-            extensionSettings.customPlotRandomPrompt = '';
-            break;
-        case 'plotNatural':
-            extensionSettings.customPlotNaturalPrompt = '';
-            break;
-        case 'avatar':
-            extensionSettings.avatarLLMCustomInstruction = '';
-            break;
-        case 'trackerInstructions':
-            extensionSettings.customTrackerInstructionsPrompt = '';
-            break;
-        case 'trackerContinuation':
-            extensionSettings.customTrackerContinuationPrompt = '';
-            break;
-        case 'combatNarrative':
-            extensionSettings.customCombatNarrativePrompt = '';
-            break;
-    }
+    extensionSettings[PROMPT_SETTINGS[promptType]] = '';
 
     saveSettings();
+    refreshCastPrompt();
 }
 
 /**
  * Restore all prompts to their defaults
  */
 function restoreAllToDefaults() {
-    $('#rpg-prompt-html').val(DEFAULT_PROMPTS.html);
-    $('#rpg-prompt-dialogue-coloring').val(DEFAULT_PROMPTS.dialogueColoring);
-    $('#rpg-prompt-deception').val(DEFAULT_PROMPTS.deception);
-    $('#rpg-prompt-omniscience').val(DEFAULT_PROMPTS.omniscience);
-    $('#rpg-prompt-cyoa').val(DEFAULT_PROMPTS.cyoa);
-    $('#rpg-prompt-spotify').val(DEFAULT_PROMPTS.spotify);
-    $('#rpg-prompt-narrator').val(DEFAULT_PROMPTS.narrator);
-    $('#rpg-prompt-context-instructions').val(DEFAULT_PROMPTS.contextInstructions);
-    $('#rpg-prompt-plot-random').val(DEFAULT_PROMPTS.plotRandom);
-    $('#rpg-prompt-plot-natural').val(DEFAULT_PROMPTS.plotNatural);
-    $('#rpg-prompt-avatar').val(DEFAULT_PROMPTS.avatar);
-    $('#rpg-prompt-tracker-instructions').val(DEFAULT_PROMPTS.trackerInstructions);
-    $('#rpg-prompt-tracker-continuation').val(DEFAULT_PROMPTS.trackerContinuation);
-    $('#rpg-prompt-combat-narrative').val(DEFAULT_PROMPTS.combatNarrative);
-
-    // Clear all custom prompts
-    extensionSettings.customHtmlPrompt = '';
-    extensionSettings.customDialogueColoringPrompt = '';
-    extensionSettings.customDeceptionPrompt = '';
-    extensionSettings.customOmnisciencePrompt = '';
-    extensionSettings.customCYOAPrompt = '';
-    extensionSettings.customSpotifyPrompt = '';
-    extensionSettings.customNarratorPrompt = '';
-    extensionSettings.customContextInstructionsPrompt = '';
-    extensionSettings.customPlotRandomPrompt = '';
-    extensionSettings.customPlotNaturalPrompt = '';
-    extensionSettings.avatarLLMCustomInstruction = '';
-    extensionSettings.customTrackerInstructionsPrompt = '';
-    extensionSettings.customTrackerContinuationPrompt = '';
-    extensionSettings.customCombatNarrativePrompt = '';
+    for (const [key, setting] of Object.entries(PROMPT_SETTINGS)) {
+        textarea(key).val(DEFAULT_PROMPTS[key]);
+        extensionSettings[setting] = '';
+    }
 
     saveSettings();
+    refreshCastPrompt();
 }
 
 /**

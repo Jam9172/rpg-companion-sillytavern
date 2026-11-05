@@ -48,6 +48,13 @@ export const defaultSettings = {
     castMeanwhile: true, // Cast: show what changed off-screen under each reply
     castStoryInject: true, // Cast: send the story so far (chapters and beats) to the main model
     castElsewhere: true, // Cast: an Elsewhere button with what the away characters are doing
+    // Cast's prompts from the Prompts editor (empty = use the default in castPrompts.js)
+    customCastUpdatePrompt: '',
+    customCastFoldPrompt: '',
+    customCastTidyPrompt: '',
+    customCastNotesPrompt: '',
+    customCastAwayPrompt: '',
+    customCastStoryPrompt: '',
     enableHtmlPrompt: false, // Enable immersive HTML prompt injection
     enableSpotifyMusic: false, // Enable Spotify music integration (asks AI for Spotify URLs)
     customSpotifyPrompt: '', // Custom Spotify prompt text (empty = use default)

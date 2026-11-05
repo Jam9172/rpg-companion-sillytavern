@@ -36,6 +36,13 @@ export let extensionSettings = {
     castMeanwhile: true, // Cast: show what changed off-screen under each reply
     castStoryInject: true, // Cast: send the story so far (chapters and beats) to the main model
     castElsewhere: true, // Cast: an Elsewhere button with what the away characters are doing
+    // Cast's prompts from the Prompts editor (empty = use the default in castPrompts.js)
+    customCastUpdatePrompt: '',
+    customCastFoldPrompt: '',
+    customCastTidyPrompt: '',
+    customCastNotesPrompt: '',
+    customCastAwayPrompt: '',
+    customCastStoryPrompt: '',
     narratorMode: false, // Use character card as narrator instead of fixed character references
     customNarratorPrompt: '', // Custom narrator mode prompt text (empty = use default)
     customContextInstructionsPrompt: '', // Custom context instructions prompt text (empty = use default)

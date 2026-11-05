@@ -1277,6 +1277,90 @@
                     <i class="fa-solid fa-rotate-left"></i>&nbsp;<span data-i18n-key="template.promptsEditor.restoreDefault">Restore Default</span>
                 </button>
             </div>
+
+            <!-- Cast (Character Memory): instructions only; the reply formats Cast reads stay fixed -->
+            <h4 class="rpg-prompt-editor-group" data-i18n-key="template.promptsEditor.castGroup">Cast (Character Memory)</h4>
+            <small class="rpg-prompt-editor-group-note" style="display: block; margin-bottom: 12px; color: #888; font-size: 11px;" data-i18n-key="template.promptsEditor.castGroupNote">
+                The instructions only: the reply format Cast reads is added after them and cannot be changed here, so an edit cannot break Cast. {userName} will be replaced with the user's name.
+            </small>
+
+            <div class="rpg-prompt-editor-section">
+                <label for="rpg-prompt-cast-update" style="display: block; margin-bottom: 8px; font-weight: 600;">
+                    <i class="fa-solid fa-users"></i> <span data-i18n-key="template.promptsEditor.castUpdatePrompt.title">Cast Update Rules</span>
+                </label>
+                <small style="display: block; margin-bottom: 8px; color: #888; font-size: 11px;" data-i18n-key="template.promptsEditor.castUpdatePrompt.note">
+                    Sent to the background model after each reply: which characters are tracked, how they write their memory, and how away characters live off-screen.
+                </small>
+                <textarea id="rpg-prompt-cast-update" class="rpg-prompt-textarea" rows="10"></textarea>
+                <button class="menu_button rpg-restore-prompt-btn" data-prompt="castUpdate" style="margin-top: 8px;">
+                    <i class="fa-solid fa-rotate-left"></i>&nbsp;<span data-i18n-key="template.promptsEditor.restoreDefault">Restore Default</span>
+                </button>
+            </div>
+
+            <div class="rpg-prompt-editor-section">
+                <label for="rpg-prompt-cast-fold" style="display: block; margin-bottom: 8px; font-weight: 600;">
+                    <i class="fa-solid fa-scroll"></i> <span data-i18n-key="template.promptsEditor.castFoldPrompt.title">Cast Summaries and Chapters</span>
+                </label>
+                <small style="display: block; margin-bottom: 8px; color: #888; font-size: 11px;" data-i18n-key="template.promptsEditor.castFoldPrompt.note">
+                    Sent to the background model when a character's older memories are summed up, and when story beats are retold as a chapter.
+                </small>
+                <textarea id="rpg-prompt-cast-fold" class="rpg-prompt-textarea" rows="6"></textarea>
+                <button class="menu_button rpg-restore-prompt-btn" data-prompt="castFold" style="margin-top: 8px;">
+                    <i class="fa-solid fa-rotate-left"></i>&nbsp;<span data-i18n-key="template.promptsEditor.restoreDefault">Restore Default</span>
+                </button>
+            </div>
+
+            <div class="rpg-prompt-editor-section">
+                <label for="rpg-prompt-cast-tidy" style="display: block; margin-bottom: 8px; font-weight: 600;">
+                    <i class="fa-solid fa-edit"></i> <span data-i18n-key="template.promptsEditor.castTidyPrompt.title">Cast Tidy Rules</span>
+                </label>
+                <small style="display: block; margin-bottom: 8px; color: #888; font-size: 11px;" data-i18n-key="template.promptsEditor.castTidyPrompt.note">
+                    Sent to the background model when you press Tidy in the Cast tab: how every character's memory is shortened and corrected.
+                </small>
+                <textarea id="rpg-prompt-cast-tidy" class="rpg-prompt-textarea" rows="8"></textarea>
+                <button class="menu_button rpg-restore-prompt-btn" data-prompt="castTidy" style="margin-top: 8px;">
+                    <i class="fa-solid fa-rotate-left"></i>&nbsp;<span data-i18n-key="template.promptsEditor.restoreDefault">Restore Default</span>
+                </button>
+            </div>
+
+            <div class="rpg-prompt-editor-section">
+                <label for="rpg-prompt-cast-notes" style="display: block; margin-bottom: 8px; font-weight: 600;">
+                    <i class="fa-solid fa-file-lines"></i> <span data-i18n-key="template.promptsEditor.castNotesPrompt.title">Cast Notes Instruction</span>
+                </label>
+                <small style="display: block; margin-bottom: 8px; color: #888; font-size: 11px;" data-i18n-key="template.promptsEditor.castNotesPrompt.note">
+                    Sent to the main model at the top of the cast notes: what the notes are and how to use them.
+                </small>
+                <textarea id="rpg-prompt-cast-notes" class="rpg-prompt-textarea" rows="3"></textarea>
+                <button class="menu_button rpg-restore-prompt-btn" data-prompt="castNotes" style="margin-top: 8px;">
+                    <i class="fa-solid fa-rotate-left"></i>&nbsp;<span data-i18n-key="template.promptsEditor.restoreDefault">Restore Default</span>
+                </button>
+            </div>
+
+            <div class="rpg-prompt-editor-section">
+                <label for="rpg-prompt-cast-away" style="display: block; margin-bottom: 8px; font-weight: 600;">
+                    <i class="fa-solid fa-location-dot"></i> <span data-i18n-key="template.promptsEditor.castAwayPrompt.title">Away Characters Instruction</span>
+                </label>
+                <small style="display: block; margin-bottom: 8px; color: #888; font-size: 11px;" data-i18n-key="template.promptsEditor.castAwayPrompt.note">
+                    Sent to the main model at the end of the cast notes when some characters are away: when and how to bring them back into the story.
+                </small>
+                <textarea id="rpg-prompt-cast-away" class="rpg-prompt-textarea" rows="3"></textarea>
+                <button class="menu_button rpg-restore-prompt-btn" data-prompt="castAway" style="margin-top: 8px;">
+                    <i class="fa-solid fa-rotate-left"></i>&nbsp;<span data-i18n-key="template.promptsEditor.restoreDefault">Restore Default</span>
+                </button>
+            </div>
+
+            <div class="rpg-prompt-editor-section">
+                <label for="rpg-prompt-cast-story" style="display: block; margin-bottom: 8px; font-weight: 600;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n-key="template.promptsEditor.castStoryPrompt.title">Story So Far Instruction</span>
+                </label>
+                <small style="display: block; margin-bottom: 8px; color: #888; font-size: 11px;" data-i18n-key="template.promptsEditor.castStoryPrompt.note">
+                    Sent to the main model at the top of the story so far, while the Cast tab's own setting for sending it is on.
+                </small>
+                <textarea id="rpg-prompt-cast-story" class="rpg-prompt-textarea" rows="2"></textarea>
+                <button class="menu_button rpg-restore-prompt-btn" data-prompt="castStory" style="margin-top: 8px;">
+                    <i class="fa-solid fa-rotate-left"></i>&nbsp;<span data-i18n-key="template.promptsEditor.restoreDefault">Restore Default</span>
+                </button>
+            </div>
         </div>
 
         <footer class="rpg-settings-popup-footer">
