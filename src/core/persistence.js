@@ -1604,6 +1604,7 @@ export function loadPreset(presetId) {
             extensionSettings.historyPersistence = {
                 enabled: false,
                 messageCount: 5,
+                steppedWindow: true,
                 injectionPosition: 'user_message_end',
                 contextPreamble: ''
             };

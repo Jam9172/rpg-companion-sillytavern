@@ -449,6 +449,7 @@ function resetToDefaults() {
     extensionSettings.historyPersistence = {
         enabled: false,
         messageCount: 5,
+        steppedWindow: true,
         injectionPosition: 'user_message_end',
         contextPreamble: '',
         sendAllEnabledOnRefresh: false
@@ -1530,6 +1531,13 @@ function renderHistoryPersistenceTab() {
     html += `<input type="number" id="rpg-history-message-count" min="0" max="50" value="${historyPersistence.messageCount}" class="rpg-input" style="width: 80px; margin-left: 8px;">`;
     html += '</div>';
 
+    // Stepped window (prompt cache)
+    html += '<div class="rpg-editor-toggle-row" style="margin-top: 8px;">';
+    html += `<input type="checkbox" id="rpg-history-stepped-window" ${historyPersistence.steppedWindow !== false ? 'checked' : ''}>`;
+    html += `<label for="rpg-history-stepped-window">${i18n.getTranslation('historyPersistence.steppedWindow') || 'Cache friendly: move the window in steps'}</label>`;
+    html += '</div>';
+    html += `<p class="rpg-editor-hint" style="margin-top: 4px; margin-left: 24px;">${i18n.getTranslation('historyPersistence.steppedWindowHint') || 'Notes stay on the same messages for several replies and the oldest ones drop off together, so providers with prompt caching do not read the chat again on every reply. Sends between the number above and almost twice that. Off: always exactly that many.'}</p>`;
+
     // Injection position
     html += '<div class="rpg-editor-input-row" style="margin-top: 12px;">';
     html += `<label for="rpg-history-injection-position">${i18n.getTranslation('historyPersistence.injectionPosition') || 'Injection Position:'}</label>`;
@@ -1688,6 +1696,11 @@ function setupHistoryPersistenceListeners() {
     // Message count
     $('#rpg-history-message-count').off('change').on('change', function () {
         extensionSettings.historyPersistence.messageCount = parseInt($(this).val()) || 0;
+    });
+
+    // Stepped window
+    $('#rpg-history-stepped-window').off('change').on('change', function () {
+        extensionSettings.historyPersistence.steppedWindow = $(this).is(':checked');
     });
 
     // Injection position

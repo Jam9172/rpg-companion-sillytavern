@@ -75,8 +75,7 @@ function buildHistoricalContextMap() {
     const contextMap = new Map();
 
     // Determine how many messages to include (0 = all available)
-    const messageCount = historyPersistence.messageCount || 0;
-    const maxMessages = messageCount === 0 ? chat.length : Math.min(messageCount, chat.length);
+    const messageCount = Math.max(0, historyPersistence.messageCount || 0);
 
     // Find the last assistant message - this is the one that gets current context via setExtensionPrompt
     // We should NOT add historical context to it when injecting into assistant messages
@@ -92,45 +91,33 @@ function buildHistoricalContextMap() {
     // Iterate through messages to find those with tracker data
     // For user_message_end: start from the last assistant message (we need its context for the preceding user message)
     // For assistant_message_end: start from before the last assistant message (it gets current context via setExtensionPrompt)
-    let processedCount = 0;
     const startIndex = position === 'user_message_end'
         ? lastAssistantIndex
         : (lastAssistantIndex > 0 ? lastAssistantIndex - 1 : chat.length - 2);
 
-    for (let i = startIndex; i >= 0 && (messageCount === 0 || processedCount < maxMessages); i--) {
-        const message = chat[i];
+    // Every message that has tracker data, newest first
+    const withData = [];
+    for (let i = startIndex; i >= 0; i--) {
+        const trackerData = getTrackerDataForMessage(chat[i]);
+        if (trackerData) withData.push({ i, trackerData });
+    }
 
-        // Skip system messages
-        if (message.is_system) {
-            continue;
+    // Which of them get notes. A window that slid by one message every reply would change the prompt
+    // where its oldest note drops off, so a provider's prompt cache would have to read everything after
+    // that point again on every reply. In steps, the window's start only moves once every `messageCount`
+    // replies: between messageCount and 2 × messageCount − 1 notes are sent, and in between the notes
+    // stay on the same messages, so only the end of the prompt is new.
+    let keep = withData.length;
+    if (messageCount > 0 && withData.length > messageCount) {
+        if (historyPersistence.steppedWindow === false) {
+            keep = messageCount;
+        } else {
+            const start = Math.floor((withData.length - messageCount) / messageCount) * messageCount;
+            keep = withData.length - start;
         }
+    }
 
-        // Only assistant messages have rpg_companion_swipes data
-        if (message.is_user) {
-            continue;
-        }
-
-        // Get the rpg_companion_swipes data for current swipe
-        // Data can be in two places:
-        // 1. message.extra.rpg_companion_swipes (current session, before save)
-        // 2. message.swipe_info[swipeId].extra.rpg_companion_swipes (loaded from file)
-        const currentSwipeId = message.swipe_id || 0;
-        let swipeData = message.extra?.rpg_companion_swipes;
-
-        // If not in message.extra, check swipe_info
-        if (!swipeData && message.swipe_info && message.swipe_info[currentSwipeId]) {
-            swipeData = message.swipe_info[currentSwipeId].extra?.rpg_companion_swipes;
-        }
-
-        if (!swipeData) {
-            continue;
-        }
-
-        const trackerData = swipeData[currentSwipeId];
-        if (!trackerData) {
-            continue;
-        }
-
+    for (const { i, trackerData } of withData.slice(0, keep)) {
         // Format the historical tracker data using the shared function
         const formattedContext = formatHistoricalTrackerData(trackerData, trackerConfig, userName);
         if (!formattedContext) {
@@ -170,11 +157,25 @@ function buildHistoricalContextMap() {
         } else {
             contextMap.set(targetIndex, wrappedContext);
         }
-
-        processedCount++;
     }
 
     return contextMap;
+}
+
+/**
+ * The tracker data saved on an assistant message for the swipe it shows, or null.
+ * It can be in two places: message.extra.rpg_companion_swipes (current session, before save) or
+ * message.swipe_info[swipeId].extra.rpg_companion_swipes (loaded from file).
+ */
+function getTrackerDataForMessage(message) {
+    // Only assistant messages have rpg_companion_swipes data
+    if (!message || message.is_system || message.is_user) {
+        return null;
+    }
+    const currentSwipeId = message.swipe_id || 0;
+    const swipeData = message.extra?.rpg_companion_swipes
+        || message.swipe_info?.[currentSwipeId]?.extra?.rpg_companion_swipes;
+    return swipeData?.[currentSwipeId] || null;
 }
 
 /**
