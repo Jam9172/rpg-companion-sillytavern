@@ -396,6 +396,8 @@
     "template.promptsEditor.combatPrompt.note": "Writing style instructions for combat encounters. Includes prose quality guidelines and anti-repetition rules. {userName} will be replaced with the user's name.",
     "template.settingsModal.mobileFabTitle": "Mobile Button Widgets",
     "template.settingsModal.mobileFabNote": "Show compact info widgets around the floating button on mobile. Widgets are positioned automatically.",
+    "template.settingsModal.mobileFab.compactPhone": "Compact Phone Layout",
+    "template.settingsModal.mobileFab.compactPhoneNote": "On phones, the panel button and the Thoughts and Elsewhere buttons sit in the row above the message box instead of floating over the chat, and the widgets below are hidden (the panel shows the same things). Off: everything floats as before.",
     "template.settingsModal.mobileFab.enabled": "Enable Floating Mobile Widgets",
     "template.settingsModal.mobileFab.enabledNote": "Master toggle to show info widgets around the mobile floating button.",
     "template.settingsModal.mobileFab.weatherIcon": "Weather Icon",

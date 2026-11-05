@@ -16670,3 +16670,104 @@ body:has(.rpg-panel[data-theme="forge"]):has(:is(#rpg-thoughts-button, #rpg-else
     flex: 1 1 auto;
     min-width: 0;
 }
+
+/* ==========================================================================
+   Compact phone layout (body.rpg-compact-phone, set on phones while the
+   setting is on): the thought icon and the Elsewhere button are docked in the
+   row above the message box, next to the plot buttons (icons only), and the
+   info pills around the panel button are hidden. Only the panel button floats.
+   ========================================================================== */
+body.rpg-compact-phone .rpg-fab-widget-container {
+    display: none !important;
+}
+
+body.rpg-compact-phone #extension-buttons-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 2px auto 4px !important;
+}
+
+body.rpg-compact-phone #rpg-plot-buttons {
+    gap: 6px;
+}
+
+body.rpg-compact-phone #rpg-plot-random,
+body.rpg-compact-phone #rpg-plot-natural,
+body.rpg-compact-phone #rpg-encounter-button {
+    height: 34px;
+    min-width: 34px;
+    padding: 0 10px !important;
+    margin: 0 !important;
+}
+
+body.rpg-compact-phone #rpg-plot-buttons .rpg-btn-text {
+    display: none;
+}
+
+#rpg-phone-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#rpg-phone-bar:empty {
+    display: none;
+}
+
+#rpg-phone-bar > .rpg-docked {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    animation: none !important;
+}
+
+#rpg-phone-bar > #rpg-thought-icon.rpg-docked:not(.rpg-force-hide) {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px;
+    padding: 0 !important;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* While its sheet is open the icon stays in its place in the row, just dimmed */
+#rpg-phone-bar > #rpg-thought-icon.rpg-docked.rpg-hidden {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+#rpg-phone-bar > #rpg-thought-icon.rpg-docked svg {
+    width: 18px;
+    height: 18px;
+}
+
+#rpg-phone-bar > #rpg-mobile-toggle.rpg-docked {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+#rpg-phone-bar > #rpg-mobile-toggle.rpg-docked:hover {
+    transform: none;
+}
+
+#rpg-phone-bar > #rpg-elsewhere-button.rpg-docked {
+    height: 34px;
+    padding: 0 8px !important;
+    gap: 6px;
+}
+
+#rpg-phone-bar > #rpg-elsewhere-button.rpg-docked .rpg-elsewhere-button-label {
+    display: none;
+}

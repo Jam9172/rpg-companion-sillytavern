@@ -10,7 +10,7 @@ import {
     committedTrackerData,
     $infoBoxContainer
 } from '../../core/state.js';
-import { saveChatData, setMessageSwipeTrackerField } from '../../core/persistence.js';
+import { saveChatData, setMessageSwipeTrackerField, updateMessageSwipeData } from '../../core/persistence.js';
 import { i18n } from '../../core/i18n.js';
 import { isItemLocked } from '../generation/lockManager.js';
 import { repairJSON } from '../../utils/jsonRepair.js';
@@ -762,6 +762,8 @@ export function updateInfoBoxField(field, value) {
             // Save back as JSON
             lastGeneratedData.infoBox = JSON.stringify(jsonData, null, 2);
             committedTrackerData.infoBox = lastGeneratedData.infoBox;
+            // The next turn loads its trackers from the latest reply, so the edit has to be saved there too
+            updateMessageSwipeData();
             saveChatData();
             renderInfoBox();
             // console.log('[RPG Companion] Updated info box field (v3 JSON):', { field, value });
@@ -1048,7 +1050,33 @@ function updateRecentEvent(field, value) {
         'event3': 2
     }[field];
 
+    // Leaving an empty slot unchanged must not save its "Click to add event" hint as an event
+    const placeholder = i18n.getTranslation('infobox.recentEvents.addEventPlaceholder') || 'Click to add event';
+    if (value === placeholder || value === 'Click to add event') value = '';
+
     if (eventIndex !== undefined) {
+        // JSON Info Box: edit its recentEvents list (the text handling below would append a
+        // "Recent Events:" line to the JSON and break it)
+        const current = (lastGeneratedData.infoBox || committedTrackerData.infoBox || '').trim();
+        if (current.startsWith('{')) {
+            const jsonData = repairJSON(current);
+            if (jsonData && typeof jsonData === 'object') {
+                const events = Array.isArray(jsonData.recentEvents) ? jsonData.recentEvents.slice() : [];
+                while (events.length <= eventIndex) events.push('');
+                events[eventIndex] = value;
+                jsonData.recentEvents = events.filter(e => typeof e === 'string' && e.trim());
+                lastGeneratedData.infoBox = JSON.stringify(jsonData, null, 2);
+                committedTrackerData.infoBox = lastGeneratedData.infoBox;
+                updateMessageSwipeData();
+                saveChatData();
+                renderInfoBox();
+                if (window.RPGCompanion?.updateWeatherEffect) {
+                    window.RPGCompanion.updateWeatherEffect();
+                }
+                return;
+            }
+        }
+
         // Parse current infoBox to get existing events
         const lines = (committedTrackerData.infoBox || '').split('\n');
         let recentEvents = [];

@@ -428,5 +428,7 @@
     "template.settingsModal.advanced.clearInventoryConfirm": "Vider l'inventaire de ce chat ? L'onglet Statut, les quêtes et Cast restent. Cette action est irréversible.",
     "template.settingsModal.advanced.clearStatus": "Effacer le statut",
     "template.settingsModal.advanced.clearStatusNote": "Efface uniquement l'onglet Statut (vos stats, humeur et états, compétences, attributs, la boîte info et les personnages présents) pour votre chat actuellement actif, y compris dans les réponses précédentes. L'inventaire, les quêtes et Cast restent inchangés.",
-    "template.settingsModal.advanced.clearStatusConfirm": "Effacer l'onglet Statut de ce chat ? Vos stats, la boîte info et les personnages présents seront supprimés ; l'inventaire, les quêtes et Cast restent. Cette action est irréversible."
+    "template.settingsModal.advanced.clearStatusConfirm": "Effacer l'onglet Statut de ce chat ? Vos stats, la boîte info et les personnages présents seront supprimés ; l'inventaire, les quêtes et Cast restent. Cette action est irréversible.",
+    "template.settingsModal.mobileFab.compactPhone": "Disposition compacte sur téléphone",
+    "template.settingsModal.mobileFab.compactPhoneNote": "Sur téléphone, le bouton du panneau et les boutons Pensées et Ailleurs se placent dans la rangée au-dessus de la zone de message au lieu de flotter sur le chat, et les widgets ci-dessous sont masqués (le panneau affiche les mêmes informations). Désactivé : tout flotte comme avant."
 }

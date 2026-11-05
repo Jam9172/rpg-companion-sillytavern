@@ -158,7 +158,8 @@ export function setupMobileToggle() {
         const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
         // Start dragging if held long enough OR moved far enough
-        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
+        // Docked in the phone row (compact phone layout): a button, not something to drag
+        if (!isDragging && !$mobileToggle.hasClass('rpg-docked') && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
             isDragging = true;
             $mobileToggle.addClass('dragging'); // Disable transitions while dragging
         }
@@ -222,7 +223,8 @@ export function setupMobileToggle() {
         const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
         // Start dragging if held long enough OR moved far enough
-        if (!isDragging && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
+        // Docked in the phone row (compact phone layout): a button, not something to drag
+        if (!isDragging && !$mobileToggle.hasClass('rpg-docked') && (timeSinceStart > LONG_PRESS_DURATION || distance > MOVE_THRESHOLD)) {
             isDragging = true;
             $mobileToggle.addClass('dragging'); // Disable transitions while dragging
         }
@@ -515,8 +517,8 @@ export function setupMobileToggle() {
  * Ensures button never goes behind the top bar or outside viewport edges.
  */
 export function constrainFabToViewport() {
-    // Only constrain if user has set a custom position
-    if (!extensionSettings.mobileFabPosition) {
+    // Only constrain if user has set a custom position (and not while docked in the phone row)
+    if (!extensionSettings.mobileFabPosition || $('#rpg-mobile-toggle').hasClass('rpg-docked')) {
         // console.log('[RPG Mobile] Skipping viewport constraint - using CSS defaults');
         return;
     }

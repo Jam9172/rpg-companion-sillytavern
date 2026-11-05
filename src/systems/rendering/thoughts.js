@@ -13,6 +13,7 @@ import {
 } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { saveChatData, saveSettings, getCurrentMessageSwipeTrackerData, setMessageSwipeTrackerField } from '../../core/persistence.js';
+import { dockPhoneButtons } from '../ui/phoneBar.js';
 import {
     stripBrackets,
     extractFieldValue,
@@ -1412,6 +1413,8 @@ export function updateChatThoughts(attempt = 0) {
     } else {
         teardownInlineThoughtsObserver();
         createThoughtPanel($targetMessage, thoughtsArray);
+        // Compact phone layout: the thought icon goes in the row above the message box
+        dockPhoneButtons();
     }
 }
 
@@ -1788,7 +1791,8 @@ function attachDragHandlersToIcon($icon) {
 
     // Touch drag support - mobile only
     $icon.on('touchstart.thoughtIconDrag', function (e) {
-        if (window.innerWidth > 1000) return;
+        // Docked in the phone bar (compact phone layout): a button, not something to drag
+        if (window.innerWidth > 1000 || this.classList.contains('rpg-docked')) return;
 
         // console.log('[Thought Icon] touchstart');
         touchMoved = false;

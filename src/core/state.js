@@ -26,6 +26,7 @@ export let extensionSettings = {
     showThoughtsInChat: true, // Show thoughts overlay in chat
     thoughtsInChatStyle: 'corner', // 'corner' or 'inline'
     thoughtsOverlay: true, // Arcane Forge on desktop: a Thoughts button opens every thought in an overlay
+    compactPhoneLayout: true, // Phones: thought icon and Elsewhere docked above the message box, no pills around the panel button
     fixMismatchedQuotes: true, // Pair “…" quote marks in new replies so the dialogue gets coloured
     castEnabled: true, // Cast: a background model keeps every character's lasting memory and feeds it to the chat
     castUpdateDepth: 4, // Cast: messages the background model reads for each update

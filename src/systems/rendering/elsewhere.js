@@ -9,6 +9,7 @@ import { extensionSettings } from '../../core/state.js';
 import { i18n } from '../../core/i18n.js';
 import { listCharacters, onCastChanged, OFFSCREEN_PREFIX } from '../features/cast.js';
 import { applyCastTheme, castThemeStyle } from '../ui/theme.js';
+import { dockPhoneButtons } from '../ui/phoneBar.js';
 
 const t = (key, fallback) => i18n.getTranslation(key) || fallback;
 const tf = (key, fallback, vars) => t(key, fallback).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
@@ -64,7 +65,7 @@ function setOpen(open, { focus = true } = {}) {
 function position() {
     const chatEl = document.getElementById('chat');
     const $button = $('#rpg-elsewhere-button');
-    if (!chatEl || !$button.length) return;
+    if (!chatEl || !$button.length || $button.hasClass('rpg-docked')) return;
     const rect = chatEl.getBoundingClientRect();
     $button.css({ top: `${rect.top + 12}px`, left: 'auto', right: `${Math.max(8, window.innerWidth - rect.right + 12)}px` });
 }
@@ -76,6 +77,7 @@ export function renderElsewhere() {
     if (!away.length) {
         $('#rpg-elsewhere-button, #rpg-elsewhere-panel, #rpg-elsewhere-backdrop').remove();
         isOpen = false;
+        dockPhoneButtons();
         return;
     }
     const title = t('elsewhere.title', 'Elsewhere');
@@ -113,6 +115,7 @@ export function renderElsewhere() {
             </div>
             <p class="rpg-elsewhere-note">${escapeHtml(t('elsewhere.note', 'Off-screen: the story has not shown you any of this yet.'))}</p>
             <div class="rpg-elsewhere-list">${away.map(card).join('')}</div>`);
+    dockPhoneButtons();
     position();
     if (isOpen) setOpen(true, { focus: false });
 }

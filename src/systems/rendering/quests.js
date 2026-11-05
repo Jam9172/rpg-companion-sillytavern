@@ -4,7 +4,7 @@
  */
 
 import { extensionSettings, $questsContainer, committedTrackerData, lastGeneratedData } from '../../core/state.js';
-import { saveSettings, saveChatData } from '../../core/persistence.js';
+import { saveSettings, saveChatData, updateMessageSwipeData } from '../../core/persistence.js';
 import { isItemLocked, setItemLock } from '../generation/lockManager.js';
 import { i18n } from '../../core/i18n.js';
 
@@ -26,6 +26,8 @@ function syncQuestsToCommittedData() {
                 const updatedJSON = JSON.stringify(jsonData, null, 2);
                 committedTrackerData.userStats = updatedJSON;
                 lastGeneratedData.userStats = updatedJSON;
+                // Save it on the latest reply too, which is what the next turn loads from
+                updateMessageSwipeData();
             }
         } catch (e) {
             console.warn('[RPG Quests] Failed to sync quests to committed data:', e);

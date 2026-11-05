@@ -394,6 +394,8 @@
     "template.promptsEditor.combatPrompt.note": "战斗遭遇的写作风格指令。包括散文质量指南和防重复规则。{userName}将被替换为用户名称。",
     "template.settingsModal.mobileFabTitle": "移动按钮小部件",
     "template.settingsModal.mobileFabNote": "在移动设备上显示围绕浮动按钮的紧凑信息小部件。小部件自动定位。",
+    "template.settingsModal.mobileFab.compactPhone": "手机紧凑布局",
+    "template.settingsModal.mobileFab.compactPhoneNote": "在手机上，面板按钮以及想法和别处按钮会放在消息框上方的一行里，而不是浮在聊天上方，下面的小部件也会隐藏（面板里显示相同的内容）。关闭：一切照旧浮动显示。",
     "template.settingsModal.mobileFab.enabled": "启用浮动移动小部件",
     "template.settingsModal.mobileFab.enabledNote": "主开关，用于在移动浮动按钮周围显示信息小部件。",
     "template.settingsModal.mobileFab.weatherIcon": "天气图标",

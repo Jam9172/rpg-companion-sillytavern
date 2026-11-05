@@ -160,6 +160,7 @@ import { initCast, refreshCastPrompt } from './src/systems/features/cast.js';
 import { initCastTab, renderCast } from './src/systems/rendering/cast.js';
 import { initMeanwhile, renderAllMeanwhile } from './src/systems/rendering/meanwhile.js';
 import { initElsewhere, renderElsewhere } from './src/systems/rendering/elsewhere.js';
+import { initPhoneBar, dockPhoneButtons } from './src/systems/ui/phoneBar.js';
 import { initScrollEdges } from './src/systems/ui/scrollEdges.js';
 import { DEFAULT_HTML_PROMPT } from './src/systems/generation/promptBuilder.js';
 import { openEncounterModal } from './src/systems/ui/encounterUI.js';
@@ -328,6 +329,8 @@ async function initUI() {
         </button>
     `;
     $('body').append(mobileToggleHtml);
+    // Compact phone layout: straight into the row above the message box
+    dockPhoneButtons();
 
     // Hide mobile toggle on desktop viewport (> 1000px)
     if (window.innerWidth > 1000) {
@@ -780,6 +783,14 @@ async function initUI() {
     });
 
     // Mobile FAB Widget toggles - simplified, no position saving (auto-positioned)
+    $('#rpg-toggle-compact-phone').on('change', function() {
+        extensionSettings.compactPhoneLayout = $(this).prop('checked');
+        saveSettings();
+        dockPhoneButtons();
+        updateChatThoughts();
+        updateFabWidgets();
+    });
+
     $('#rpg-toggle-fab-widgets-enabled').on('change', function() {
         if (!extensionSettings.mobileFabWidgets) extensionSettings.mobileFabWidgets = {};
         extensionSettings.mobileFabWidgets.enabled = $(this).prop('checked');
@@ -1257,6 +1268,7 @@ async function initUI() {
 
     // Initialize Mobile FAB Widget checkboxes
     const fabWidgets = extensionSettings.mobileFabWidgets || {};
+    $('#rpg-toggle-compact-phone').prop('checked', extensionSettings.compactPhoneLayout !== false);
     $('#rpg-toggle-fab-widgets-enabled').prop('checked', fabWidgets.enabled || false);
     $('#rpg-toggle-fab-weather-icon').prop('checked', fabWidgets.weatherIcon?.enabled || false);
     $('#rpg-toggle-fab-weather-desc').prop('checked', fabWidgets.weatherDesc?.enabled || false);
@@ -1526,6 +1538,7 @@ jQuery(async () => {
             initCastTab();
             initMeanwhile();
             initElsewhere();
+            initPhoneBar();
 
             eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (messageId) => {
                 if (!extensionSettings.enabled) {
