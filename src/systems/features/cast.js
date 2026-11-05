@@ -46,6 +46,8 @@ const EVENTS_HARD_CAP = 20;   // the summing-up call keeps failing: past this, t
                               // (above the old limits, so long memories from before still get their summary)
 const EVENTS_IN_PROMPT = 3;   // recent events shown to the main model per character
 const CARDS_LIMIT = 6000;     // characters of card descriptions sent to the background model
+const LORE_LIMIT = 6000;      // characters of lorebook entries sent to the background model
+const LORE_ENTRY_LIMIT = 2000; // and at most this much of any one entry
 const MAX_JOURNAL = 200;      // undo entries kept (older ones can no longer be rolled back)
 const MAX_ARCHIVE = 300;      // archived memories kept per chat (the oldest go first)
 const ARCHIVE_IN_NOTES = 3;   // archived memories a mention can bring back into the main model's notes
@@ -59,6 +61,60 @@ const MAX_KEY_MEMORIES = 5;   // key memories kept per character (starring anoth
 const KEY_MARK = '★ ';        // how key memories are shown to the background model
 
 const listeners = [];
+
+/**
+ * Lorebook entries about the characters, for the background model. With a blank-slate card and the
+ * characters kept in lorebooks, the card says nothing about who anyone is, so Cast also reads the active
+ * lorebooks (global, the character's, the chat's and the persona's). First the entries about tracked
+ * characters (a key or the entry's title is their name or first name), then entries whose keys come up
+ * in the story Cast reads (so new characters are recognised), up to LORE_LIMIT. Disabled entries and
+ * regex keys are skipped. Empty when there are no lorebooks or SillyTavern can't list them.
+ */
+async function lorebookInfo(names, storyText = '') {
+    let entries;
+    try {
+        const worldInfo = await import('../../../../../../world-info.js');
+        entries = await worldInfo.getSortedEntries();
+    } catch {
+        return '';
+    }
+    if (!Array.isArray(entries) || !entries.length) return '';
+
+    const lower = (s) => String(s || '').trim().toLowerCase();
+    const plainKeys = (entry) => [...(entry.key || []), ...(entry.keysecondary || [])]
+        .map(lower).filter((k) => k && !k.startsWith('/'));
+    const tokens = new Set();
+    for (const name of [...names].sort()) {
+        const full = lower(name);
+        if (!full) continue;
+        tokens.add(full);
+        const firstName = full.split(/\s+/)[0];
+        if (firstName.length >= 3) tokens.add(firstName);
+    }
+    const story = lower(storyText);
+    const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const inStory = (key) => key.length >= 3 && new RegExp(`(^|[^\\p{L}\\p{N}])${escape(key)}($|[^\\p{L}\\p{N}])`, 'u').test(story);
+
+    const usable = entries.filter((e) => e && !e.disable && String(e.content || '').trim());
+    const aboutCast = usable.filter((e) => plainKeys(e).some((k) => tokens.has(k))
+        || [...tokens].some((t) => t.includes(' ') && lower(e.comment).includes(t)));
+    const mentioned = story ? usable.filter((e) => !aboutCast.includes(e) && plainKeys(e).some(inStory)) : [];
+
+    const seen = new Set();
+    const parts = [];
+    let used = 0;
+    for (const entry of [...aboutCast, ...mentioned]) {
+        const id = `${entry.world}:${entry.uid}`;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const title = String(entry.comment || entry.key?.[0] || '').trim();
+        const text = `${title ? `[${title}]\n` : ''}${String(entry.content).trim().slice(0, LORE_ENTRY_LIMIT)}`;
+        if (used + text.length > LORE_LIMIT) break;
+        parts.push(text);
+        used += text.length;
+    }
+    return parts.join('\n\n');
+}
 let updateQueue = Promise.resolve();
 
 // The background update's state, shown in the Cast tab
@@ -574,6 +630,7 @@ async function buildUpdatePrompt(messageIndex) {
     } catch {
         // No card info: the story itself is the context
     }
+    const lore = await lorebookInfo(characters.map((c) => c.name), recent.map((m) => messageText(m)).join('\n'));
 
     // The instructions speak to the model as "you"; only the memory it writes is in the characters'
     // first person, so the two never get mixed up. They never change within a chat, and everything that
@@ -622,6 +679,7 @@ Reply:
     // "whole story" mode only grows at the end), what changes every time last
     const parts = [];
     if (cards) parts.push(`<cards>\n${cards}\n</cards>`);
+    if (lore) parts.push(`<lorebook>\nWho the characters are, from the story's lorebooks. Use it like the cards.\n\n${lore}\n</lorebook>`);
     if (earlier.length) parts.push(`<${range === 0 ? 'story_so_far' : 'earlier_messages'}>\nContext only, already recorded.\n\n${format(earlier)}\n</${range === 0 ? 'story_so_far' : 'earlier_messages'}>`);
     parts.push(`<ledger>\nWho was here and who was away before the NEW messages.\n${JSON.stringify(ledger)}\n</ledger>`);
     if (scene) parts.push(`<scene>\n${scene}\n</scene>`);
@@ -1198,6 +1256,7 @@ async function buildTidyPrompt(characters) {
     } catch {
         // No card info: the memory and the story are the context
     }
+    const lore = await lorebookInfo(characters.map((c) => c.name), story);
 
     const system = `You tidy the cast ledger of an ongoing roleplay story: the lasting memory of its major characters, each written by the character about themself in FIRST PERSON ("I", "me", "my"). You never write story text. You reply with JSON only.
 
@@ -1210,7 +1269,7 @@ Include every character listed, with the exact name given. Use "" for "doing_now
     const ledger = characters.map((c) => compact(c));
     return [
         { role: 'system', content: system },
-        { role: 'user', content: `${cards ? `<cards>\n${cards}\n</cards>\n\n` : ''}${story ? `<story>\n${range === 0 ? 'All of it.' : 'The latest messages.'}\n\n${story}\n</story>\n\n` : ''}<ledger>\nThe memory to tidy.\n${JSON.stringify(ledger)}\n</ledger>\n\nTidy it. JSON only.` },
+        { role: 'user', content: `${cards ? `<cards>\n${cards}\n</cards>\n\n` : ''}${lore ? `<lorebook>\nWho the characters are, from the story's lorebooks. Use it like the cards.\n\n${lore}\n</lorebook>\n\n` : ''}${story ? `<story>\n${range === 0 ? 'All of it.' : 'The latest messages.'}\n\n${story}\n</story>\n\n` : ''}<ledger>\nThe memory to tidy.\n${JSON.stringify(ledger)}\n</ledger>\n\nTidy it. JSON only.` },
     ];
 }
 
