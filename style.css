@@ -16514,3 +16514,34 @@ body:has(.rpg-panel[data-theme="forge"]):has(:is(#rpg-thoughts-button, #rpg-else
     object-fit: contain !important;
     object-position: center top !important;
 }
+
+/* Hover and motion: every row and card in the Forge panel that can be clicked or edited answers the
+   pointer the same way (a brass edge, 150 ms), and nothing moves for people who ask for reduced motion */
+.rpg-panel[data-theme="forge"] :is(.rpg-item-row, .rpg-quest-item, .rpg-cast-card, .rpg-dashboard-widget) {
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-item-row {
+    border-radius: 6px;
+}
+
+.rpg-panel[data-theme="forge"] .rpg-item-row:hover,
+.rpg-panel[data-theme="forge"] .rpg-quest-item[data-field="optional"]:hover {
+    background-color: color-mix(in srgb, var(--forge-brass) 6%, transparent);
+}
+
+.rpg-panel[data-theme="forge"] .rpg-cast-card:hover {
+    border-color: color-mix(in srgb, var(--forge-brass) 55%, var(--rpg-border));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rpg-panel[data-theme="forge"] *,
+    .rpg-panel[data-theme="forge"] *::before,
+    .rpg-panel[data-theme="forge"] *::after,
+    #rpg-thought-panel *,
+    #rpg-elsewhere-panel * {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
