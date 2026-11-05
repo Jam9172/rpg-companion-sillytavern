@@ -422,5 +422,11 @@
     "template.settingsModal.themeOptions.forge": "Arcane Forge (Braise et laiton)",
     "cast.status.present": "Ici",
     "cast.status.away": "Absent",
-    "cast.status.dead": "Mort"
+    "cast.status.dead": "Mort",
+    "template.settingsModal.advanced.clearInventory": "Vider l'inventaire",
+    "template.settingsModal.advanced.clearInventoryNote": "Vide uniquement l'inventaire (sur soi, vêtements, entreposé, biens) pour votre chat actuellement actif, y compris dans les réponses précédentes, pour qu'un swipe ne le ramène pas. L'onglet Statut, les quêtes et Cast restent inchangés.",
+    "template.settingsModal.advanced.clearInventoryConfirm": "Vider l'inventaire de ce chat ? L'onglet Statut, les quêtes et Cast restent. Cette action est irréversible.",
+    "template.settingsModal.advanced.clearStatus": "Effacer le statut",
+    "template.settingsModal.advanced.clearStatusNote": "Efface uniquement l'onglet Statut (vos stats, humeur et états, compétences, attributs, la boîte info et les personnages présents) pour votre chat actuellement actif, y compris dans les réponses précédentes. L'inventaire, les quêtes et Cast restent inchangés.",
+    "template.settingsModal.advanced.clearStatusConfirm": "Effacer l'onglet Statut de ce chat ? Vos stats, la boîte info et les personnages présents seront supprimés ; l'inventaire, les quêtes et Cast restent. Cette action est irréversible."
 }

@@ -31,6 +31,7 @@ import {
 import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { clearCast } from '../features/cast.js';
+import { clearInventory, clearStatus } from '../features/trackerReset.js';
 
 /**
  * Modern DiceModal ES6 Class
@@ -530,6 +531,31 @@ export function setupSettingsPopup() {
         if (!confirmed) return;
         // Also re-draws the Cast tab, the Meanwhile folds and Elsewhere, and takes Cast out of the prompt
         clearCast();
+    });
+
+    // Clear Inventory button: the inventory only (also in the earlier replies, so a swipe can't bring it back)
+    $('#rpg-clear-inventory').on('click', async function() {
+        const confirmed = await callGenericPopup(
+            i18n.getTranslation('template.settingsModal.advanced.clearInventoryConfirm')
+                || 'Empty the inventory for this chat? The Status tab, quests and Cast stay. It cannot be undone.',
+            POPUP_TYPE.CONFIRM);
+        if (!confirmed) return;
+        clearInventory();
+        renderInventory();
+    });
+
+    // Clear Status button: the Status tab only (stats, info box, present characters)
+    $('#rpg-clear-status').on('click', async function() {
+        const confirmed = await callGenericPopup(
+            i18n.getTranslation('template.settingsModal.advanced.clearStatusConfirm')
+                || 'Clear the Status tab for this chat? Your stats, the info box and the present characters are removed; the inventory, quests and Cast stay. It cannot be undone.',
+            POPUP_TYPE.CONFIRM);
+        if (!confirmed) return;
+        clearStatus();
+        renderUserStats();
+        renderInfoBox();
+        renderThoughts();
+        updateChatThoughts();
     });
 
     return settingsModal;

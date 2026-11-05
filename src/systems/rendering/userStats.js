@@ -21,6 +21,7 @@ import {
 import { getSafeThumbnailUrl } from '../../utils/avatars.js';
 import { statMeterAttributes } from '../../utils/statMeter.js';
 import { getPortraitFocus, portraitFocusStyle, openPortraitFocusPicker } from '../ui/portraitFocus.js';
+import { hasStatusData } from '../features/trackerReset.js';
 
 /**
  * Key the user's portrait focus is saved under (per persona image, so it can't clash with a character name)
@@ -221,7 +222,8 @@ export function renderUserStats() {
     //     committedPreview: committedTrackerData.userStats ? committedTrackerData.userStats.substring(0, 100) : 'null'
     // });
 
-    if (!lastGeneratedData.userStats && !committedTrackerData.userStats) {
+    // (after Clear Status the record can still hold the inventory and quests, with no stats in it)
+    if (!hasStatusData(lastGeneratedData.userStats || committedTrackerData.userStats)) {
         // Always render to the #rpg-user-stats container (mobile layout just moves it around in DOM)
         $userStatsContainer.html('<div class="rpg-inventory-empty">' + (i18n.getTranslation('userStats.empty') || 'No statuses generated yet') + '</div>');
         return;

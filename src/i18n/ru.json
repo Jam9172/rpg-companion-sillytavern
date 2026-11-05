@@ -381,5 +381,11 @@
     "template.settingsModal.themeOptions.forge": "Arcane Forge (угли и латунь)",
     "cast.status.present": "Здесь",
     "cast.status.away": "Нет рядом",
-    "cast.status.dead": "Мёртв(а)"
+    "cast.status.dead": "Мёртв(а)",
+    "template.settingsModal.advanced.clearInventory": "Очистить инвентарь",
+    "template.settingsModal.advanced.clearInventoryNote": "Очищает только инвентарь (при себе, одежда, на хранении, имущество) для текущего активного чата, в том числе в прошлых ответах, чтобы свайп его не вернул. Вкладка «Статус», задания и Cast остаются как есть.",
+    "template.settingsModal.advanced.clearInventoryConfirm": "Очистить инвентарь этого чата? Вкладка «Статус», задания и Cast останутся. Это нельзя отменить.",
+    "template.settingsModal.advanced.clearStatus": "Очистить статус",
+    "template.settingsModal.advanced.clearStatusNote": "Очищает только вкладку «Статус» (ваши характеристики, настроение и состояния, навыки, атрибуты, инфо-панель и присутствующих персонажей) для текущего активного чата, в том числе в прошлых ответах. Инвентарь, задания и Cast остаются как есть.",
+    "template.settingsModal.advanced.clearStatusConfirm": "Очистить вкладку «Статус» этого чата? Ваши характеристики, инфо-панель и присутствующие персонажи будут удалены; инвентарь, задания и Cast останутся. Это нельзя отменить."
 }

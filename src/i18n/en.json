@@ -604,5 +604,11 @@
     "template.promptsEditor.castStoryPrompt.note": "Sent to the main model at the top of the story so far, while the Cast tab's own setting for sending it is on.",
     "cast.status.present": "Here",
     "cast.status.away": "Away",
-    "cast.status.dead": "Dead"
+    "cast.status.dead": "Dead",
+    "template.settingsModal.advanced.clearInventory": "Clear Inventory",
+    "template.settingsModal.advanced.clearInventoryNote": "Empties only the inventory (on person, clothing, stored, assets) for your currently active chat, also in the earlier replies, so a swipe cannot bring it back. The Status tab, quests and Cast stay as they are.",
+    "template.settingsModal.advanced.clearInventoryConfirm": "Empty the inventory for this chat? The Status tab, quests and Cast stay. It cannot be undone.",
+    "template.settingsModal.advanced.clearStatus": "Clear Status",
+    "template.settingsModal.advanced.clearStatusNote": "Clears only the Status tab (your stats, mood and conditions, skills, attributes, the info box and present characters) for your currently active chat, also in the earlier replies. The inventory, quests and Cast stay as they are.",
+    "template.settingsModal.advanced.clearStatusConfirm": "Clear the Status tab for this chat? Your stats, the info box and the present characters are removed; the inventory, quests and Cast stay. It cannot be undone."
 }

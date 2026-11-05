@@ -348,5 +348,11 @@
     "template.settingsModal.themeOptions.forge": "Arcane Forge（餘燼與黃銅）",
     "cast.status.present": "在場",
     "cast.status.away": "不在場",
-    "cast.status.dead": "已死亡"
+    "cast.status.dead": "已死亡",
+    "template.settingsModal.advanced.clearInventory": "清空物品欄",
+    "template.settingsModal.advanced.clearInventoryNote": "僅清空目前聊天的物品欄（隨身、服裝、存放、資產），先前的回覆中也一併清空，這樣滑動切換回覆也不會把它帶回來。狀態欄、任務和 Cast 保持不變。",
+    "template.settingsModal.advanced.clearInventoryConfirm": "清空此聊天的物品欄？狀態欄、任務和 Cast 保留。此操作無法復原。",
+    "template.settingsModal.advanced.clearStatus": "清除狀態",
+    "template.settingsModal.advanced.clearStatusNote": "僅清除目前聊天的狀態欄（你的屬性、心情與狀況、技能、能力值、資訊框和在場角色），先前的回覆中也一併清除。物品欄、任務和 Cast 保持不變。",
+    "template.settingsModal.advanced.clearStatusConfirm": "清除此聊天的狀態欄？你的屬性、資訊框和在場角色都將被刪除；物品欄、任務和 Cast 保留。此操作無法復原。"
 }
