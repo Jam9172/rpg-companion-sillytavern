@@ -9,6 +9,7 @@ import { closeMobilePanelWithAnimation, updateCollapseToggleIcon } from './layou
 import { setupDesktopTabs, removeDesktopTabs } from './desktop.js';
 import { i18n } from '../../core/i18n.js';
 import { hexToRgba } from './theme.js';
+import { infoBoxDateValue } from '../../utils/infoBoxDate.js';
 
 /**
  * Updates the text labels of the mobile navigation tabs based on the current language.
@@ -1414,8 +1415,8 @@ export function updateFabWidgets() {
     }
 
     // Date (small)
-    if (widgetSettings.date?.enabled && infoData?.date?.value) {
-        const dateVal = infoData.date.value;
+    const dateVal = infoBoxDateValue(infoData?.date);
+    if (widgetSettings.date?.enabled && dateVal) {
         const expandAttr = needsExpand(dateVal, 12) ? ' data-full-text="true"' : '';
         widgets.push({
             type: 'small',

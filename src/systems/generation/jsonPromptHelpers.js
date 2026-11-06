@@ -144,8 +144,12 @@ export function buildInfoBoxJSONInstruction() {
     let hasFields = false;
 
     if (widgets.date?.enabled) {
-        const dateFormat = widgets.date.format || 'Weekday, Month, Year';
-        instruction += `  "date": {"value": "${dateFormat}"}`;
+        // "Weekday, Month, Year" had no place for the day of the month, and nothing said all three parts
+        // were needed, so models wrote "Sunday" alone or moved the date around between replies.
+        const numericDay = widgets.date.format === 'Day (Numerical), Month, Year';
+        const dateTemplate = numericDay ? 'Day, Month, Year' : 'Weekday, Month Day, Year';
+        const dateExample = numericDay ? '16, March, 1247' : 'Sunday, March 16, 1247';
+        instruction += `  "date": {"value": "${dateTemplate}"}  // all three parts, comma-separated, e.g. "${dateExample}". Keep the previous trackers' date and calendar; change it only when the story moves to another day (when the time passes midnight, the next day)`;
         hasFields = true;
     }
 

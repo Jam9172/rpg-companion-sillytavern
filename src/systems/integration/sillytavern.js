@@ -4,7 +4,7 @@
  */
 
 import { getContext } from '../../../../../../extensions.js';
-import { chat, chat_metadata, user_avatar, setExtensionPrompt, extension_prompt_types } from '../../../../../../../script.js';
+import { chat, chat_metadata, user_avatar, setExtensionPrompt, extension_prompt_types, updateMessageBlock } from '../../../../../../../script.js';
 
 // Core modules
 import {
@@ -558,8 +558,12 @@ export async function onMessageReceived(data) {
 
             // Then update the DOM to reflect the cleaned message
             // Using updateMessageBlock to perform macro substitutions + regex formatting
+            // A new reply is not on screen yet (SillyTavern draws it after this event, from the cleaned text);
+            // updating a message that is not there throws and stopped the saving below
             const messageId = chat.length - 1;
-            updateMessageBlock(messageId, lastMessage, { rerenderMessage: true });
+            if (document.querySelector(`#chat .mes[mesid="${messageId}"]`)) {
+                updateMessageBlock(messageId, lastMessage, { rerenderMessage: true });
+            }
 
             // console.log('[RPG Companion] Cleaned message, removed tracker code blocks from DOM');
 

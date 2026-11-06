@@ -14,6 +14,7 @@ import { saveChatData, setMessageSwipeTrackerField, updateMessageSwipeData } fro
 import { i18n } from '../../core/i18n.js';
 import { isItemLocked } from '../generation/lockManager.js';
 import { repairJSON } from '../../utils/jsonRepair.js';
+import { infoBoxDateValue, splitInfoBoxDate, joinInfoBoxDate } from '../../utils/infoBoxDate.js';
 import { updateFabWidgets } from '../ui/mobile.js';
 
 /**
@@ -160,13 +161,11 @@ export function renderInfoBox() {
             data.location = jsonData.location?.value || '';
 
             // Parse date string to extract weekday, month, year
-            if (jsonData.date?.value) {
-                data.date = jsonData.date.value;
-                // Expected format: "Tuesday, October 17th, 2023"
-                const dateParts = data.date.split(',').map(p => p.trim());
-                data.weekday = dateParts[0] || '';
-                data.month = dateParts[1] || '';
-                data.year = dateParts[2] || '';
+            // Expected format: "Tuesday, October 17th, 2023"; also a bare string and other orders
+            const dateValue = infoBoxDateValue(jsonData.date);
+            if (dateValue) {
+                data.date = dateValue;
+                Object.assign(data, splitInfoBoxDate(dateValue));
             }
 
             // Skip to rendering
@@ -202,10 +201,7 @@ export function renderInfoBox() {
                 if (!parsedFields.date) {
                     // console.log('[RPG Companion] → Matched DATE (text format)');
                     const dateStr = line.replace('Date:', '').trim();
-                    const dateParts = dateStr.split(',').map(p => p.trim());
-                    data.weekday = dateParts[0] || '';
-                    data.month = dateParts[1] || '';
-                    data.year = dateParts[2] || '';
+                    Object.assign(data, splitInfoBoxDate(dateStr));
                     data.date = dateStr;
                     parsedFields.date = true;
                 }
@@ -213,10 +209,7 @@ export function renderInfoBox() {
                 if (!parsedFields.date) {
                     // console.log('[RPG Companion] → Matched DATE (emoji format)');
                     const dateStr = line.replace('🗓️:', '').trim();
-                    const dateParts = dateStr.split(',').map(p => p.trim());
-                    data.weekday = dateParts[0] || '';
-                    data.month = dateParts[1] || '';
-                    data.year = dateParts[2] || '';
+                    Object.assign(data, splitInfoBoxDate(dateStr));
                     data.date = dateStr;
                     parsedFields.date = true;
                 }
@@ -744,19 +737,10 @@ export function updateInfoBoxField(field, value) {
                 jsonData.location.value = value;
             } else if (field === 'weekday' || field === 'month' || field === 'year') {
                 // Update date components
-                if (!jsonData.date) jsonData.date = {};
-                let currentDate = jsonData.date.value || '';
-                const dateParts = currentDate.split(',').map(p => p.trim());
-
-                if (field === 'weekday') {
-                    dateParts[0] = value;
-                } else if (field === 'month') {
-                    dateParts[1] = value;
-                } else if (field === 'year') {
-                    dateParts[2] = value;
-                }
-
-                jsonData.date.value = dateParts.filter(p => p).join(', ');
+                // Split the way the calendar shows it, so an edit lands in the part that was clicked
+                const dateParts = splitInfoBoxDate(infoBoxDateValue(jsonData.date));
+                dateParts[field] = value;
+                jsonData.date = { ...(typeof jsonData.date === 'object' ? jsonData.date : {}), value: joinInfoBoxDate(dateParts) };
             }
 
             // Save back as JSON

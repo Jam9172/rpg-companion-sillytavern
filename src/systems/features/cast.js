@@ -33,6 +33,7 @@ import { getCharacterCardsInfo } from '../generation/promptBuilder.js';
 import { evaluateSuppression } from '../generation/suppression.js';
 import { requestCast } from './castRequest.js';
 import { castPrompt } from './castPrompts.js';
+import { infoBoxDateValue } from '../../utils/infoBoxDate.js';
 
 const PROMPT_KEY = 'rpg-companion-cast';
 const METADATA_KEY = 'rpg_cast';
@@ -364,7 +365,7 @@ export function storyClock() {
     let end = '';
     try {
         const data = JSON.parse(raw);
-        date = String(data?.date?.value || '');
+        date = infoBoxDateValue(data?.date);
         start = String(data?.time?.start || '');
         end = String(data?.time?.end || '');
     } catch {

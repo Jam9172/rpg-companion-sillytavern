@@ -6,6 +6,7 @@
 import { i18n } from '../../core/i18n.js';
 import { extensionSettings, lastGeneratedData, committedTrackerData } from '../../core/state.js';
 import { hexToRgba } from './theme.js';
+import { infoBoxDateValue } from '../../utils/infoBoxDate.js';
 
 /**
  * Helper to parse time string and calculate clock hand angles
@@ -91,8 +92,8 @@ export function updateStripWidgets() {
 
     // Date Widget
     const $dateWidget = $container.find('.rpg-strip-widget-date');
-    if (widgetSettings.date?.enabled && infoData?.date?.value) {
-        const dateVal = infoData.date.value;
+    const dateVal = infoBoxDateValue(infoData?.date);
+    if (widgetSettings.date?.enabled && dateVal) {
         // Truncate long dates for display
         const displayDate = dateVal.length > 20 ? dateVal.substring(0, 18) + '…' : dateVal;
         $dateWidget.find('.rpg-strip-widget-value').text(displayDate);
