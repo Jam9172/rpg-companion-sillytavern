@@ -34,7 +34,8 @@ import {
     getSwipeData,
     commitTrackerDataFromPriorMessage,
     inheritSwipeDataFromPriorMessage,
-    flushDeferredChatDataSave
+    flushDeferredChatDataSave,
+    reindexSwipeTrackerData
 } from '../../core/persistence.js';
 import { i18n } from '../../core/i18n.js';
 
@@ -783,6 +784,19 @@ export function onMessageSwiped(messageIndex) {
 
     // Update chat thought overlays
     updateChatThoughts();
+}
+
+/**
+ * A swipe was deleted: renumber the message's saved tracker data so every swipe keeps its own trackers,
+ * then everything a deleted message needs. Runs even with the extension off, so the data stays right.
+ */
+export function onMessageSwipeDeleted(data) {
+    const messageId = Number(data?.messageId);
+    const swipeId = Number(data?.swipeId);
+    if (Number.isInteger(messageId) && Number.isInteger(swipeId)) {
+        reindexSwipeTrackerData(chat[messageId], swipeId);
+    }
+    onMessageDeleted();
 }
 
 export function onMessageDeleted() {

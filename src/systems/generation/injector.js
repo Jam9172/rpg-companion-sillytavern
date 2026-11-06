@@ -173,6 +173,11 @@ function getTrackerDataForMessage(message) {
         return null;
     }
     const currentSwipeId = message.swipe_id || 0;
+    // The swipe being generated (SillyTavern keeps the message in the chat during a swipe): no trackers
+    // yet, and a left-over slot must not hand the model the trackers of the reply it replaces
+    if (Array.isArray(message.swipes) && message.swipes.length && currentSwipeId >= message.swipes.length) {
+        return null;
+    }
     const swipeData = message.extra?.rpg_companion_swipes
         || message.swipe_info?.[currentSwipeId]?.extra?.rpg_companion_swipes;
     return swipeData?.[currentSwipeId] || null;

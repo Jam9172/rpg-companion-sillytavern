@@ -491,6 +491,44 @@ export function setMessageSwipeTrackerData(message, swipeId = 0, trackerData = {
     return extraPayload;
 }
 
+/**
+ * Renumbers a message's saved tracker data after SillyTavern deleted one of its swipes.
+ * The data is keyed by swipe number, and every swipe's swipe_info.extra holds a copy of the whole map
+ * (SillyTavern copies message.extra into it). Deleting a swipe shifts the later swipes down one, but the
+ * keys stayed: the swipe after the deleted one then read the deleted swipe's trackers, and the next new
+ * swipe read the trackers of the reply it replaces (which History Persistence sent to the model).
+ *
+ * @param {Object} message - The message whose swipe was deleted (already spliced by SillyTavern)
+ * @param {number} deletedId - The deleted swipe's number
+ */
+export function reindexSwipeTrackerData(message, deletedId) {
+    if (!message || message.is_user || !Array.isArray(message.swipes) || !Number.isInteger(deletedId) || deletedId < 0) {
+        return false;
+    }
+    const maps = [message.extra?.rpg_companion_swipes, ...(message.swipe_info || []).map((info) => info?.extra?.rpg_companion_swipes)]
+        .filter((map) => map && typeof map === 'object' && !Array.isArray(map));
+    if (!maps.length) return false;
+
+    const reindexed = {};
+    for (let swipeId = 0; swipeId < message.swipes.length; swipeId++) {
+        const oldId = swipeId < deletedId ? swipeId : swipeId + 1;
+        // The swipe's own copy first (its swipe_info moved with it), then any copy that has it
+        const own = message.swipe_info?.[swipeId]?.extra?.rpg_companion_swipes?.[oldId];
+        const data = own ?? maps.map((map) => map[oldId]).find((value) => value != null);
+        if (data != null) reindexed[swipeId] = data;
+    }
+
+    if (!message.extra || typeof message.extra !== 'object') message.extra = {};
+    message.extra.rpg_companion_swipes = structuredClone(reindexed);
+    for (const info of message.swipe_info || []) {
+        if (info && typeof info === 'object') {
+            if (!info.extra || typeof info.extra !== 'object') info.extra = {};
+            info.extra.rpg_companion_swipes = structuredClone(reindexed);
+        }
+    }
+    return true;
+}
+
 export function setMessageSwipeTrackerField(message, swipeId = 0, field, value) {
     if (!field) {
         return null;
@@ -820,6 +858,8 @@ export function updateMessageSwipeData() {
  * @returns {{userStats, infoBox, characterThoughts}|null} The swipe data or null
  */
 export function getSwipeData(message, swipeId) {
+    // A swipe that is still being generated has no trackers yet: whatever its slot holds is left over
+    if (Array.isArray(message?.swipes) && message.swipes.length && swipeId >= message.swipes.length) return null;
     // Primary: in-memory extra (current session or after a recent write)
     const fromExtra = message.extra?.rpg_companion_swipes?.[swipeId];
     if (fromExtra) return fromExtra;

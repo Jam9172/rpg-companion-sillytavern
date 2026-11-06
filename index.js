@@ -173,6 +173,7 @@ import {
     onCharacterChanged,
     onChatLoaded,
     onMessageDeleted,
+    onMessageSwipeDeleted,
     onMessageSwiped,
     scheduleChatStateRehydration,
     updatePersonaAvatar,
@@ -1526,7 +1527,7 @@ jQuery(async () => {
                 [event_types.CHAT_CHANGED]: [onCharacterChanged, updatePersonaAvatar, restoreCheckpointOnLoad, clearSessionAvatarPrompts],
                 [event_types.CHAT_LOADED]: onChatLoaded,
                 [event_types.MESSAGE_DELETED]: onMessageDeleted,
-                [event_types.MESSAGE_SWIPE_DELETED]: onMessageDeleted,
+                [event_types.MESSAGE_SWIPE_DELETED]: onMessageSwipeDeleted,
                 [event_types.MESSAGE_SWIPED]: onMessageSwiped,
                 [event_types.USER_MESSAGE_RENDERED]: updatePersonaAvatar,
                 [event_types.SETTINGS_UPDATED]: updatePersonaAvatar
