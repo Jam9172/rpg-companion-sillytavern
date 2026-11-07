@@ -35,7 +35,8 @@ import {
     commitTrackerDataFromPriorMessage,
     inheritSwipeDataFromPriorMessage,
     flushDeferredChatDataSave,
-    reindexSwipeTrackerData
+    reindexSwipeTrackerData,
+    withUnchangedTrackers
 } from '../../core/persistence.js';
 import { i18n } from '../../core/i18n.js';
 
@@ -490,17 +491,14 @@ export async function onMessageReceived(data) {
             // Parse and store Spotify URL if feature is enabled
             parseAndStoreSpotifyUrl(responseText);
 
-            // Update display data with newly parsed response
-            // console.log('[RPG Companion] 📝 TOGETHER MODE: Updating lastGeneratedData with parsed response');
-            if (parsedData.userStats) {
-                lastGeneratedData.userStats = parsedData.userStats;
-                parseUserStats(parsedData.userStats);
-            }
-            if (parsedData.infoBox) {
-                lastGeneratedData.infoBox = parsedData.infoBox;
-            }
-            if (parsedData.characterThoughts) {
-                lastGeneratedData.characterThoughts = parsedData.characterThoughts;
+            // A tracker the reply left out keeps the value the model was given, both on screen and on
+            // the reply (which the next turn loads from)
+            const trackers = withUnchangedTrackers(parsedData);
+            lastGeneratedData.userStats = trackers.userStats;
+            lastGeneratedData.infoBox = trackers.infoBox;
+            lastGeneratedData.characterThoughts = trackers.characterThoughts;
+            if (trackers.userStats) {
+                parseUserStats(trackers.userStats);
             }
 
             // Store RPG data for this specific swipe in the message's extra field
@@ -513,11 +511,7 @@ export async function onMessageReceived(data) {
 
             const currentSwipeId = resolveActiveSwipeId(lastMessage);
 
-            setMessageSwipeTrackerData(lastMessage, currentSwipeId, {
-                userStats: parsedData.userStats,
-                infoBox: parsedData.infoBox,
-                characterThoughts: parsedData.characterThoughts
-            });
+            setMessageSwipeTrackerData(lastMessage, currentSwipeId, trackers);
 
             // console.log('[RPG Companion] Stored RPG data for swipe', currentSwipeId);
 

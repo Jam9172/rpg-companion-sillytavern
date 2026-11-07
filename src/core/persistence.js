@@ -492,6 +492,19 @@ export function setMessageSwipeTrackerData(message, swipeId = 0, trackerData = {
 }
 
 /**
+ * The trackers to save on a reply from what the model wrote. A tracker the reply left out has not changed:
+ * it keeps the value the model was given (the committed data, from the reply before). Saving it as empty
+ * made the next turn, which loads from this reply, lose it while the panel still showed it.
+ */
+export function withUnchangedTrackers(parsed) {
+    return {
+        userStats: parsed?.userStats || committedTrackerData.userStats || null,
+        infoBox: parsed?.infoBox || committedTrackerData.infoBox || null,
+        characterThoughts: parsed?.characterThoughts || committedTrackerData.characterThoughts || null,
+    };
+}
+
+/**
  * Renumbers a message's saved tracker data after SillyTavern deleted one of its swipes.
  * The data is keyed by swipe number, and every swipe's swipe_info.extra holds a copy of the whole map
  * (SillyTavern copies message.extra into it). Deleting a swipe shifts the later swipes down one, but the

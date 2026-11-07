@@ -21,7 +21,7 @@ import {
     $musicPlayerContainer,
     getSeparateGenerationId
 } from '../../core/state.js';
-import { saveChatData, setMessageSwipeTrackerData } from '../../core/persistence.js';
+import { saveChatData, setMessageSwipeTrackerData, withUnchangedTrackers } from '../../core/persistence.js';
 import {
     generateSeparateUpdatePrompt
 } from './promptBuilder.js';
@@ -249,6 +249,13 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
         $updateBtn.html(`<i class="fa-solid fa-spinner fa-spin"></i> ${updatingText}`).prop('disabled', true);
         $stripRefreshBtn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
 
+        // The reply and swipe this request is for: you may flip to another swipe (or another reply may
+        // arrive) while it runs, and the result belongs to this one, not to whatever is shown when it lands
+        // (only when the chat ends with a reply: after your own message the result is shown, not saved)
+        const lastNow = chat && chat.length ? chat[chat.length - 1] : null;
+        const targetMessage = lastNow && !lastNow.is_user ? lastNow : null;
+        const targetSwipeId = targetMessage ? Number(targetMessage.swipe_id ?? 0) : 0;
+
         const prompt = await generateSeparateUpdatePrompt();
 
         // Generate response based on mode
@@ -302,39 +309,24 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
             // from the assistant message the user replied to, not auto-generated updates
             // This ensures swipes/regenerations use consistent source data
 
-            // Store RPG data for the last assistant message (separate mode)
-            const lastMessage = chat && chat.length > 0 ? chat[chat.length - 1] : null;
-            // console.log('[RPG Companion] Last message is_user:', lastMessage ? lastMessage.is_user : 'no message');
-
-            // Update lastGeneratedData for display (regardless of message type)
-            if (parsedData.userStats) {
-                lastGeneratedData.userStats = parsedData.userStats;
-                parseUserStats(parsedData.userStats);
+            // A tracker the reply left out keeps the value the model was given
+            const trackers = withUnchangedTrackers(parsedData);
+            const targetStillThere = !!targetMessage && chat.includes(targetMessage)
+                && (!Array.isArray(targetMessage.swipes) || targetSwipeId < targetMessage.swipes.length);
+            // Saved on the reply and swipe it was made for
+            if (targetStillThere) {
+                setMessageSwipeTrackerData(targetMessage, targetSwipeId, trackers);
             }
-            if (parsedData.infoBox) {
-                lastGeneratedData.infoBox = parsedData.infoBox;
-            }
-            if (parsedData.characterThoughts) {
-                lastGeneratedData.characterThoughts = parsedData.characterThoughts;
-            }
-
-            // Also store on assistant message if present (existing behavior)
-            if (lastMessage && !lastMessage.is_user) {
-                if (!lastMessage.extra) {
-                    lastMessage.extra = {};
+            // Shown only if that swipe is still the one on screen (otherwise the panel keeps the shown one's)
+            const targetShown = targetStillThere && Number(targetMessage.swipe_id ?? 0) === targetSwipeId
+                && chat[chat.length - 1] === targetMessage;
+            if (targetShown || !targetMessage) {
+                lastGeneratedData.userStats = trackers.userStats;
+                lastGeneratedData.infoBox = trackers.infoBox;
+                lastGeneratedData.characterThoughts = trackers.characterThoughts;
+                if (trackers.userStats) {
+                    parseUserStats(trackers.userStats);
                 }
-                if (!lastMessage.extra.rpg_companion_swipes) {
-                    lastMessage.extra.rpg_companion_swipes = {};
-                }
-
-                const currentSwipeId = lastMessage.swipe_id || 0;
-                setMessageSwipeTrackerData(lastMessage, currentSwipeId, {
-                    userStats: parsedData.userStats,
-                    infoBox: parsedData.infoBox,
-                    characterThoughts: parsedData.characterThoughts
-                });
-
-                // console.log('[RPG Companion] Stored separate mode RPG data for message swipe', currentSwipeId);
             }
 
             // Only commit on TRULY first generation (no committed data exists at all)

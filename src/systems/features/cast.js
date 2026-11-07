@@ -297,6 +297,42 @@ function messageSignature(index) {
     return `${message.send_date ?? ''}|${message.swipe_id ?? 0}`;
 }
 
+/**
+ * Whether an update's signature still matches the message. Besides the message's own date it accepts the
+ * shown swipe's date: right after a swipe was deleted, SillyTavern has picked the new swipe but not yet
+ * copied that swipe's date onto the message.
+ */
+function signatureMatches(index, signature) {
+    if (messageSignature(index) === signature) return true;
+    const message = chat[index];
+    const swipeId = message?.swipe_id ?? 0;
+    const swipeDate = message?.swipe_info?.[swipeId]?.send_date;
+    return swipeDate != null && `${swipeDate}|${swipeId}` === signature;
+}
+
+/**
+ * A swipe was deleted: the swipes after it moved down one, so updates Cast took from them are renumbered
+ * (otherwise they looked gone and were undone). Updates from the deleted swipe itself are then undone.
+ */
+function onSwipeDeleted(data) {
+    if (!chat_metadata?.[METADATA_KEY]) return;
+    const messageId = Number(data?.messageId);
+    const deleted = Number(data?.swipeId);
+    if (Number.isInteger(messageId) && Number.isInteger(deleted)) {
+        const cast = getCast();
+        for (const entry of cast.journal) {
+            if (entry.messageIndex !== messageId || typeof entry.signature !== 'string') continue;
+            const cut = entry.signature.lastIndexOf('|');
+            const swipeId = Number(entry.signature.slice(cut + 1));
+            if (swipeId > deleted) entry.signature = `${entry.signature.slice(0, cut)}|${swipeId - 1}`;
+            // Taken from the deleted swipe: matches nothing any more, so it is undone below
+            else if (swipeId === deleted) entry.signature = `deleted|${entry.signature}`;
+        }
+        saveCast();
+    }
+    reconcileCast();
+}
+
 /** Puts back what one update changed: the characters as they were, and none of what it archived. */
 function undoEntry(cast, entry) {
     for (const [key, before] of Object.entries(entry.before)) {
@@ -326,12 +362,12 @@ export function reconcileCast() {
     let changed = false;
     while (cast.journal.length) {
         const entry = cast.journal[cast.journal.length - 1];
-        if (messageSignature(entry.messageIndex) === entry.signature) break;
+        if (signatureMatches(entry.messageIndex, entry.signature)) break;
         // An earlier message was deleted and this one moved up: follow it instead of undoing
-        const movedTo = chat.findIndex((_, i) => messageSignature(i) === entry.signature);
+        const movedTo = chat.findIndex((_, i) => signatureMatches(i, entry.signature));
         if (movedTo >= 0) {
             cast.journal.forEach((e) => {
-                const at = chat.findIndex((_, i) => messageSignature(i) === e.signature);
+                const at = chat.findIndex((_, i) => signatureMatches(i, e.signature));
                 if (at >= 0) e.messageIndex = at;
             });
             changed = true;
@@ -1506,7 +1542,7 @@ export function initCast() {
     });
     eventSource.on(event_types.MESSAGE_DELETED, reconcileCast);
     eventSource.on(event_types.MESSAGE_SWIPED, reconcileCast);
-    eventSource.on(event_types.MESSAGE_SWIPE_DELETED, reconcileCast);
+    eventSource.on(event_types.MESSAGE_SWIPE_DELETED, onSwipeDeleted);
     eventSource.on(event_types.CHAT_CHANGED, () => {
         reconcileCast();
         refreshCastPrompt();
