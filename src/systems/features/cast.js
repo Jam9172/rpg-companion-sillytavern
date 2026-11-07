@@ -33,6 +33,7 @@ import { getCharacterCardsInfo } from '../generation/promptBuilder.js';
 import { evaluateSuppression } from '../generation/suppression.js';
 import { requestCast } from './castRequest.js';
 import { castPrompt } from './castPrompts.js';
+import { lorebookContext } from '../../utils/lorebook.js';
 import { infoBoxDateValue } from '../../utils/infoBoxDate.js';
 
 const PROMPT_KEY = 'rpg-companion-cast';
@@ -46,8 +47,6 @@ const EVENTS_HARD_CAP = 20;   // the summing-up call keeps failing: past this, t
                               // (above the old limits, so long memories from before still get their summary)
 const EVENTS_IN_PROMPT = 3;   // recent events shown to the main model per character
 const CARDS_LIMIT = 6000;     // characters of card descriptions sent to the background model
-const LORE_LIMIT = 6000;      // characters of lorebook entries sent to the background model
-const LORE_ENTRY_LIMIT = 2000; // and at most this much of any one entry
 const MAX_JOURNAL = 200;      // undo entries kept (older ones can no longer be rolled back)
 const MAX_ARCHIVE = 300;      // archived memories kept per chat (the oldest go first)
 const ARCHIVE_IN_NOTES = 3;   // archived memories a mention can bring back into the main model's notes
@@ -62,58 +61,9 @@ const KEY_MARK = '★ ';        // how key memories are shown to the background 
 
 const listeners = [];
 
-/**
- * Lorebook entries about the characters, for the background model. With a blank-slate card and the
- * characters kept in lorebooks, the card says nothing about who anyone is, so Cast also reads the active
- * lorebooks (global, the character's, the chat's and the persona's). First the entries about tracked
- * characters (a key or the entry's title is their name or first name), then entries whose keys come up
- * in the story Cast reads (so new characters are recognised), up to LORE_LIMIT. Disabled entries and
- * regex keys are skipped. Empty when there are no lorebooks or SillyTavern can't list them.
- */
-async function lorebookInfo(names, storyText = '') {
-    let entries;
-    try {
-        const worldInfo = await import('../../../../../../world-info.js');
-        entries = await worldInfo.getSortedEntries();
-    } catch {
-        return '';
-    }
-    if (!Array.isArray(entries) || !entries.length) return '';
-
-    const lower = (s) => String(s || '').trim().toLowerCase();
-    const plainKeys = (entry) => [...(entry.key || []), ...(entry.keysecondary || [])]
-        .map(lower).filter((k) => k && !k.startsWith('/'));
-    const tokens = new Set();
-    for (const name of [...names].sort()) {
-        const full = lower(name);
-        if (!full) continue;
-        tokens.add(full);
-        const firstName = full.split(/\s+/)[0];
-        if (firstName.length >= 3) tokens.add(firstName);
-    }
-    const story = lower(storyText);
-    const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const inStory = (key) => key.length >= 3 && new RegExp(`(^|[^\\p{L}\\p{N}])${escape(key)}($|[^\\p{L}\\p{N}])`, 'u').test(story);
-
-    const usable = entries.filter((e) => e && !e.disable && String(e.content || '').trim());
-    const aboutCast = usable.filter((e) => plainKeys(e).some((k) => tokens.has(k))
-        || [...tokens].some((t) => t.includes(' ') && lower(e.comment).includes(t)));
-    const mentioned = story ? usable.filter((e) => !aboutCast.includes(e) && plainKeys(e).some(inStory)) : [];
-
-    const seen = new Set();
-    const parts = [];
-    let used = 0;
-    for (const entry of [...aboutCast, ...mentioned]) {
-        const id = `${entry.world}:${entry.uid}`;
-        if (seen.has(id)) continue;
-        seen.add(id);
-        const title = String(entry.comment || entry.key?.[0] || '').trim();
-        const text = `${title ? `[${title}]\n` : ''}${String(entry.content).trim().slice(0, LORE_ENTRY_LIMIT)}`;
-        if (used + text.length > LORE_LIMIT) break;
-        parts.push(text);
-        used += text.length;
-    }
-    return parts.join('\n\n');
+/** Lorebook entries about the characters for the background model (the chat lorebook first): see lorebook.js. */
+function lorebookInfo(names, storyText = '') {
+    return lorebookContext({ names, storyText });
 }
 let updateQueue = Promise.resolve();
 

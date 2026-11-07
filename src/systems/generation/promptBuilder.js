@@ -16,6 +16,18 @@ import {
 import { applyLocks } from './lockManager.js';
 import { isPresentCharactersEnabled } from '../../utils/presentCharacters.js';
 import { getCurrentMessageSwipeTrackerData } from '../../core/persistence.js';
+import { lorebookContext } from '../../utils/lorebook.js';
+
+/** Names of the Present Characters the trackers were last given (for picking their lorebook entries). */
+function trackedCharacterNames() {
+    try {
+        const parsed = JSON.parse(committedTrackerData.characterThoughts || 'null');
+        const list = Array.isArray(parsed) ? parsed : (parsed?.characters || []);
+        return list.map((c) => c?.name).filter((n) => typeof n === 'string' && n.trim());
+    } catch {
+        return [];
+    }
+}
 
 // Type imports
 /** @typedef {import('../../types/inventory.js').InventoryV2} InventoryV2 */
@@ -1330,6 +1342,18 @@ export async function generateSeparateUpdatePrompt() {
     systemMessage += `Here is the description of the protagonist for reference:\n`;
     systemMessage += `<protagonist>\n{{persona}}\n</protagonist>\n`;
     systemMessage += `\n`;
+
+    // The chat lorebook (bound to this chat with the lock button): who the characters are, places and
+    // facts of the world. This request is built here, so SillyTavern's World Info never reaches it.
+    const lore = await lorebookContext({
+        names: trackedCharacterNames(),
+        storyText: chat.slice(-depth).filter((m) => !m.is_system).map((m) => m.mes).join('\n'),
+        chatOnly: true,
+    });
+    if (lore) {
+        systemMessage += `Here is background from this chat's lorebook (characters, places and facts of the world). Use it for names, appearances and details; the messages win when they disagree:\n`;
+        systemMessage += `<lorebook>\n${lore}\n</lorebook>\n\n`;
+    }
 
     systemMessage += `Here are the last few messages in the conversation history (between the user and the roleplayer assistant) you should reference when responding:\n<history>`;
 
