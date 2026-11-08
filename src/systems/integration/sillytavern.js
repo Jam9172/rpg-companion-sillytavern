@@ -343,7 +343,7 @@ export function scheduleChatStateRehydration() {
     const eagerRetryAttempts = 4;
 
     const tryRestoreState = () => {
-        if (runId !== chatStateRehydrateRunId) {
+        if (runId !== chatStateRehydrateRunId || !extensionSettings.enabled) {
             return;
         }
 
@@ -388,6 +388,9 @@ export function scheduleChatStateRehydration() {
 }
 
 export function onChatLoaded() {
+    // Turned off: leave the chat alone (turning it back on loads the chat's data then)
+    if (!extensionSettings.enabled) return;
+
     loadChatData();
     restoreOrRepairLatestTrackerState();
     maybeRehydrateUserStatsFromDisplayData();

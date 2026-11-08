@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Fixed RPG Companion reading and saving tracker data when a chat was opened while it was turned off in its settings. Turned off, it now leaves chats alone; turning it back on loads the open chat's data as before.
 - Fixed streaming replies showing nothing until they were complete while one of RPG Companion's background requests was running (Cast, tracker refresh, encounters, avatars), and staying that way for the rest of the session after two such requests overlapped.
 - Lock icons escape item and character names in their HTML attributes.
 - Tracker JSON is now parsed without eval. Replies that write it loosely (keys without quotes, single-quoted text) still parse.
