@@ -59,3 +59,26 @@ test('field locks on a character whose name has a "." reach the model', async ()
     const vey = (Array.isArray(sent) ? sent : sent.characters)[0];
     assert.deepEqual(vey.Appearance, { value: 'Tall', locked: true });
 });
+
+test('names like __proto__ can\'t reach Object.prototype through a lock', async () => {
+    extensionSettings.lockedItems = {};
+    for (const name of ['__proto__', 'constructor', 'prototype']) {
+        setItemLock('characters', lockManager.lockPath(name, 'Appearance'), true);
+        setItemLock('userStats', lockManager.lockPath('inventory', 'stored', name, 'Rope'), true);
+        setItemLock(name, 'Appearance', true);
+        assert.equal(isItemLocked('characters', lockManager.lockPath(name, 'Appearance')), false, name);
+    }
+    assert.equal(({}).Appearance, undefined);
+    assert.equal(Object.Appearance, undefined);
+    assert.equal(({}).Rope, undefined);
+    assert.deepEqual(JSON.parse(JSON.stringify(extensionSettings.lockedItems)), {});
+});
+
+test('names like "constructor" aren\'t sent to the model as locked', async () => {
+    extensionSettings.lockedItems = { userStats: { skills: { Riding: true }, inventory: { onPerson: { Rope: true } } } };
+    const sent = await send({ skills: ['constructor', 'Riding'], inventory: { onPerson: ['constructor', 'Rope'] } });
+    assert.deepEqual(sent.skills, ['constructor', { name: 'Riding', locked: true }]);
+    assert.deepEqual(sent.inventory.onPerson, ['constructor', { item: 'Rope', locked: true }]);
+    const chars = await quietly(() => JSON.parse(applyLocks(JSON.stringify([{ name: 'constructor', Appearance: 'Tall' }]), 'characters')));
+    assert.deepEqual((Array.isArray(chars) ? chars : chars.characters)[0], { name: 'constructor', Appearance: 'Tall' });
+});

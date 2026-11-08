@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Locks ignore names like "__proto__" and "constructor" from the model's output.
 - Fixed negative temperatures ("Temperature: -5°C") being dropped when an old chat's Info Box was converted to the current format.
 - Fixed item names like "iPhone" or "eReader" being changed to "IPhone" and "EReader" every time a chat loaded (and saved that way). Items named "__proto__" and similar are now dropped from item lists, as the code's documentation always said.
 - Fixed the Info Box calendar putting the month or season in the weekday slot for dates like "March, 1247" or "Late Autumn, 1247" (and showing MON), and missing the weekday in "Sunday 16 March 1247" written without commas.

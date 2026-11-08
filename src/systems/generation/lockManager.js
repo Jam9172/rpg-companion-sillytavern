@@ -41,6 +41,11 @@ export function applyLocks(trackerData, trackerType) {
     }
 }
 
+/** A lock stored under a name from the model's output (own properties only, so "constructor" isn't Object). */
+function ownLock(locks, name) {
+    return locks && typeof locks === 'object' && Object.hasOwn(locks, name) ? locks[name] : undefined;
+}
+
 /**
  * Apply locks to User Stats tracker
  * @param {Object} data - Parsed user stats data
@@ -91,11 +96,11 @@ function applyUserStatsLocks(data, lockedItems) {
         if (Array.isArray(data.skills)) {
             data.skills = data.skills.map(skill => {
                 if (typeof skill === 'string') {
-                    if (lockedItems.skills[skill]) {
+                    if (ownLock(lockedItems.skills, skill)) {
                         return { name: skill, locked: true };
                     }
                     return skill;
-                } else if (skill.name && lockedItems.skills[skill.name]) {
+                } else if (skill.name && ownLock(lockedItems.skills, skill.name)) {
                     return { ...skill, locked: true };
                 }
                 return skill;
@@ -120,7 +125,7 @@ function applyUserStatsLocks(data, lockedItems) {
                 }
 
                 // Check if this specific item name is locked
-                if (lockedItems.inventory[category][itemName]) {
+                if (ownLock(lockedItems.inventory[category], itemName)) {
                     return typeof item === 'string'
                         ? { item, locked: true }
                         : { ...item, locked: true };
@@ -147,7 +152,7 @@ function applyUserStatsLocks(data, lockedItems) {
         // Apply locks to stored items - match by item name
         if (data.inventory.stored && lockedItems.inventory.stored) {
             for (const location in data.inventory.stored) {
-                if (Array.isArray(data.inventory.stored[location]) && lockedItems.inventory.stored[location]) {
+                if (Array.isArray(data.inventory.stored[location]) && ownLock(lockedItems.inventory.stored, location)) {
                     data.inventory.stored[location] = data.inventory.stored[location].map((item) => {
                         let itemName = '';
                         if (typeof item === 'string') {
@@ -157,7 +162,7 @@ function applyUserStatsLocks(data, lockedItems) {
                             itemName = (item.quantity && item.quantity > 1) ? `${item.quantity}x ${baseName}` : baseName;
                         }
 
-                        if (lockedItems.inventory.stored[location][itemName]) {
+                        if (ownLock(lockedItems.inventory.stored[location], itemName)) {
                             return typeof item === 'string'
                                 ? { item, locked: true }
                                 : { ...item, locked: true };
@@ -251,7 +256,7 @@ function applyCharactersLocks(data, lockedItems) {
         }
 
         // Check if character name exists in locked items (could be nested object for field locks or boolean for full lock)
-        const charLocks = lockedItems[charName];
+        const charLocks = Object.hasOwn(lockedItems, charName) ? lockedItems[charName] : undefined;
 
         if (charLocks === true) {
             // Entire character is locked
@@ -436,6 +441,10 @@ function splitLockPath(itemPath) {
     return String(itemPath).split('.').map((part) => part.replace(/%2E/gi, '.').replace(/%25/g, '%'));
 }
 
+// Names come from the model's output; as lock path parts these would reach Object.prototype or Object
+const UNSAFE_LOCK_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const isUnsafeLockKey = (part) => UNSAFE_LOCK_KEYS.has(part);
+
 /**
  * Check if a specific item is locked
  * @param {string} trackerType - Type of tracker
@@ -447,10 +456,11 @@ export function isItemLocked(trackerType, itemPath) {
     if (!lockedItems) return false;
 
     const parts = splitLockPath(itemPath);
+    if (parts.some(isUnsafeLockKey)) return false;
     let current = lockedItems;
 
     for (const part of parts) {
-        if (current[part] === undefined) return false;
+        if (!current || typeof current !== 'object' || !Object.hasOwn(current, part)) return false;
         current = current[part];
     }
 
@@ -466,21 +476,24 @@ export function isItemLocked(trackerType, itemPath) {
 export function setItemLock(trackerType, itemPath, locked) {
     // console.log('[Lock Manager] setItemLock called:', { trackerType, itemPath, locked });
 
+    const parts = splitLockPath(itemPath);
+    // A character or item named "__proto__" (and so on) can't be locked
+    if (isUnsafeLockKey(trackerType) || parts.some(isUnsafeLockKey)) return;
+
     if (!extensionSettings.lockedItems) {
         extensionSettings.lockedItems = {};
     }
 
-    if (!extensionSettings.lockedItems[trackerType]) {
+    if (!Object.hasOwn(extensionSettings.lockedItems, trackerType) || !extensionSettings.lockedItems[trackerType]) {
         extensionSettings.lockedItems[trackerType] = {};
     }
 
-    const parts = splitLockPath(itemPath);
     let current = extensionSettings.lockedItems[trackerType];
 
     // Navigate to parent of target
     for (let i = 0; i < parts.length - 1; i++) {
         const part = parts[i];
-        if (!current[part]) {
+        if (!Object.hasOwn(current, part) || !current[part]) {
             current[part] = {};
         }
         current = current[part];
