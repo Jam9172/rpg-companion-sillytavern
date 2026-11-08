@@ -382,9 +382,9 @@ export function renderInfoBox() {
         row1Widgets.push(`
             <div class="rpg-dashboard-widget rpg-calendar-widget">
                 ${dateLockIconHtml}
-                <div class="rpg-calendar-top rpg-editable" contenteditable="true" data-field="month" data-full-value="${data.month || ''}" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${monthDisplay}</div>
-                <div class="rpg-calendar-day" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}"><span class="rpg-calendar-day-text rpg-editable" contenteditable="true" data-field="weekday" data-full-value="${data.weekday || ''}">${weekdayDisplay}</span></div>
-                <div class="rpg-calendar-year rpg-editable" contenteditable="true" data-field="year" data-full-value="${data.year || ''}" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${yearDisplay}</div>
+                <div class="rpg-calendar-top rpg-editable" contenteditable="true" data-field="month" data-full-value="${escapeAttribute(data.month)}" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${escapeAttribute(monthDisplay)}</div>
+                <div class="rpg-calendar-day" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}"><span class="rpg-calendar-day-text rpg-editable" contenteditable="true" data-field="weekday" data-full-value="${escapeAttribute(data.weekday)}">${escapeAttribute(weekdayDisplay)}</span></div>
+                <div class="rpg-calendar-year rpg-editable" contenteditable="true" data-field="year" data-full-value="${escapeAttribute(data.year)}" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${escapeAttribute(yearDisplay)}</div>
             </div>
         `);
     }
@@ -398,8 +398,8 @@ export function renderInfoBox() {
         row1Widgets.push(`
             <div class="rpg-dashboard-widget rpg-weather-widget">
                 ${weatherLockIconHtml}
-                <div class="rpg-weather-icon rpg-editable" contenteditable="true" data-field="weatherEmoji" title="${i18n.getTranslation('userStats.clickToEditEmoji') || 'Click to edit emoji'}">${weatherEmoji}</div>
-                <div class="rpg-weather-forecast rpg-editable" contenteditable="true" data-field="weatherForecast" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${weatherForecast}</div>
+                <div class="rpg-weather-icon rpg-editable" contenteditable="true" data-field="weatherEmoji" title="${i18n.getTranslation('userStats.clickToEditEmoji') || 'Click to edit emoji'}">${escapeAttribute(weatherEmoji)}</div>
+                <div class="rpg-weather-forecast rpg-editable" contenteditable="true" data-field="weatherForecast" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${escapeAttribute(weatherForecast)}</div>
             </div>
         `);
     }
@@ -445,10 +445,10 @@ export function renderInfoBox() {
                 <div class="rpg-thermometer">
                     <div class="rpg-thermometer-bulb"></div>
                     <div class="rpg-thermometer-tube">
-                        <div class="rpg-thermometer-fill" style="height: ${tempPercent}%; background: ${tempColor}"></div>
+                        <div class="rpg-thermometer-fill" style="height: ${escapeAttribute(tempPercent)}%; background: ${escapeAttribute(tempColor)}"></div>
                     </div>
                 </div>
-                <div class="rpg-temp-value rpg-editable" contenteditable="true" data-field="temperature" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${tempDisplay}</div>
+                <div class="rpg-temp-value rpg-editable" contenteditable="true" data-field="temperature" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${escapeAttribute(tempDisplay)}</div>
             </div>
         `);
     }
@@ -483,9 +483,9 @@ export function renderInfoBox() {
                     </div>
                 </div>
                 <div class="rpg-time-range">
-                    <div class="rpg-time-value rpg-editable" contenteditable="true" data-field="timeStart" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${timeStartDisplay}</div>
+                    <div class="rpg-time-value rpg-editable" contenteditable="true" data-field="timeStart" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${escapeAttribute(timeStartDisplay)}</div>
                     <span class="rpg-time-separator">→</span>
-                    <div class="rpg-time-value rpg-editable" contenteditable="true" data-field="timeEnd" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${timeEndDisplay}</div>
+                    <div class="rpg-time-value rpg-editable" contenteditable="true" data-field="timeEnd" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${escapeAttribute(timeEndDisplay)}</div>
                 </div>
             </div>
         `);
@@ -510,7 +510,7 @@ export function renderInfoBox() {
                     <div class="rpg-map-bg">
                         <div class="rpg-map-marker">📍</div>
                     </div>
-                    <div class="rpg-location-text rpg-editable" contenteditable="true" data-field="location" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${locationDisplay}</div>
+                    <div class="rpg-location-text rpg-editable" contenteditable="true" data-field="location" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${escapeAttribute(locationDisplay)}</div>
                 </div>
             </div>
         `;
@@ -569,7 +569,7 @@ export function renderInfoBox() {
             html += `
                         <div class="rpg-notebook-line">
                             <span class="rpg-bullet">•</span>
-                            <span class="rpg-event-text rpg-editable" contenteditable="true" data-field="event${i + 1}" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${validEvents[i]}</span>
+                            <span class="rpg-event-text rpg-editable" contenteditable="true" data-field="event${i + 1}" title="${i18n.getTranslation('infoBox.clickToEdit') || 'Click to edit'}">${escapeAttribute(validEvents[i])}</span>
                         </div>
             `;
         }

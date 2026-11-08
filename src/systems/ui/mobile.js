@@ -10,6 +10,7 @@ import { setupDesktopTabs, removeDesktopTabs } from './desktop.js';
 import { i18n } from '../../core/i18n.js';
 import { hexToRgba } from './theme.js';
 import { infoBoxDateValue } from '../../utils/infoBoxDate.js';
+import { escapeAttribute } from '../../utils/security.js';
 
 /**
  * Updates the text labels of the mobile navigation tabs based on the current language.
@@ -1357,7 +1358,7 @@ export function updateFabWidgets() {
     if (widgetSettings.weatherIcon?.enabled && infoData?.weather?.emoji) {
         widgets.push({
             type: 'small',
-            html: `<div class="rpg-fab-widget rpg-fab-widget-weather-icon" title="Weather">${infoData.weather.emoji}</div>`
+            html: `<div class="rpg-fab-widget rpg-fab-widget-weather-icon" title="Weather">${escapeAttribute(infoData.weather.emoji)}</div>`
         });
     }
 
@@ -1366,17 +1367,17 @@ export function updateFabWidgets() {
         const desc = infoData.weather.forecast.length > 15 ? infoData.weather.forecast.substring(0, 13) + '…' : infoData.weather.forecast;
         widgets.push({
             type: 'small',
-            html: `<div class="rpg-fab-widget rpg-fab-widget-weather-desc" title="${infoData.weather.forecast}">${desc}</div>`
+            html: `<div class="rpg-fab-widget rpg-fab-widget-weather-desc" title="${escapeAttribute(infoData.weather.forecast)}">${escapeAttribute(desc)}</div>`
         });
     }
 
     // Helper to create expandable text widget HTML
     const createExpandableText = (fullText, maxLen, emoji) => {
         if (fullText.length <= maxLen) {
-            return `${emoji} ${fullText}`;
+            return `${emoji} ${escapeAttribute(fullText)}`;
         }
         const truncated = fullText.substring(0, maxLen - 2) + '…';
-        return `${emoji} <span class="rpg-truncated">${truncated}</span><span class="rpg-full-text">${fullText}</span>`;
+        return `${emoji} <span class="rpg-truncated">${escapeAttribute(truncated)}</span><span class="rpg-full-text">${escapeAttribute(fullText)}</span>`;
     };
 
     // Check if text needs truncation for data attribute
@@ -1402,13 +1403,13 @@ export function updateFabWidgets() {
             const { hourAngle, minuteAngle } = parseTimeForClock(timeStr);
             widgets.push({
                 type: 'bottom', // Special type for bottom position
-                html: `<div class="rpg-fab-widget rpg-fab-widget-clock" title="${timeStr}">
+                html: `<div class="rpg-fab-widget rpg-fab-widget-clock" title="${escapeAttribute(timeStr)}">
                     <div class="rpg-fab-clock-face">
                         <div class="rpg-fab-clock-hour" style="transform: rotate(${hourAngle}deg)"></div>
                         <div class="rpg-fab-clock-minute" style="transform: rotate(${minuteAngle}deg)"></div>
                         <div class="rpg-fab-clock-center"></div>
                     </div>
-                    <span class="rpg-fab-clock-time">${timeStr}</span>
+                    <span class="rpg-fab-clock-time">${escapeAttribute(timeStr)}</span>
                 </div>`
             });
         }
@@ -1420,7 +1421,7 @@ export function updateFabWidgets() {
         const expandAttr = needsExpand(dateVal, 12) ? ' data-full-text="true"' : '';
         widgets.push({
             type: 'small',
-            html: `<div class="rpg-fab-widget rpg-fab-widget-date"${expandAttr} title="${dateVal}">${createExpandableText(dateVal, 12, '📅')}</div>`
+            html: `<div class="rpg-fab-widget rpg-fab-widget-date"${expandAttr} title="${escapeAttribute(dateVal)}">${createExpandableText(dateVal, 12, '📅')}</div>`
         });
     }
 
@@ -1430,7 +1431,7 @@ export function updateFabWidgets() {
         const expandAttr = needsExpand(loc, 14) ? ' data-full-text="true"' : '';
         widgets.push({
             type: 'small',
-            html: `<div class="rpg-fab-widget rpg-fab-widget-location"${expandAttr} title="${loc}">${createExpandableText(loc, 14, '📍')}</div>`
+            html: `<div class="rpg-fab-widget rpg-fab-widget-location"${expandAttr} title="${escapeAttribute(loc)}">${createExpandableText(loc, 14, '📍')}</div>`
         });
     }
 
@@ -1474,8 +1475,8 @@ export function updateFabWidgets() {
             .map(stat => {
                 const value = typeof stat.value === 'number' ? stat.value : parseInt(stat.value) || 0;
                 const color = getStatColor(value);
-                const abbr = stat.name.substring(0, 3).toUpperCase();
-                return `<span class="rpg-fab-widget-stat-item" title="${stat.name}: ${value}" style="color: ${color};">${abbr}:${value}</span>`;
+                const abbr = String(stat.name ?? '').substring(0, 3).toUpperCase();
+                return `<span class="rpg-fab-widget-stat-item" title="${escapeAttribute(stat.name)}: ${escapeAttribute(value)}" style="color: ${escapeAttribute(color)};">${escapeAttribute(abbr)}:${escapeAttribute(value)}</span>`;
             })
             .join('');
 
@@ -1507,7 +1508,7 @@ export function updateFabWidgets() {
                     }
                     return true;
                 })
-                .map(([key, value]) => `<div class="rpg-fab-widget-attr-item"><span class="rpg-fab-widget-attr-name">${key.toUpperCase()}</span><span class="rpg-fab-widget-attr-value">${value}</span></div>`)
+                .map(([key, value]) => `<div class="rpg-fab-widget-attr-item"><span class="rpg-fab-widget-attr-name">${escapeAttribute(key.toUpperCase())}</span><span class="rpg-fab-widget-attr-value">${escapeAttribute(value)}</span></div>`)
                 .join('');
 
             if (attrItems) {

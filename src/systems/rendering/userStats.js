@@ -32,6 +32,7 @@ function getUserPortraitFocusKey() {
 }
 import { buildInventorySummary } from '../generation/promptBuilder.js';
 import { isItemLocked, setItemLock } from '../generation/lockManager.js';
+import { escapeAttribute } from '../../utils/security.js';
 import { updateFabWidgets } from '../ui/mobile.js';
 import { getStatBarColors } from '../ui/theme.js';
 
@@ -358,7 +359,7 @@ export function renderUserStats() {
                 <div class="rpg-stat-bar" style="background: ${gradient}">
                     <div class="rpg-stat-fill" style="width: ${100 - percentage}%"></div>
                 </div>
-                <span class="rpg-stat-value rpg-editable-stat" contenteditable="true" data-field="${stat.id}" data-max="${maxValue}" data-mode="${displayMode}" title="${i18n.getTranslation('userStats.clickToEditStatValue') || 'Click to edit stat value'}">${displayValue}</span>
+                <span class="rpg-stat-value rpg-editable-stat" contenteditable="true" data-field="${stat.id}" data-max="${maxValue}" data-mode="${displayMode}" title="${i18n.getTranslation('userStats.clickToEditStatValue') || 'Click to edit stat value'}">${escapeAttribute(displayValue)}</span>
             </div>
         `;
     }
@@ -376,7 +377,7 @@ export function renderUserStats() {
         }
 
         if (config.statusSection.showMoodEmoji) {
-            html += `<div class="rpg-mood-emoji rpg-editable" contenteditable="true" data-field="mood" title="${i18n.getTranslation('userStats.clickToEditEmoji') || 'Click to edit emoji'}">${stats.mood}</div>`;
+            html += `<div class="rpg-mood-emoji rpg-editable" contenteditable="true" data-field="mood" title="${i18n.getTranslation('userStats.clickToEditEmoji') || 'Click to edit emoji'}">${escapeAttribute(stats.mood)}</div>`;
         }
 
         // Render custom status fields
@@ -391,7 +392,7 @@ export function renderUserStats() {
                     // Strip brackets if present (from JSON array format)
                     fieldValue = fieldValue.replace(/^\[|\]$/g, '').trim();
                 }
-                html += `<div class="rpg-mood-conditions rpg-editable" contenteditable="true" data-field="${fieldKey}" title="${i18n.getTranslation('userStats.clickToEdit') || 'Click to edit'} ${fieldName}">${fieldValue}</div>`;
+                html += `<div class="rpg-mood-conditions rpg-editable" contenteditable="true" data-field="${escapeAttribute(fieldKey)}" title="${i18n.getTranslation('userStats.clickToEdit') || 'Click to edit'} ${escapeAttribute(fieldName)}">${escapeAttribute(fieldValue)}</div>`;
             }
         }
 
@@ -419,7 +420,7 @@ export function renderUserStats() {
         }
         html += `
                 <span class="rpg-skills-label">${config.skillsSection.label}:</span>
-                <div class="rpg-skills-value rpg-editable" contenteditable="true" data-field="skills" title="${i18n.getTranslation('userStats.clickToEditSkills') || 'Click to edit skills'}">${skillsValue}</div>
+                <div class="rpg-skills-value rpg-editable" contenteditable="true" data-field="skills" title="${i18n.getTranslation('userStats.clickToEditSkills') || 'Click to edit skills'}">${escapeAttribute(skillsValue)}</div>
             </div>
         `;
     }
@@ -456,7 +457,7 @@ export function renderUserStats() {
                             <span class="rpg-classic-stat-label">${attr.name}</span>
                             <div class="rpg-classic-stat-buttons">
                                 <button class="rpg-classic-stat-btn rpg-stat-decrease" data-stat="${attr.id}">−</button>
-                                <span class="rpg-classic-stat-value">${value}</span>
+                                <span class="rpg-classic-stat-value">${escapeAttribute(value)}</span>
                                 <button class="rpg-classic-stat-btn rpg-stat-increase" data-stat="${attr.id}">+</button>
                             </div>
                         </div>
