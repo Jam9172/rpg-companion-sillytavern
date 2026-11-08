@@ -78,21 +78,64 @@ export function repairJSON(jsonString) {
         }
     }
 
-    // Attempt 4: Use Function constructor (safer than eval, still controlled)
-    // Only as last resort for trusted AI output
-    try {
-        const fn = new Function(`"use strict"; return (${cleaned});`);
-        const result = fn();
-        // Validate it's actually an object or array
-        if (result && (typeof result === 'object')) {
-            // console.log('[RPG JSON Repair] ✓ Repaired using Function constructor');
-            return result;
+    // Attempt 4: JavaScript-style object text (bare keys, single-quoted strings), converted to JSON.
+    // Data only: the text is never run as code.
+    for (const loose of [cleaned, objectMatch?.[0]]) {
+        if (!loose) continue;
+        try {
+            const result = JSON.parse(looseToJSON(loose));
+            if (result && typeof result === 'object') {
+                return result;
+            }
+        } catch (e) {
+            // try the next candidate
         }
-    } catch (e) {
-        console.error('[RPG JSON Repair] ✗ All repair attempts failed:', e.message);
     }
 
+    console.error('[RPG JSON Repair] ✗ All repair attempts failed');
     return null;
+}
+
+/**
+ * Rewrites JavaScript-style object text as JSON: quotes bare keys ({mood: 1} -> {"mood": 1}) and turns
+ * 'single-quoted' strings into "double-quoted" ones. Text inside strings is left alone. Values that
+ * aren't JSON (expressions, function calls, undefined) stay as they are, so JSON.parse rejects them.
+ * @param {string} text
+ * @returns {string}
+ */
+function looseToJSON(text) {
+    let out = '';
+    let i = 0;
+    while (i < text.length) {
+        const ch = text[i];
+        if (ch === '"' || ch === "'") {
+            // Copy a string, re-quoting single-quoted ones
+            let j = i + 1;
+            let body = '';
+            while (j < text.length && text[j] !== ch) {
+                if (text[j] === '\\' && j + 1 < text.length) {
+                    // \' isn't a JSON escape; everything else is kept as written
+                    body += (ch === "'" && text[j + 1] === "'") ? "'" : text[j] + text[j + 1];
+                    j += 2;
+                    continue;
+                }
+                body += (ch === "'" && text[j] === '"') ? '\\"' : text[j];
+                j++;
+            }
+            out += `"${body}"`;
+            i = j + 1;
+            continue;
+        }
+        const key = /^[A-Za-z_$][\w$]*(?=\s*:)/.exec(text.slice(i));
+        if (key && /[{,]\s*$/.test(out)) {
+            out += `"${key[0]}"`;
+            i += key[0].length;
+            continue;
+        }
+        out += ch;
+        i++;
+    }
+    return out;
 }
 
 /**
