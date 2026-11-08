@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Fixed negative temperatures ("Temperature: -5°C") being dropped when an old chat's Info Box was converted to the current format.
 - Fixed item names like "iPhone" or "eReader" being changed to "IPhone" and "EReader" every time a chat loaded (and saved that way). Items named "__proto__" and similar are now dropped from item lists, as the code's documentation always said.
 - Fixed the Info Box calendar putting the month or season in the weekday slot for dates like "March, 1247" or "Late Autumn, 1247" (and showing MON), and missing the weekday in "Sunday 16 March 1247" written without commas.
 - Fixed Present Characters edge cases: a character whose thoughts or relationship came back as an object with no text showed (and sent the expression classifier) "[object Object]", and a single empty entry in the model's list of characters made every present character disappear. Empty entries are now skipped.

@@ -222,10 +222,10 @@ export function migrateInfoBoxToJSON(textData) {
         }
 
         // Parse "Temperature: X°C" or "Temperature: X°F" format
-        const tempMatch = trimmed.match(/^Temperature:\s*(\d+)\s*°?([CF])?/i);
+        const tempMatch = trimmed.match(/^Temperature:\s*([-−]?\d+)\s*°?([CF])?/i);
         if (tempMatch) {
             result.temperature = {
-                value: parseInt(tempMatch[1]),
+                value: parseInt(tempMatch[1].replace('−', '-')),
                 unit: tempMatch[2] ? tempMatch[2].toUpperCase() : 'C'
             };
             continue;
