@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Fixed the Info Box calendar putting the month or season in the weekday slot for dates like "March, 1247" or "Late Autumn, 1247" (and showing MON), and missing the weekday in "Sunday 16 March 1247" written without commas.
 - Fixed Present Characters edge cases: a character whose thoughts or relationship came back as an object with no text showed (and sent the expression classifier) "[object Object]", and a single empty entry in the model's list of characters made every present character disappear. Empty entries are now skipped.
 - Fixed portraits and expressions not being found for characters whose card name starts or ends with a letter outside A–Z ("Анна", "José", "Zoë") when the model writes a longer name ("Анна Каренина"). Also, a card named "Ann" no longer matches "Ann's Mother".
 - Fixed tracker updates being lost when the model's JSON had "//" or "/*" in its text, such as a URL or "Rain // heavy": everything after it on that line was cut as if it were a comment, so the JSON broke and that turn's update was dropped. Comments and trailing commas are now only removed outside the text, and valid JSON is used as it is.
