@@ -387,17 +387,17 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
                 debugLog(`[RPG Thoughts] Building HTML card for ${char.name}...`);
 
                 html += `
-                    <div class="rpg-character-card" data-character-name="${char.name}">
+                    <div class="rpg-character-card" data-character-name="${escapeAttribute(char.name)}">
                         <div class="rpg-character-header-row">
-                            <div class="rpg-character-avatar rpg-avatar-upload" data-character="${char.name}" title="${i18n.getTranslation('thoughts.clickToUpload') || 'Click to upload avatar'}">
-                                <img src="${characterPortrait}" alt="${char.name}" style="${portraitStyle}" onerror="this.style.opacity='0.5';this.onerror=null;" />
-                                ${largePortrait ? `<button type="button" class="rpg-portrait-focus-btn" data-character="${char.name}" title="${i18n.getTranslation('portraitFocus.open') || 'Adjust portrait focus'}" aria-label="${i18n.getTranslation('portraitFocus.open') || 'Adjust portrait focus'}"><i class="fa-solid fa-crop-simple" aria-hidden="true"></i></button>` : ''}
-                                ${hasRelationshipEnabled ? `<div class="rpg-relationship-badge rpg-editable" contenteditable="true" data-character="${char.name}" data-field="${relationshipFieldName}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'} (emoji: ⚔️ ⚖️ ⭐ ❤️)">${relationshipBadge}</div>` : ''}
+                            <div class="rpg-character-avatar rpg-avatar-upload" data-character="${escapeAttribute(char.name)}" title="${i18n.getTranslation('thoughts.clickToUpload') || 'Click to upload avatar'}">
+                                <img src="${escapeAttribute(characterPortrait)}" alt="${escapeAttribute(char.name)}" style="${escapeAttribute(portraitStyle)}" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                                ${largePortrait ? `<button type="button" class="rpg-portrait-focus-btn" data-character="${escapeAttribute(char.name)}" title="${i18n.getTranslation('portraitFocus.open') || 'Adjust portrait focus'}" aria-label="${i18n.getTranslation('portraitFocus.open') || 'Adjust portrait focus'}"><i class="fa-solid fa-crop-simple" aria-hidden="true"></i></button>` : ''}
+                                ${hasRelationshipEnabled ? `<div class="rpg-relationship-badge rpg-editable" contenteditable="true" data-character="${escapeAttribute(char.name)}" data-field="${relationshipFieldName}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'} (emoji: ⚔️ ⚖️ ⭐ ❤️)">${escapeAttribute(relationshipBadge)}</div>` : ''}
                             </div>
                             <div class="rpg-character-header">
-                                <span class="rpg-character-emoji rpg-editable" contenteditable="true" data-character="${char.name}" data-field="emoji" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}">${char.emoji}</span>
-                                <span class="rpg-character-name rpg-editable" contenteditable="true" data-character="${char.name}" data-field="name" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}">${char.name}</span>
-                                <button class="rpg-character-remove" data-character="${char.name}" title="${i18n.getTranslation('thoughts.removeCharacter') || 'Remove character'}">×</button>
+                                <span class="rpg-character-emoji rpg-editable" contenteditable="true" data-character="${escapeAttribute(char.name)}" data-field="emoji" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}">${escapeAttribute(char.emoji)}</span>
+                                <span class="rpg-character-name rpg-editable" contenteditable="true" data-character="${escapeAttribute(char.name)}" data-field="name" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}">${escapeAttribute(char.name)}</span>
+                                <button class="rpg-character-remove" data-character="${escapeAttribute(char.name)}" title="${i18n.getTranslation('thoughts.removeCharacter') || 'Remove character'}">×</button>
                             </div>
                         </div>
                         <div class="rpg-character-content">
@@ -413,19 +413,19 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
                     // Skip lock icons for thoughts field
                     const showLock = !fieldNameLower.includes('thought');
                     // Add placeholder for empty fields
-                    const placeholder = fieldValue ? '' : `data-placeholder="${field.name}"`;
+                    const placeholder = fieldValue ? '' : `data-placeholder="${escapeAttribute(field.name)}"`;
                     const emptyClass = fieldValue ? '' : ' rpg-empty-field';
                     if (showLock) {
                         const lockIconHtml = getLockIconHtml('characters', lockPath(char.name, field.name));
                         html += `
-                                <div class="rpg-character-field rpg-character-${fieldId}" style="position: relative;">
+                                <div class="rpg-character-field rpg-character-${escapeAttribute(fieldId)}" style="position: relative;">
                                     ${lockIconHtml}
-                                    <span class="rpg-editable${emptyClass}" contenteditable="true" data-character="${char.name}" data-field="${field.name}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}" ${placeholder}>${fieldValue}</span>
+                                    <span class="rpg-editable${emptyClass}" contenteditable="true" data-character="${escapeAttribute(char.name)}" data-field="${escapeAttribute(field.name)}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}" ${placeholder}>${escapeAttribute(fieldValue)}</span>
                                 </div>
                         `;
                     } else {
                         html += `
-                                <div class="rpg-character-field rpg-character-${fieldId} rpg-editable${emptyClass}" contenteditable="true" data-character="${char.name}" data-field="${field.name}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}" ${placeholder}>${fieldValue}</div>
+                                <div class="rpg-character-field rpg-character-${escapeAttribute(fieldId)} rpg-editable${emptyClass}" contenteditable="true" data-character="${escapeAttribute(char.name)}" data-field="${escapeAttribute(field.name)}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}" ${placeholder}>${escapeAttribute(fieldValue)}</div>
                         `;
                     }
                 }
@@ -451,7 +451,7 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
                         );
                         html += `
                                 <div class="rpg-character-stat" ${statMeterAttributes(stat.name, statValue)}>
-                                    <span class="rpg-stat-name">${stat.name}${extensionSettings.theme === 'forge' ? '' : ': '}</span><span class="rpg-editable" contenteditable="true" data-character="${char.name}" data-field="${stat.name}" style="color: ${statColor}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}">${statValue}%</span>
+                                    <span class="rpg-stat-name">${escapeAttribute(stat.name)}${extensionSettings.theme === 'forge' ? '' : ': '}</span><span class="rpg-editable" contenteditable="true" data-character="${escapeAttribute(char.name)}" data-field="${escapeAttribute(stat.name)}" style="color: ${escapeAttribute(statColor)}" title="${i18n.getTranslation('thoughts.clickToEdit') || 'Click to edit'}">${escapeAttribute(statValue)}%</span>
                                 </div>
                         `;
                     }
