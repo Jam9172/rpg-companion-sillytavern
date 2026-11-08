@@ -57,6 +57,15 @@ export function getPresentCharactersTrackerData({ useCommittedFallback = true } 
     return lastGeneratedData.characterThoughts || (useCommittedFallback ? committedTrackerData.characterThoughts : null) || '';
 }
 
+/** The text of a field the model may write as "text" or as {key: "text"} (or {value: "text"}). */
+function textOf(value, key) {
+    if (value && typeof value === 'object') {
+        const text = value[key] ?? value.value;
+        return typeof text === 'string' ? text : '';
+    }
+    return value;
+}
+
 export function parsePresentCharacters(characterThoughtsData, { enabledFields = [], enabledCharStats = [] } = {}) {
     if (!characterThoughtsData) {
         return [];
@@ -71,8 +80,10 @@ export function parsePresentCharacters(characterThoughtsData, { enabledFields = 
 
         const charactersArray = Array.isArray(parsed) ? parsed : (parsed.characters || []);
 
-        if (charactersArray.length > 0) {
-            presentCharacters = charactersArray.map(char => {
+        // An entry that isn't a character (null, a stray string) is skipped, not the whole list
+        const characterEntries = charactersArray.filter((char) => char && typeof char === 'object' && !Array.isArray(char));
+        if (characterEntries.length > 0) {
+            presentCharacters = characterEntries.map(char => {
                 const character = {
                     name: char.name,
                     emoji: char.emoji || '👤'
@@ -101,13 +112,13 @@ export function parsePresentCharacters(characterThoughtsData, { enabledFields = 
                 }
 
                 if (char.Relationship) {
-                    character.Relationship = stripBrackets(char.Relationship);
+                    character.Relationship = stripBrackets(textOf(char.Relationship, 'status'));
                 } else if (char.relationship) {
-                    character.Relationship = stripBrackets(char.relationship.status || char.relationship);
+                    character.Relationship = stripBrackets(textOf(char.relationship, 'status'));
                 }
 
                 if (char.thoughts) {
-                    character.ThoughtsContent = stripBrackets(char.thoughts.content || char.thoughts);
+                    character.ThoughtsContent = stripBrackets(textOf(char.thoughts, 'content'));
                 }
 
                 if (char.stats && enabledCharStats.length > 0) {

@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Fixed Present Characters edge cases: a character whose thoughts or relationship came back as an object with no text showed (and sent the expression classifier) "[object Object]", and a single empty entry in the model's list of characters made every present character disappear. Empty entries are now skipped.
 - Fixed portraits and expressions not being found for characters whose card name starts or ends with a letter outside A–Z ("Анна", "José", "Zoë") when the model writes a longer name ("Анна Каренина"). Also, a card named "Ann" no longer matches "Ann's Mother".
 - Fixed tracker updates being lost when the model's JSON had "//" or "/*" in its text, such as a URL or "Rain // heavy": everything after it on that line was cut as if it were a comment, so the JSON broke and that turn's update was dropped. Comments and trailing commas are now only removed outside the text, and valid JSON is used as it is.
 - Fixed locks on items and characters whose name has a "." ("Vol. 2 of the Codex", "St. John's Wort", "Dr. Vey"). The lock showed as on but never reached the model, so it could still change them. Such locks set before this fix need setting again; other locks are unchanged.
