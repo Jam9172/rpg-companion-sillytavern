@@ -2078,16 +2078,16 @@ function buildWhisperItem(thought) {
     return `
         <div class="rpg-whisper-item${isOpen ? ' is-open' : ''}" data-character="${name}">
             <button type="button" class="rpg-whisper-pill" aria-expanded="${isOpen}" title="${showText}">
-                <img class="rpg-whisper-avatar" src="${thumbnail}" alt="" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                <img class="rpg-whisper-avatar" src="${escapeInlineThoughtHtml(thumbnail)}" alt="" onerror="this.style.opacity='0.5';this.onerror=null;" />
                 <span class="rpg-whisper-label"><span class="rpg-whisper-name">${name}</span> <span class="rpg-whisper-thinking">${thinkingText}</span></span>
             </button>
             <div class="rpg-whisper-body">
                 <div class="rpg-whisper-portrait">
-                    <img src="${fullPortrait}" alt="${name}" style="${focusStyle}" onerror="this.style.opacity='0.5';this.onerror=null;" />
+                    <img src="${escapeInlineThoughtHtml(fullPortrait)}" alt="${name}" style="${escapeInlineThoughtHtml(focusStyle)}" onerror="this.style.opacity='0.5';this.onerror=null;" />
                     <span class="rpg-whisper-portrait-name">${name}</span>
                     <button type="button" class="rpg-whisper-collapse" title="${hideText}" aria-label="${hideText}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6 M20 10h-6V4 M14 10l7-7 M3 21l7-7"/></svg></button>
                 </div>
-                <div class="rpg-thought-content rpg-editable" contenteditable="true" data-character="${name}" data-field="thoughts" title="Click to edit thoughts">${thought.thought}</div>
+                <div class="rpg-thought-content rpg-editable" contenteditable="true" data-character="${name}" data-field="thoughts" title="Click to edit thoughts">${escapeInlineThoughtHtml(thought.thought)}</div>
             </div>
         </div>
     `;
@@ -2199,10 +2199,10 @@ export function createThoughtPanel($message, thoughtsArray) {
         thoughtsHtml += `
             <div class="rpg-thought-item">
                 <div class="rpg-thought-emoji-box">
-                    ${thought.emoji}
+                    ${escapeInlineThoughtHtml(thought.emoji)}
                 </div>
-                <div class="rpg-thought-content rpg-editable" contenteditable="true" data-character="${thought.name}" data-field="thoughts" title="Click to edit thoughts">
-                    ${thought.thought}
+                <div class="rpg-thought-content rpg-editable" contenteditable="true" data-character="${escapeInlineThoughtHtml(thought.name)}" data-field="thoughts" title="Click to edit thoughts">
+                    ${escapeInlineThoughtHtml(thought.thought)}
                 </div>
             </div>
         `;

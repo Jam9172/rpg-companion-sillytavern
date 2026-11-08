@@ -54,3 +54,20 @@ test('ordinary names and values look the same as before', async () => {
     assert.equal(host.querySelector('.rpg-character-emoji').textContent, '🙂');
     assert.ok([...host.querySelectorAll('[data-field="Appearance"]')].some((el) => el.textContent === 'Copper hair & burn scars'));
 });
+
+const { createThoughtPanel } = await ext('src/systems/rendering/thoughts.js');
+for (const theme of ['default', 'forge']) {
+    test(`thoughts from the model stay text in the thought panel (${theme} theme)`, async () => {
+        state.extensionSettings.theme = theme;
+        const message = $('<div class="mes"><div class="avatar"><img src="a.png"></div><div class="mes_text"></div></div>').appendTo(document.body);
+        const thought = { name: bad('Mira'), emoji: bad('E'), thought: bad('Thinks') };
+        await quietly(() => createThoughtPanel(message, [thought]));
+        const panel = document.querySelector('#rpg-thought-panel');
+        assert.ok(panel, 'panel built');
+        assert.equal(document.querySelector('.injected'), null);
+        assert.ok(panel.textContent.includes(bad('Thinks')), 'shows the thought as text');
+        assert.equal(panel.querySelector('.rpg-thought-content').getAttribute('data-character'), bad('Mira'));
+        $('#rpg-thought-panel, #rpg-thought-icon, #rpg-thoughts-button').remove();
+        message.remove();
+    });
+}

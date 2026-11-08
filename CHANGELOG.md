@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- The thought panel and Arcane Forge's whisper thoughts escape character names, emoji and thoughts from the model, like the thoughts shown inside messages already did.
 - The Present Characters card escapes character names, fields, relationships and stats from the model.
 - Locks ignore names like "__proto__" and "constructor" from the model's output.
 - Fixed negative temperatures ("Temperature: -5°C") being dropped when an old chat's Info Box was converted to the current format.
