@@ -6,6 +6,7 @@
 import { extensionSettings, $questsContainer, committedTrackerData, lastGeneratedData } from '../../core/state.js';
 import { saveSettings, saveChatData, updateMessageSwipeData } from '../../core/persistence.js';
 import { isItemLocked, setItemLock } from '../generation/lockManager.js';
+import { escapeAttribute } from '../../utils/security.js';
 import { i18n } from '../../core/i18n.js';
 
 /**
@@ -49,7 +50,7 @@ function getLockIconHtml(tracker, path) {
     const lockIcon = isLocked ? '🔒' : '🔓';
     const lockTitle = isLocked ? i18n.getTranslation('global.locked') || 'Locked' : i18n.getTranslation('global.unlocked') || 'Unlocked';
     const lockedClass = isLocked ? ' locked' : '';
-    return `<span class="rpg-section-lock-icon${lockedClass}" data-tracker="${tracker}" data-path="${path}" title="${lockTitle}">${lockIcon}</span>`;
+    return `<span class="rpg-section-lock-icon${lockedClass}" data-tracker="${escapeAttribute(tracker)}" data-path="${escapeAttribute(path)}" title="${lockTitle}">${lockIcon}</span>`;
 }
 
 /**

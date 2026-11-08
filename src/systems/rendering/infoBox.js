@@ -13,6 +13,7 @@ import {
 import { saveChatData, setMessageSwipeTrackerField, updateMessageSwipeData } from '../../core/persistence.js';
 import { i18n } from '../../core/i18n.js';
 import { isItemLocked } from '../generation/lockManager.js';
+import { escapeAttribute } from '../../utils/security.js';
 import { repairJSON } from '../../utils/jsonRepair.js';
 import { infoBoxDateValue, splitInfoBoxDate, joinInfoBoxDate } from '../../utils/infoBoxDate.js';
 import { updateFabWidgets } from '../ui/mobile.js';
@@ -31,7 +32,7 @@ function getLockIconHtml(tracker, path) {
     const lockIcon = isLocked ? '🔒' : '🔓';
     const lockTitle = isLocked ? 'Locked' : 'Unlocked';
     const lockedClass = isLocked ? ' locked' : '';
-    return `<span class="rpg-section-lock-icon${lockedClass}" data-tracker="${tracker}" data-path="${path}" title="${lockTitle}">${lockIcon}</span>`;
+    return `<span class="rpg-section-lock-icon${lockedClass}" data-tracker="${escapeAttribute(tracker)}" data-path="${escapeAttribute(path)}" title="${lockTitle}">${lockIcon}</span>`;
 }
 
 /**

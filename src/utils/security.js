@@ -24,6 +24,20 @@ const BLOCKED_PROPERTY_NAMES = [
 ];
 
 /**
+ * Escapes text for use inside a double- or single-quoted HTML attribute value (or as element text).
+ * @param {*} value
+ * @returns {string}
+ */
+export function escapeAttribute(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+/**
  * Validates and sanitizes storage location names.
  * Prevents prototype pollution and object property shadowing attacks.
  *

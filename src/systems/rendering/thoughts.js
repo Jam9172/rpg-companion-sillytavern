@@ -22,6 +22,7 @@ import {
     resolvePresentCharacterPortrait
 } from '../../utils/presentCharacters.js';
 import { isItemLocked, setItemLock } from '../generation/lockManager.js';
+import { escapeAttribute } from '../../utils/security.js';
 import { statMeterAttributes } from '../../utils/statMeter.js';
 import { downscaleImageDataUrl } from '../../utils/avatars.js';
 import { getPortraitFocus, portraitFocusStyle, openPortraitFocusPicker } from '../ui/portraitFocus.js';
@@ -42,7 +43,7 @@ function getLockIconHtml(tracker, path) {
     const lockIcon = isLocked ? '🔒' : '🔓';
     const lockTitle = isLocked ? i18n.getTranslation('thoughts.locked') || 'Locked' : i18n.getTranslation('thoughts.unlocked') || 'Unlocked';
     const lockedClass = isLocked ? ' locked' : '';
-    return `<span class="rpg-section-lock-icon${lockedClass}" data-tracker="${tracker}" data-path="${path}" title="${lockTitle}">${lockIcon}</span>`;
+    return `<span class="rpg-section-lock-icon${lockedClass}" data-tracker="${escapeAttribute(tracker)}" data-path="${escapeAttribute(path)}" title="${lockTitle}">${lockIcon}</span>`;
 }
 
 /**
