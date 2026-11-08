@@ -52,22 +52,27 @@ function applyUserStatsLocks(data, lockedItems) {
     if (data.stats && lockedItems.stats) {
         // Handle both section lock and individual stat locks
         const isStatsLocked = lockedItems.stats === true;
-        if (isStatsLocked) {
+        // Keep the stat's id, name and value; a bare value becomes {value}
+        const lockStat = (stat) => (stat && typeof stat === 'object' && !Array.isArray(stat))
+            ? { ...stat, locked: true }
+            : { value: stat, locked: true };
+        if (Array.isArray(data.stats)) {
+            // [{id, name, value}], as the tracker prompt asks for
+            data.stats = data.stats.map((stat) => {
+                const locked = isStatsLocked
+                    || (stat && typeof stat === 'object' && (lockedItems.stats[stat.id] || lockedItems.stats[stat.name]));
+                return locked ? lockStat(stat) : stat;
+            });
+        } else if (isStatsLocked) {
             // Lock entire stats section
             for (const statName in data.stats) {
-                data.stats[statName] = {
-                    value: data.stats[statName].value || data.stats[statName],
-                    locked: true
-                };
+                data.stats[statName] = lockStat(data.stats[statName]);
             }
         } else {
             // Lock individual stats
             for (const statName in lockedItems.stats) {
                 if (lockedItems.stats[statName] && data.stats[statName] !== undefined) {
-                    data.stats[statName] = {
-                        value: data.stats[statName].value || data.stats[statName],
-                        locked: true
-                    };
+                    data.stats[statName] = lockStat(data.stats[statName]);
                 }
             }
         }
