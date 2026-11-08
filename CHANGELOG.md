@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Fixed locks on items and characters whose name has a "." ("Vol. 2 of the Codex", "St. John's Wort", "Dr. Vey"). The lock showed as on but never reached the model, so it could still change them. Such locks set before this fix need setting again; other locks are unchanged.
 - Fixed locking the **Stats** section sending the model nameless numbers. Each stat was stripped down to its value, so the model couldn't tell which stat was which (and a stat at 0 was sent as a whole object). Locked stats now keep their id and name.
 - Fixed RPG Companion reading and saving tracker data when a chat was opened while it was turned off in its settings. Turned off, it now leaves chats alone; turning it back on loads the open chat's data as before.
 - Fixed streaming replies showing nothing until they were complete while one of RPG Companion's background requests was running (Cast, tracker refresh, encounters, avatars), and staying that way for the rest of the session after two such requests overlapped.

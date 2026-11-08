@@ -422,6 +422,21 @@ function removeLockedProperties(obj) {
 }
 
 /**
+ * Builds a lock path from its parts. Names can contain "." ("Vol. 2", "St. John's Wort"), so each part has
+ * "%" and "." encoded; paths of parts without them are unchanged.
+ * @param {...string} parts
+ * @returns {string}
+ */
+export function lockPath(...parts) {
+    return parts.map((part) => String(part).replace(/%/g, '%25').replace(/\./g, '%2E')).join('.');
+}
+
+/** Splits a lock path into its parts (see lockPath). */
+function splitLockPath(itemPath) {
+    return String(itemPath).split('.').map((part) => part.replace(/%2E/gi, '.').replace(/%25/g, '%'));
+}
+
+/**
  * Check if a specific item is locked
  * @param {string} trackerType - Type of tracker
  * @param {string} itemPath - Path to the item (e.g., 'stats.Health', 'quests.main.0')
@@ -431,7 +446,7 @@ export function isItemLocked(trackerType, itemPath) {
     const lockedItems = extensionSettings.lockedItems?.[trackerType];
     if (!lockedItems) return false;
 
-    const parts = itemPath.split('.');
+    const parts = splitLockPath(itemPath);
     let current = lockedItems;
 
     for (const part of parts) {
@@ -459,7 +474,7 @@ export function setItemLock(trackerType, itemPath, locked) {
         extensionSettings.lockedItems[trackerType] = {};
     }
 
-    const parts = itemPath.split('.');
+    const parts = splitLockPath(itemPath);
     let current = extensionSettings.lockedItems[trackerType];
 
     // Navigate to parent of target

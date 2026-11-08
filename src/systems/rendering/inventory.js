@@ -8,7 +8,7 @@ import { saveSettings } from '../../core/persistence.js';
 import { getInventoryRenderOptions, restoreFormStates } from '../interaction/inventoryActions.js';
 import { updateInventoryItem } from '../interaction/inventoryEdit.js';
 import { parseItems } from '../../utils/itemParser.js';
-import { isItemLocked, setItemLock } from '../generation/lockManager.js';
+import { isItemLocked, setItemLock, lockPath } from '../generation/lockManager.js';
 import { escapeAttribute } from '../../utils/security.js';
 import { i18n } from '../../core/i18n.js';
 
@@ -92,7 +92,7 @@ export function renderOnPersonView(onPersonItems, viewMode = 'list') {
         if (viewMode === 'grid') {
             // Grid view: card-style items
             itemsHtml = items.map((item, index) => {
-                const lockIconHtml = getLockIconHtml('userStats', `inventory.onPerson.${item}`);
+                const lockIconHtml = getLockIconHtml('userStats', lockPath('inventory', 'onPerson', item));
                 const match = item.match(/^(\d+)x\s+(.*)$/);
                 const qty = match ? match[1] : 1;
                 const name = match ? match[2] : item;
@@ -113,7 +113,7 @@ export function renderOnPersonView(onPersonItems, viewMode = 'list') {
         } else {
             // List view: full-width rows
             itemsHtml = items.map((item, index) => {
-                const lockIconHtml = getLockIconHtml('userStats', `inventory.onPerson.${item}`);
+                const lockIconHtml = getLockIconHtml('userStats', lockPath('inventory', 'onPerson', item));
                 const match = item.match(/^(\d+)x\s+(.*)$/);
                 const qty = match ? match[1] : 1;
                 const name = match ? match[2] : item;
@@ -183,7 +183,7 @@ export function renderClothingView(clothingItems, viewMode = 'list') {
         if (viewMode === 'grid') {
             // Grid view: card-style items
             itemsHtml = items.map((item, index) => {
-                const lockIconHtml = getLockIconHtml('userStats', `inventory.clothing.${item}`);
+                const lockIconHtml = getLockIconHtml('userStats', lockPath('inventory', 'clothing', item));
                 const match = item.match(/^(\d+)x\s+(.*)$/);
                 const qty = match ? match[1] : 1;
                 const name = match ? match[2] : item;
@@ -204,7 +204,7 @@ export function renderClothingView(clothingItems, viewMode = 'list') {
         } else {
             // List view: full-width rows
             itemsHtml = items.map((item, index) => {
-                const lockIconHtml = getLockIconHtml('userStats', `inventory.clothing.${item}`);
+                const lockIconHtml = getLockIconHtml('userStats', lockPath('inventory', 'clothing', item));
                 const match = item.match(/^(\d+)x\s+(.*)$/);
                 const qty = match ? match[1] : 1;
                 const name = match ? match[2] : item;
@@ -312,7 +312,7 @@ export function renderStoredView(stored, collapsedLocations = [], viewMode = 'li
                 if (viewMode === 'grid') {
                     // Grid view: card-style items
                     itemsHtml = items.map((item, index) => {
-                        const lockIconHtml = getLockIconHtml('userStats', `inventory.stored.${location}.${item}`);
+                        const lockIconHtml = getLockIconHtml('userStats', lockPath('inventory', 'stored', location, item));
                         const match = item.match(/^(\d+)x\s+(.*)$/);
                         const qty = match ? match[1] : 1;
                         const name = match ? match[2] : item;
@@ -333,7 +333,7 @@ export function renderStoredView(stored, collapsedLocations = [], viewMode = 'li
                 } else {
                     // List view: full-width rows
                     itemsHtml = items.map((item, index) => {
-                        const lockIconHtml = getLockIconHtml('userStats', `inventory.stored.${location}.${item}`);
+                        const lockIconHtml = getLockIconHtml('userStats', lockPath('inventory', 'stored', location, item));
                         const match = item.match(/^(\d+)x\s+(.*)$/);
                         const qty = match ? match[1] : 1;
                         const name = match ? match[2] : item;
@@ -431,7 +431,7 @@ export function renderAssetsView(assets, viewMode = 'list') {
         if (viewMode === 'grid') {
             // Grid view: card-style items
             itemsHtml = items.map((item, index) => {
-                const lockIconHtml = getLockIconHtml('userStats', `inventory.assets.${item}`);
+                const lockIconHtml = getLockIconHtml('userStats', lockPath('inventory', 'assets', item));
                 const match = item.match(/^(\d+)x\s+(.*)$/);
                 const qty = match ? match[1] : 1;
                 const name = match ? match[2] : item;
@@ -452,7 +452,7 @@ export function renderAssetsView(assets, viewMode = 'list') {
         } else {
             // List view: full-width rows
             itemsHtml = items.map((item, index) => {
-                const lockIconHtml = getLockIconHtml('userStats', `inventory.assets.${item}`);
+                const lockIconHtml = getLockIconHtml('userStats', lockPath('inventory', 'assets', item));
                 const match = item.match(/^(\d+)x\s+(.*)$/);
                 const qty = match ? match[1] : 1;
                 const name = match ? match[2] : item;

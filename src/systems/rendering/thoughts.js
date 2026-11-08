@@ -21,7 +21,7 @@ import {
     getPresentCharactersTrackerData,
     resolvePresentCharacterPortrait
 } from '../../utils/presentCharacters.js';
-import { isItemLocked, setItemLock } from '../generation/lockManager.js';
+import { isItemLocked, setItemLock, lockPath } from '../generation/lockManager.js';
 import { escapeAttribute } from '../../utils/security.js';
 import { statMeterAttributes } from '../../utils/statMeter.js';
 import { downscaleImageDataUrl } from '../../utils/avatars.js';
@@ -416,7 +416,7 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
                     const placeholder = fieldValue ? '' : `data-placeholder="${field.name}"`;
                     const emptyClass = fieldValue ? '' : ' rpg-empty-field';
                     if (showLock) {
-                        const lockIconHtml = getLockIconHtml('characters', `${char.name}.${field.name}`);
+                        const lockIconHtml = getLockIconHtml('characters', lockPath(char.name, field.name));
                         html += `
                                 <div class="rpg-character-field rpg-character-${fieldId}" style="position: relative;">
                                     ${lockIconHtml}
@@ -436,7 +436,7 @@ export function renderThoughts({ preserveScroll = false, useCommittedFallback = 
 
                 // Render character stats if enabled (outside rpg-character-info)
                 if (enabledCharStats.length > 0) {
-                    const lockIconHtml = getLockIconHtml('characters', `${char.name}.stats`);
+                    const lockIconHtml = getLockIconHtml('characters', lockPath(char.name, 'stats'));
                     html += `<div class="rpg-character-stats" style="position: relative;">
                         <span class="rpg-section-lock-icon" style="position: absolute; top: 4px; right: 4px; font-size: 1rem; z-index: 10; opacity: 0.7; pointer-events: auto;">${lockIconHtml}</span>
                         <div class="rpg-character-stats-inner">`;
