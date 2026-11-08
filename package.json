@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "validate_locale": "node src/i18n/validator.js --watch",
-    "validate_locale_once": "node src/i18n/validator.js"
+    "validate_locale_once": "node src/i18n/validator.js",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +14,9 @@
   "devDependencies": {
     "chokidar": "^5.0.0",
     "fs-extra": "^11.3.3",
-    "glob": "^13.0.6"
+    "glob": "^13.0.6",
+    "jquery": "^3.7.1",
+    "jsdom": "^24.1.3"
   },
   "dependencies": {}
 }
