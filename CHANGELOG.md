@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Fixed streaming replies showing nothing until they were complete while one of RPG Companion's background requests was running (Cast, tracker refresh, encounters, avatars), and staying that way for the rest of the session after two such requests overlapped.
 - Lock icons escape item and character names in their HTML attributes.
 - Tracker JSON is now parsed without eval. Replies that write it loosely (keys without quotes, single-quoted text) still parse.
 - The **chat lorebook** (the one bound to a chat with the lock button) gives RPG Companion's own requests context. The tracker request in Separate and External modes now gets its always-on entries, the entries about the Present Characters it tracks, and entries whose keywords come up in the messages it reads (it used to get only the character card and your persona, so with a blank-slate card it knew nothing about anyone). Cast already read every active lorebook; the chat lorebook's entries now come first there too, always-on ones included. Up to about 6,000 characters; disabled entries and regex keywords are skipped. Together mode is unchanged: there the main model gets your lorebooks from SillyTavern as usual.
