@@ -37,8 +37,11 @@ export function namesMatch(cardName, aiName) {
     const aiCore = stripParens(aiName).toLowerCase();
     if (cardCore === aiCore) return true;
 
+    // The card name as a whole word of the model's name ("Анна" in "Анна Каренина"). \b only knows ASCII
+    // letters, so the boundaries are any non-letter, non-digit. A possessive after it ("Ann's Mother") is
+    // someone else.
     const escapedCardCore = cardCore.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const wordBoundary = new RegExp(`\\b${escapedCardCore}\\b`);
+    const wordBoundary = new RegExp(`(^|[^\\p{L}\\p{N}])${escapedCardCore}($|[^\\p{L}\\p{N}'’])`, 'u');
     return wordBoundary.test(aiCore);
 }
 
