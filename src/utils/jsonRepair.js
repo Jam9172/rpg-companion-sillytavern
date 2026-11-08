@@ -30,29 +30,18 @@ export function repairJSON(jsonString) {
     cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, '');
     cleaned = cleaned.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
 
-    // Fix common JSON errors:
+    // Attempt 1: Standard JSON.parse (valid JSON is used as it is)
+    try {
+        return JSON.parse(cleaned);
+    } catch (e) {
+    }
 
-    // 1. Trailing commas before closing brackets
-    cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1');
+    // Fix common JSON errors, outside strings only (so URLs and "//" in text are kept):
+    // JavaScript comments (the prompts' examples have "// 0 to 100" notes) and trailing commas.
+    // (Missing commas, single quotes and unquoted keys aren't regex-fixed here: that corrupted valid
+    // JSON. Attempt 4 below reads bare keys and single-quoted strings instead.)
+    cleaned = stripCommentsAndTrailingCommas(cleaned);
 
-    // 2. Missing commas between properties - DISABLED because it corrupts valid JSON
-    // Modern AI models send properly formatted JSON, so this aggressive repair is not needed
-    // cleaned = cleaned.replace(/("\s*:\s*(?:"[^"]*"|[^,}\]]+))(\s+")/g, '$1,$2');
-
-    // 3. Single quotes to double quotes - DISABLED because it corrupts apostrophes in text
-    // Apostrophes in strings like "Zandik's Office" would become "Zandik"s Office" (invalid JSON)
-    // Modern AI models already use double quotes for JSON strings
-    // cleaned = cleaned.replace(/'/g, '"');
-
-    // 4. Unquoted keys - DISABLED because it corrupts valid JSON string values
-    // The AI models already send properly quoted JSON, so this is not needed
-    // cleaned = cleaned.replace(/(\{|,)\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
-
-    // 5. Remove JavaScript comments
-    cleaned = cleaned.replace(/\/\/.*$/gm, '');
-    cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
-
-    // Attempt 1: Standard JSON.parse
     try {
         return JSON.parse(cleaned);
     } catch (e) {
@@ -94,6 +83,51 @@ export function repairJSON(jsonString) {
 
     console.error('[RPG JSON Repair] ✗ All repair attempts failed');
     return null;
+}
+
+const CLOSES_NEXT = /(?:\s|\/\/[^\n]*|\/\*[\s\S]*?\*\/)*[}\]]/y;
+/** Whether only whitespace and comments come before the next } or ] at position `from`. */
+function closesNext(text, from) {
+    CLOSES_NEXT.lastIndex = from;
+    return CLOSES_NEXT.test(text);
+}
+
+/**
+ * Removes // and /* *\/ comments and commas before a closing } or ], leaving text inside "double" or
+ * 'single' quoted strings alone.
+ * @param {string} text
+ * @returns {string}
+ */
+function stripCommentsAndTrailingCommas(text) {
+    let out = '';
+    let quote = null;
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (quote) {
+            out += ch;
+            if (ch === '\\' && i + 1 < text.length) {
+                out += text[++i];
+            } else if (ch === quote) {
+                quote = null;
+            }
+            continue;
+        }
+        if (ch === '"' || ch === "'") {
+            quote = ch;
+            out += ch;
+        } else if (ch === '/' && text[i + 1] === '/') {
+            while (i < text.length && text[i] !== '\n') i++;
+            if (i < text.length) out += '\n';
+        } else if (ch === '/' && text[i + 1] === '*') {
+            const close = text.indexOf('*/', i + 2);
+            i = close === -1 ? text.length : close + 1;
+        } else if (ch === ',' && closesNext(text, i + 1)) {
+            // trailing comma: drop it
+        } else {
+            out += ch;
+        }
+    }
+    return out;
 }
 
 /**

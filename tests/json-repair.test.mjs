@@ -33,3 +33,27 @@ test('opening a chat does not evaluate braces in the latest reply', async () => 
         assert.equal(globalThis.__evaluated, undefined, `enabled=${enabled}`);
     }
 });
+
+test('repairJSON keeps // and /* inside strings', () => {
+    for (const text of [
+        '{\n  "weather": {"forecast": "Clear, see https://example.com"},\n  "time": {"start": "9:00"}\n}',
+        '{"notes":"https://wiki.example/Library","time":{"start":"9:00"}}',
+        '{"inventory":{"onPerson":"Scroll /* torn */ of Light"}}',
+    ]) {
+        assert.deepEqual(repairJSON(text), JSON.parse(text));
+    }
+});
+
+test('repairJSON strips comments and trailing commas outside strings', () => {
+    const text = '{\n  "hp": 80, // 0 to 100\n  "note": "see https://example.com // not a comment", /* stray */\n  "tags": ["a", "b",],\n}';
+    assert.deepEqual(repairJSON(text), { hp: 80, note: 'see https://example.com // not a comment', tags: ['a', 'b'] });
+    assert.deepEqual(repairJSON('{"a": 1, // last\n}'), { a: 1 });
+    assert.deepEqual(repairJSON(`{note: 'a // b', n: 1,}`), { note: 'a // b', n: 1 });
+});
+
+test('a reply whose tracker text contains "//" keeps it', async () => {
+    const { parseResponse } = await ext('src/systems/generation/parser.js');
+    const reply = 'She smiles.\n```json\n{\n  "infoBox": {\n    "location": {"value": "Guild Hall"},\n    "weather": {"emoji": "🌧️", "forecast": "Rain // heavy"}\n  }\n}\n```';
+    const result = await quietly(() => parseResponse(reply, { suppressNoDataError: true }));
+    assert.equal(JSON.parse(result.infoBox).weather.forecast, 'Rain // heavy');
+});
