@@ -134,8 +134,10 @@ function promptMarkers(prompt) {
 
 /** The raw response of this call's own request, or null when it can't be told apart from another call's. */
 async function ownRawData(call, options) {
+    // Requests share lines (the tracker request and Cast both carry the recent chat), so a response is
+    // this call's own only when its request has every one of this call's prompt lines
     const markers = promptMarkers(options?.prompt);
-    const mine = call.responses.filter((r) => markers.some((m) => r.body.includes(m)));
+    const mine = markers.length ? call.responses.filter((r) => markers.every((m) => r.body.includes(m))) : [];
     const pick = mine.length ? mine[mine.length - 1] : (!call.overlapped && call.responses.length === 1 ? call.responses[0] : null);
     return pick ? await pick.pending : null;
 }

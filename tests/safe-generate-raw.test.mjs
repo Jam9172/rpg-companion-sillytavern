@@ -72,3 +72,22 @@ test('fetch wrapped by someone else meanwhile is left as they set it', async () 
     await call;
     assert.equal(window.fetch, theirs);
 });
+
+test('overlapping requests that share chat lines still each get their own reply', async () => {
+    window.fetch = backend;
+    // generateRaw stand-in whose backend reply names the request's first (instruction) message
+    script.__set('generateRaw', async ({ prompt, ms = 0 }) => {
+        const response = await window.fetch(GENERATE, { method: 'POST', body: JSON.stringify({ messages: prompt, say: prompt[0].content, stream: false }) });
+        await response.json();
+        await sleep(ms);
+        throw new Error('No message generated');
+    });
+    const chat = { role: 'user', content: 'Mira lowers her voice and says the harbour is closed tonight.' };
+    const trackers = quietly(() => safeGenerateRaw({ prompt: [{ role: 'system', content: 'Update the trackers for this scene as JSON.' }, chat], ms: 400 }));
+    await sleep(100);
+    const cast = quietly(() => safeGenerateRaw({ prompt: [{ role: 'system', content: 'Update the cast ledger for the characters here.' }, chat], ms: 100 }));
+    assert.deepEqual(await Promise.all([trackers, cast]), [
+        'reply to: Update the trackers for this scene as JSON.',
+        'reply to: Update the cast ledger for the characters here.',
+    ]);
+});

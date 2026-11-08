@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Fixed a rare case where two of RPG Companion's background requests running at once (the tracker request and Cast, say) could get each other's reply, when the model's reply needed the extended-thinking fallback.
 - Fixed a tracker update being dropped when the model wrote an apostrophe as \' inside its JSON ("I don\'t trust him."), which models sometimes do.
 - The Info Box, the Status tab (mood, conditions, skills, stat and attribute values) and the phone panel-button widgets escape text from the model.
 - The thought panel and Arcane Forge's whisper thoughts escape character names, emoji and thoughts from the model, like the thoughts shown inside messages already did.
