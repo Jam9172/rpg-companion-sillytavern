@@ -89,6 +89,7 @@ export function sanitizeLocationName(name) {
  * sanitizeItemName("Sword") // "Sword"
  * sanitizeItemName("") // null
  * sanitizeItemName("A".repeat(600)) // "AAA..." (truncated to 500 chars)
+ * sanitizeItemName("__proto__") // null (blocked)
  */
 export function sanitizeItemName(name) {
     if (!name || typeof name !== 'string') {
@@ -99,6 +100,13 @@ export function sanitizeItemName(name) {
 
     // Empty check
     if (trimmed === '' || trimmed.toLowerCase() === 'none') {
+        return null;
+    }
+
+    // "__proto__" and the other __…__ names can't be real items. (Plain words from the blocked list,
+    // like "Prototype" or "Constructor", can be: items are kept as list entries, not object keys.)
+    if (/^__.+__$/.test(trimmed) && BLOCKED_PROPERTY_NAMES.includes(trimmed)) {
+        console.warn(`[RPG Companion] Blocked dangerous item name: "${trimmed}"`);
         return null;
     }
 
@@ -135,7 +143,7 @@ export function sanitizeItemName(name) {
  * validateStoredInventory({ "__proto__": "malicious" })
  * // → {} (dangerous key removed, logged)
  *
- * validateStoredInventory({ "BadLocation": "__proto__, constructor" })
+ * validateStoredInventory({ "BadLocation": "__proto__, __defineGetter__" })
  * // → { "BadLocation": "None" } (all items removed, location kept empty)
  *
  * validateStoredInventory(null)
@@ -208,7 +216,7 @@ export const MAX_ITEMS_PER_SECTION = 500;
  * cleanItemString("Sword, __proto__, Shield") // "Sword, Shield" (dangerous item removed)
  * cleanItemString("A".repeat(600) + ", Sword") // "AAA... (truncated), Sword"
  * cleanItemString("**Sword**, *Shield*") // "Sword, Shield" (markdown stripped)
- * cleanItemString("__proto__, constructor") // "None" (all items invalid)
+ * cleanItemString("__proto__, __defineGetter__") // "None" (all items invalid)
  */
 export function cleanItemString(itemString) {
     // Parse using robust parser (handles all edge cases, sanitizes each item)

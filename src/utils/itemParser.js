@@ -237,9 +237,9 @@ function cleanSingleItem(item) {
         return null;
     }
 
-    // Capitalize first letter for consistency
-    // Preserves rest of string case (e.g., "iPhone" stays "iPhone", not "Iphone")
-    if (cleaned.length > 0) {
+    // Capitalize first letter for consistency, except names already written with a capital second
+    // letter ("iPhone" stays "iPhone", "eReader" stays "eReader")
+    if (cleaned.length > 0 && !/^\p{Ll}\p{Lu}/u.test(cleaned)) {
         cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
     }
 
