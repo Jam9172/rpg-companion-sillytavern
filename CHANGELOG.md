@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Fixed a tracker update being dropped when the model wrote an apostrophe as \' inside its JSON ("I don\'t trust him."), which models sometimes do.
 - The Info Box, the Status tab (mood, conditions, skills, stat and attribute values) and the phone panel-button widgets escape text from the model.
 - The thought panel and Arcane Forge's whisper thoughts escape character names, emoji and thoughts from the model, like the thoughts shown inside messages already did.
 - The Present Characters card escapes character names, fields, relationships and stats from the model.

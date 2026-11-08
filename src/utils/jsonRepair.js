@@ -148,8 +148,9 @@ function looseToJSON(text) {
             let body = '';
             while (j < text.length && text[j] !== ch) {
                 if (text[j] === '\\' && j + 1 < text.length) {
-                    // \' isn't a JSON escape; everything else is kept as written
-                    body += (ch === "'" && text[j + 1] === "'") ? "'" : text[j] + text[j + 1];
+                    // \' isn't a JSON escape (models write "I don\'t" in either kind of string); everything
+                    // else is kept as written
+                    body += text[j + 1] === "'" ? "'" : text[j] + text[j + 1];
                     j += 2;
                     continue;
                 }

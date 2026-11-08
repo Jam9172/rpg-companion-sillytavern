@@ -57,3 +57,12 @@ test('a reply whose tracker text contains "//" keeps it', async () => {
     const result = await quietly(() => parseResponse(reply, { suppressNoDataError: true }));
     assert.equal(JSON.parse(result.infoBox).weather.forecast, 'Rain // heavy');
 });
+
+test('tracker JSON with \\\' inside a double-quoted string still parses', async () => {
+    const text = '{"thoughts": {"content": "I don\\\'t trust him."}, "mood": "She\\\'s calm"}';
+    assert.deepEqual(await quietly(() => repairJSON(text)), { thoughts: { content: "I don't trust him." }, mood: "She's calm" });
+    const { parseResponse } = await ext('src/systems/generation/parser.js');
+    const reply = 'He frowns.\n```json\n{"infoBox": {"location": {"value": "Kael\\\'s Forge"}}}\n```';
+    const result = await quietly(() => parseResponse(reply, { suppressNoDataError: true }));
+    assert.equal(JSON.parse(result.infoBox).location.value, "Kael's Forge");
+});
