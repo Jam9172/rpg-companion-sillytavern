@@ -71,6 +71,21 @@ async function sendPrompt(messages) {
     return eventData.chat;
 }
 
+test('history notes go on their own messages, however short those are', async () => {
+    setChat(reply('Welcome.'), user('ok'), reply('You are in a cell.', 'Cell'), user('go'), reply('You are in a corridor.', 'Corridor'),
+        user('ok'), reply('You are on the stairs.', 'Stairs'));
+    s.historyPersistence = { ...s.historyPersistence, enabled: true, messageCount: 0, injectionPosition: 'user_message_end' };
+    await generate();
+    const sent = await sendPrompt(prompt(
+        ['system', 'You are the narrator. Look at the scene and never go out of character.'],
+        ['assistant', 'Welcome.'], ['user', 'ok'], ['assistant', 'You are in a cell.'], ['user', 'go'],
+        ['assistant', 'You are in a corridor.'], ['user', 'ok'], ['assistant', 'You are on the stairs.'],
+        ['user', 'Write the next reply. It is ok to go slowly.'], // an injected instruction, not a chat message
+        ['user', 'I look around.'],
+    ));
+    assert.deepEqual(notesOn(sent), ['', '', 'Cell', '', 'Corridor', '', 'Stairs', '', '', '']);
+});
+
 test('history notes stay out of the prompt once RPG Companion is off or the chat changes', async () => {
     const turn = () => [reply('Welcome.'), user('Status report, please.'), reply('You are in a cell.', 'Cell')];
     const sent = () => sendPrompt(prompt(['assistant', 'Welcome.'], ['user', 'Status report, please.'], ['assistant', 'Elsewhere.']));

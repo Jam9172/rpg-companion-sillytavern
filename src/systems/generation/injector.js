@@ -318,8 +318,30 @@ function injectContextIntoTextPrompt(prompt) {
 }
 
 /**
+ * Whether a chat completion prompt message is the prompt's copy of a chat message: the same role, and the
+ * same text (alone, or after a "Name: " prefix). The prompt's copy of a longer message may have been cut
+ * or reworded (regex scripts, macros), so for those the same ending is enough.
+ */
+function isPromptCopyOf(promptMessage, chatMessage) {
+    if (typeof promptMessage?.content !== 'string' || promptMessage.role !== (chatMessage.is_user ? 'user' : 'assistant')) {
+        return false;
+    }
+    const text = chatMessage.mes.trim();
+    const content = promptMessage.content.trim();
+    if (!text) return false;
+    return content === text
+        || content.endsWith(`: ${text}`)
+        || [500, 300, 200, 100, 50].some((length) => text.length > length && content.includes(text.slice(-length)));
+}
+
+/**
  * Injects historical context into a chat completion message array.
  * Modifies the content of messages in the array directly.
+ *
+ * The chat's messages are in the prompt in the chat's order, among other entries (the main prompt,
+ * instructions, lorebook entries). Both are walked from the newest message back, so each chat message
+ * is only looked for before the ones after it, and a short message ("ok") can't be mistaken for part
+ * of a longer entry or for an earlier message with the same text.
  *
  * @param {Array} chatMessages - The chat completion message array
  * @returns {Array} - The modified message array with injected context
@@ -329,60 +351,34 @@ function injectContextIntoChatPrompt(chatMessages) {
         return chatMessages;
     }
 
-    const context = getContext();
-    const chat = context.chat;
+    const chat = getContext().chat;
+    const oldestWithNotes = Math.min(...pendingContextMap.keys());
     let injectedCount = 0;
+    let searchFrom = chatMessages.length - 1;
 
-    // Process each message that needs context injection
-    for (const [msgIdx, ctxContent] of pendingContextMap) {
-        const originalMessage = chat[msgIdx];
-        if (!originalMessage || typeof originalMessage.mes !== 'string') {
+    for (let msgIdx = chat.length - 1; msgIdx >= oldestWithNotes && searchFrom >= 0; msgIdx--) {
+        const chatMessage = chat[msgIdx];
+        if (!chatMessage || chatMessage.is_system || typeof chatMessage.mes !== 'string') {
             continue;
         }
 
-        const messageContent = originalMessage.mes;
-
-        // Find this message in the chat completion array by matching content
-        // Try full content first, then progressively smaller suffixes
-        let found = false;
-
-        for (const promptMsg of chatMessages) {
-            if (!promptMsg.content || typeof promptMsg.content !== 'string') {
-                continue;
+        let at = searchFrom;
+        while (at >= 0 && !isPromptCopyOf(chatMessages[at], chatMessage)) {
+            at--;
+        }
+        if (at < 0) {
+            // Not in the prompt (cut off, or the reply being replaced by a swipe)
+            if (pendingContextMap.has(msgIdx)) {
+                console.debug(`[RPG Companion] Could not find message ${msgIdx} in chat prompt for context injection`);
             }
-
-            // Try full content match
-            if (promptMsg.content.includes(messageContent)) {
-                promptMsg.content = promptMsg.content + ctxContent;
-                injectedCount++;
-                found = true;
-                break;
-            }
-
-            // Try suffix matches for truncated messages
-            const searchLengths = [500, 300, 200, 100, 50];
-            for (const len of searchLengths) {
-                if (messageContent.length <= len) {
-                    continue;
-                }
-
-                const searchContent = messageContent.slice(-len);
-                if (promptMsg.content.includes(searchContent)) {
-                    promptMsg.content = promptMsg.content + ctxContent;
-                    injectedCount++;
-                    found = true;
-                    break;
-                }
-            }
-
-            if (found) {
-                break;
-            }
+            continue;
         }
 
-        if (!found) {
-            console.debug(`[RPG Companion] Could not find message ${msgIdx} in chat prompt for context injection`);
+        if (pendingContextMap.has(msgIdx)) {
+            chatMessages[at].content += pendingContextMap.get(msgIdx);
+            injectedCount++;
         }
+        searchFrom = at - 1;
     }
 
     if (injectedCount > 0) {
