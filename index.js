@@ -152,8 +152,8 @@ import {
 // Feature modules
 import { setupPlotButtons, sendPlotProgression } from './src/systems/features/plotProgression.js';
 import { setupClassicStatsButtons } from './src/systems/features/classicStats.js';
-import { ensureHtmlCleaningRegex, detectConflictingRegexScripts, ensureTrackerCleaningRegex } from './src/systems/features/htmlCleaning.js';
-import { ensureJsonCleaningRegex, removeJsonCleaningRegex } from './src/systems/features/jsonCleaning.js';
+import { detectConflictingRegexScripts } from './src/systems/features/htmlCleaning.js';
+import { syncRegexScripts } from './src/systems/features/regexScripts.js';
 import { parseAndStoreSpotifyUrl } from './src/systems/features/musicPlayer.js';
 import { initQuoteFix } from './src/systems/features/quoteFix.js';
 import { initCast, refreshCastPrompt } from './src/systems/features/cast.js';
@@ -247,6 +247,7 @@ async function addExtensionSettings() {
         const wasEnabled = extensionSettings.enabled;
         extensionSettings.enabled = $(this).prop('checked');
         saveSettings();
+        syncRegexScripts(st_extension_settings, saveSettingsDebounced, { enabled: extensionSettings.enabled });
 
         if (!extensionSettings.enabled && wasEnabled) {
             // Disabling extension - remove UI elements
@@ -1462,29 +1463,12 @@ jQuery(async () => {
             console.error('[RPG Companion] Chat data load failed, using defaults:', error);
         }
 
-        // Import the HTML cleaning regex if needed
+        // The regex scripts that hide tracker JSON and keep HTML out of later prompts
         try {
-            await ensureHtmlCleaningRegex(st_extension_settings, saveSettingsDebounced);
+            syncRegexScripts(st_extension_settings, saveSettingsDebounced, { enabled: extensionSettings.enabled });
         } catch (error) {
-            console.error('[RPG Companion] HTML regex import failed:', error);
-            // Non-critical - continue without it
-        }
-
-        // Import the tracker cleaning regex (removes old together mode JSON from prompts)
-        try {
-            await ensureTrackerCleaningRegex(st_extension_settings, saveSettingsDebounced);
-        } catch (error) {
-            console.error('[RPG Companion] Tracker cleaning regex import failed:', error);
-            // Non-critical - continue without it
-        }
-
-        // Import the JSON cleaning regex to clean up JSON in messages
-        // This cleans historical messages when displayed
-        try {
-            await ensureJsonCleaningRegex(st_extension_settings, saveSettingsDebounced);
-        } catch (error) {
-            console.error('[RPG Companion] JSON cleaning regex setup failed:', error);
-            // Non-critical - continue without it
+            console.error('[RPG Companion] Regex script setup failed:', error);
+            // Non-critical - continue without them
         }
 
         // Detect conflicting regex scripts from old manual formatters
