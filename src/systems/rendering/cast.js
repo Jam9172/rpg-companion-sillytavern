@@ -9,7 +9,7 @@ import { i18n } from '../../core/i18n.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { listCharacters, editCharacter, deleteCharacter, listForgotten, rememberCharacter, onCastChanged, refreshCastPrompt, OFFSCREEN_PREFIX, castReadRange, refreshCast, getCastStatus, tidyCast, canUndoTidy, undoTidy, listArchive, editArchiveKeywords, deleteArchive, getStory, editStory, toggleKeyMemory } from '../features/cast.js';
 import { saveSettings } from '../../core/persistence.js';
-import { castConnectionProfiles, castReasoning } from '../features/castRequest.js';
+import { castConnectionProfiles, castReasoning, CAST_REASONING } from '../features/castRequest.js';
 import { renderAllMeanwhile } from './meanwhile.js';
 import { renderElsewhere } from './elsewhere.js';
 
@@ -123,6 +123,17 @@ function storyFold() {
         </details>`;
 }
 
+// The Reasoning dropdown: SillyTavern's own scale (English fallbacks; the locale files translate them)
+const REASONING_LABELS = {
+    auto: { key: 'cast.model.reasoningAuto', text: 'Auto (the model decides)' },
+    min: { key: 'cast.model.reasoningMin', text: 'Minimum (fastest, cheapest)' },
+    low: { key: 'cast.model.reasoningLow', text: 'Low' },
+    medium: { key: 'cast.model.reasoningMedium', text: 'Medium' },
+    high: { key: 'cast.model.reasoningHigh', text: 'High' },
+    max: { key: 'cast.model.reasoningMax', text: 'Maximum' },
+};
+const REASONING_HELP = 'How much the model thinks before each update, on SillyTavern\'s Reasoning Effort scale; each level means what it means on your provider. Thinking is never shown and costs reply tokens. Minimum is fastest and cheapest (on NanoGPT it turns thinking off); Auto sends no setting, so the model or the Connection Profile\'s preset decides. Tidy always thinks at least a little.';
+
 /** The background model's settings: connection, reasoning and strict JSON. */
 function modelSettings() {
     const profiles = castConnectionProfiles();
@@ -140,12 +151,10 @@ function modelSettings() {
                     ${profiles.map((p) => option(p.id, p.name, connection)).join('')}
                 </select>
             </label>
-            <label class="rpg-cast-model-row" title="${escapeHtml(t('cast.model.reasoningHelp', 'How much the model thinks before each update. Thinking is never shown and costs reply tokens; Off is fastest and cheapest. Tidy always thinks at least a little.'))}">
+            <label class="rpg-cast-model-row" title="${escapeHtml(t('cast.model.reasoningHelp', REASONING_HELP))}">
                 <span class="rpg-cast-label">${escapeHtml(t('cast.model.reasoning', 'Reasoning'))}</span>
                 <select class="rpg-cast-reasoning">
-                    ${option('off', t('cast.model.reasoningOff', 'Off (fastest, cheapest)'), reasoning)}
-                    ${option('low', t('cast.model.reasoningLow', 'Low'), reasoning)}
-                    ${option('default', t('cast.model.reasoningDefault', 'Model default'), reasoning)}
+                    ${CAST_REASONING.map((level) => option(level, t(REASONING_LABELS[level].key, REASONING_LABELS[level].text), reasoning)).join('')}
                 </select>
             </label>
             <label class="checkbox_label rpg-cast-model-check">

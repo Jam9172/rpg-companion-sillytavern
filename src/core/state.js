@@ -32,7 +32,7 @@ export let extensionSettings = {
     castUpdateDepth: 4, // Cast: messages the background model reads for each update
     castPromptDepth: 2, // Cast: how deep in the chat the cast notes are placed
     castConnection: '', // Cast: Connection Profile id for the background model ('' = RPG Companion's connection)
-    castReasoning: 'off', // Cast: how much the background model reasons before answering ('off', 'low', 'default')
+    castReasoning: 'min', // Cast: how much the background model reasons before answering (SillyTavern's scale: 'auto', 'min', 'low', 'medium', 'high', 'max')
     castStrictJson: true, // Cast: ask for replies that match Cast's JSON schema
     castMeanwhile: true, // Cast: show what changed off-screen under each reply
     castStoryInject: true, // Cast: send the story so far (chapters and beats) to the main model
