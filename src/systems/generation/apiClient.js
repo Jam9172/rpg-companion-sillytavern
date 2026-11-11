@@ -21,7 +21,7 @@ import {
     $musicPlayerContainer,
     getSeparateGenerationId
 } from '../../core/state.js';
-import { saveChatData, setMessageSwipeTrackerData, withUnchangedTrackers } from '../../core/persistence.js';
+import { saveChatData, setMessageSwipeTrackerData, withUnchangedTrackers, commitTrackerDataFromPriorMessage } from '../../core/persistence.js';
 import {
     generateSeparateUpdatePrompt
 } from './promptBuilder.js';
@@ -255,6 +255,12 @@ export async function updateRPGData(renderUserStats, renderInfoBox, renderThough
         const lastNow = chat && chat.length ? chat[chat.length - 1] : null;
         const targetMessage = lastNow && !lastNow.is_user ? lastNow : null;
         const targetSwipeId = targetMessage ? Number(targetMessage.swipe_id ?? 0) : 0;
+
+        // Its previous state is the one before that reply. (Normally committed when the reply's generation
+        // started, but that commit is skipped while an earlier update is still running.)
+        if (targetMessage) {
+            commitTrackerDataFromPriorMessage(chat.length - 1);
+        }
 
         const prompt = await generateSeparateUpdatePrompt();
 

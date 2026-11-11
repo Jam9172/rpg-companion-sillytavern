@@ -377,7 +377,7 @@ export function generateTrackerExample() {
  * @param {boolean} includeAttributes - Whether to include RPG attributes (false for separate tracker generation)
  * @returns {string} Formatted instruction text for the AI
  */
-export function generateTrackerInstructions(includeHtmlPrompt = true, includeContinuation = true, includeAttributes = true) {
+export function generateTrackerInstructions(includeHtmlPrompt = true, includeContinuation = true, includeAttributes = true, trackersOnly = false) {
     const userName = getContext().name1;
     const classicStats = extensionSettings.classicStats;
     const trackerConfig = extensionSettings.trackerConfig;
@@ -392,7 +392,11 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
         const endCodeBlockMarker = '';
 
         // Universal instruction header
-        instructions += '\nAt the start of every reply, you must attach an update to the trackers in EXACTLY the JSON format shown below as a single unified JSON object containing all enabled tracker fields. ';
+        // A reply that is the trackers alone (the separate tracker request) is asked for the bare object;
+        // a story reply carries them in a fenced block, which is what gets hidden from the chat
+        instructions += trackersOnly
+            ? '\nReply with an update to the trackers in EXACTLY the JSON format shown below as a single unified JSON object containing all enabled tracker fields. '
+            : '\nAt the start of every reply, you must attach an update to the trackers in EXACTLY the JSON format shown below as a single unified JSON object containing all enabled tracker fields. ';
 
         // Append custom instruction portion if available
         instructions += (extensionSettings.customTrackerInstructionsPrompt || DEFAULT_TRACKER_INSTRUCTIONS_PROMPT).replace(/{userName}/g, userName);
@@ -414,7 +418,9 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
         }
 
         if (enabledTrackers.length > 0) {
-            instructions += '\n\nFORMAT:\n\nProvide EXACTLY ONE JSON code block with ALL tracker sections wrapped in a single object:\n\n```json\n{\n';
+            instructions += trackersOnly
+                ? '\n\nFORMAT:\n\nProvide EXACTLY ONE JSON object with ALL tracker sections wrapped in it:\n\n{\n'
+                : '\n\nFORMAT:\n\nProvide EXACTLY ONE JSON code block with ALL tracker sections wrapped in a single object:\n\n```json\n{\n';
 
             if (extensionSettings.showUserStats) {
                 instructions += '  "userStats": ';
@@ -439,7 +445,7 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
                 instructions += charactersJSON.split('\n').map((line, i) => i === 0 ? line : '  ' + line).join('\n');
             }
 
-            instructions += '\n}\n```\n\nDo NOT output multiple separate JSON objects. Everything must be in ONE unified object with the keys shown above.';
+            instructions += `\n}\n${trackersOnly ? '' : '```\n'}\nDo NOT output multiple separate JSON objects. Everything must be in ONE unified object with the keys shown above.`;
 
             if (isPresentCharactersEnabled()) {
                 instructions += '\n\n' + buildCharacterIdentityRule();
@@ -1303,8 +1309,9 @@ export function generateRPGPromptText() {
 
     promptText += `</previous>\n`;
 
-    // Don't include HTML prompt, continuation instruction, or attributes for separate tracker generation
-    promptText += generateTrackerInstructions(false, false, false);
+    // Don't include HTML prompt, continuation instruction, or attributes for separate tracker generation,
+    // whose reply is the trackers alone
+    promptText += generateTrackerInstructions(false, false, false, true);
 
     return promptText;
 }
@@ -1339,9 +1346,12 @@ export async function generateSeparateUpdatePrompt() {
 
     // The chat lorebook (bound to this chat with the lock button): who the characters are, places and
     // facts of the world. This request is built here, so SillyTavern's World Info never reaches it.
+    // The messages this request reads: the latest ones the story model sees too (hidden ones are left out)
+    const recentMessages = chat.filter((m) => !m.is_system).slice(-depth);
+
     const lore = await lorebookContext({
         names: trackedCharacterNames(),
-        storyText: chat.slice(-depth).filter((m) => !m.is_system).map((m) => m.mes).join('\n'),
+        storyText: recentMessages.map((m) => m.mes).join('\n'),
         chatOnly: true,
     });
     if (lore) {
@@ -1356,10 +1366,7 @@ export async function generateSeparateUpdatePrompt() {
         content: systemMessage
     });
 
-    // /hide command automatically handles checkpoint filtering
     // Add chat history as separate user/assistant messages with per-message historical context
-    const recentMessages = chat.slice(-depth);
-    const startIndex = chat.length - depth;
     const position = historyPersistence?.injectionPosition || 'user_message_end';
 
     // Build a map of which messages should get context based on position setting
@@ -1468,7 +1475,7 @@ export async function generateSeparateUpdatePrompt() {
 
     // Build the instruction message
     let instructionMessage = `</history>\n\n`;
-    instructionMessage += generateRPGPromptText().replace('start your response with', 'respond with');
+    instructionMessage += generateRPGPromptText();
     instructionMessage += `\nProvide ONLY the requested data in the exact JSON format specified above. Do not include any roleplay response, other text, or commentary. Remember, all placeholders MUST be replaced with actual content. Do NOT wrap the JSON in code fences (\`\`\`json). Output the JSON object directly.`;
 
     messages.push({
