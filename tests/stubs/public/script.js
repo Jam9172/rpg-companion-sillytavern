@@ -28,7 +28,11 @@ export function getThumbnailUrl(type, file) { return `/thumbnail?type=${type}&fi
 export async function reloadCurrentChat() {}
 export function saveChatDebounced() {}
 export function saveSettingsDebounced() {}
-export function setExtensionPrompt() {}
+// Like SillyTavern: one slot per key, an empty value clears it
+export const extension_prompts = {};
+export function setExtensionPrompt(key, value, position, depth, scan = false, role = 0) {
+  extension_prompts[key] = { value: String(value ?? ''), position, depth, scan, role };
+}
 export function substituteParams(s) { return s; }
 export function substituteParamsExtended(s) { return s; }
 export function updateMessageBlock() {}

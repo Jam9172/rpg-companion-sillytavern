@@ -46,3 +46,11 @@ export async function quietly(fn) {
     Object.assign(console, { log() {}, warn() {}, error() {}, info() {}, debug() {} });
     try { return await fn(); } finally { Object.assign(console, saved); }
 }
+
+/** Gives the extension the panel containers its renderers draw into (in the page they come from the template). */
+export async function mountPanel() {
+    const state = await ext('src/core/state.js');
+    for (const name of ['Panel', 'UserStats', 'InfoBox', 'Thoughts', 'Inventory', 'Quests', 'MusicPlayer']) {
+        state[`set${name}Container`]($('<div></div>').appendTo(document.body));
+    }
+}

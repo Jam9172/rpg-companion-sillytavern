@@ -48,6 +48,20 @@ let lastCommittedUserMessageSignature = null;
 // Store context map for prompt injection (used by event handlers)
 let pendingContextMap = new Map();
 
+// Every prompt slot this module fills. (Cast keeps its own, see cast.js.)
+const PROMPT_SLOTS = ['inject', 'example', 'context', 'html', 'dialogue-coloring', 'deception', 'omniscience', 'spotify', 'zzz-cyoa']
+    .map((name) => `rpg-companion-${name}`);
+
+/**
+ * Takes everything this module adds out of the prompt: every slot, and the History Persistence notes.
+ */
+export function clearExtensionPrompts() {
+    for (const slot of PROMPT_SLOTS) {
+        setExtensionPrompt(slot, '', extension_prompt_types.IN_CHAT, 0, false);
+    }
+    pendingContextMap = new Map();
+}
+
 // Flag to track if injection already happened in BEFORE_COMBINE
 let historyInjectionDone = false;
 
@@ -578,17 +592,13 @@ export async function onGenerationStarted(type, data, dryRun) {
     // Skip tracker injection for image generation requests
     if (data?.quietImage || data?.quiet_image || data?.isImageGeneration) {
         // console.log('[RPG Companion] Detected image generation, skipping tracker injection');
+        pendingContextMap = new Map(); // the last turn's history notes don't belong in an image prompt
         return;
     }
 
     if (!extensionSettings.enabled) {
-        // Extension is disabled - clear any existing prompts to ensure nothing is injected
-        setExtensionPrompt('rpg-companion-inject', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-example', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-html', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-dialogue-coloring', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-spotify', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-context', '', extension_prompt_types.IN_CHAT, 1, false);
+        // Extension is disabled - make sure nothing of ours is injected
+        clearExtensionPrompts();
         return;
     }
 
@@ -679,13 +689,16 @@ export async function onGenerationStarted(type, data, dryRun) {
             }
         }
 
-        // If we have previous tracker data and found an assistant message, inject it as an assistant message
-        if (!shouldSuppress && example && lastAssistantDepth > 0) {
-            setExtensionPrompt('rpg-companion-example', example, extension_prompt_types.IN_CHAT, lastAssistantDepth, false, extension_prompt_roles.ASSISTANT);
-            // console.log('[RPG Companion] Injected tracker example as assistant message at depth:', lastAssistantDepth);
-        } else {
-            // console.log('[RPG Companion] NOT injecting example. example:', !!example, 'lastAssistantDepth:', lastAssistantDepth);
+        // No earlier reply to put it before (a chat without a greeting, on its second turn): it goes right
+        // after the only reply, before the message being sent
+        if (lastAssistantDepth < 0) {
+            lastAssistantDepth = 1;
         }
+
+        // The previous trackers go in as an assistant message; with none, the slot is emptied, or the
+        // trackers of a story that has since been deleted would stay in the prompt
+        const previousTrackers = !shouldSuppress && example ? example : '';
+        setExtensionPrompt('rpg-companion-example', previousTrackers, extension_prompt_types.IN_CHAT, lastAssistantDepth, false, extension_prompt_roles.ASSISTANT);
 
         // Inject the instructions as a user message at depth 0 (right before generation)
         // If this is a guided generation (user explicitly injected 'instruct'), skip adding
@@ -882,15 +895,7 @@ ${NO_ECHO_RULE}
         setExtensionPrompt('rpg-companion-example', '', extension_prompt_types.IN_CHAT, 0, false);
     } else {
         // Clear all injections
-        setExtensionPrompt('rpg-companion-inject', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-example', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-context', '', extension_prompt_types.IN_CHAT, 1, false);
-        setExtensionPrompt('rpg-companion-html', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-dialogue-coloring', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-deception', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-omniscience', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-zzz-cyoa', '', extension_prompt_types.IN_CHAT, 0, false);
-        setExtensionPrompt('rpg-companion-spotify', '', extension_prompt_types.IN_CHAT, 0, false);
+        clearExtensionPrompts();
     }
 
     // Set suppression state for the historical context injection
@@ -919,6 +924,9 @@ export function initHistoryInjectionListeners() {
 
     // Chat completion (OpenAI, etc.)
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, onChatCompletionPromptReady);
+
+    // The notes are for messages of the chat they were built from
+    eventSource.on(event_types.CHAT_CHANGED, () => { pendingContextMap = new Map(); });
 
     console.log('[RPG Companion] History injection listeners initialized');
 }

@@ -4,7 +4,7 @@
  */
 
 import { getContext } from '../../../../../../extensions.js';
-import { chat, chat_metadata, user_avatar, setExtensionPrompt, extension_prompt_types, updateMessageBlock } from '../../../../../../../script.js';
+import { chat, chat_metadata, user_avatar, updateMessageBlock } from '../../../../../../../script.js';
 
 // Core modules
 import {
@@ -825,19 +825,8 @@ export function updatePersonaAvatar() {
     }
 }
 
-/**
- * Clears all extension prompts.
- */
-export function clearExtensionPrompts() {
-    setExtensionPrompt('rpg-companion-inject', '', extension_prompt_types.IN_CHAT, 0, false);
-    setExtensionPrompt('rpg-companion-example', '', extension_prompt_types.IN_CHAT, 0, false);
-    setExtensionPrompt('rpg-companion-html', '', extension_prompt_types.IN_CHAT, 0, false);
-    setExtensionPrompt('rpg-companion-dialogue-coloring', '', extension_prompt_types.IN_CHAT, 0, false);
-    setExtensionPrompt('rpg-companion-spotify', '', extension_prompt_types.IN_CHAT, 0, false);
-    setExtensionPrompt('rpg-companion-context', '', extension_prompt_types.IN_CHAT, 1, false);
-    // Note: rpg-companion-plot is not cleared here since it's passed via quiet_prompt option
-    // console.log('[RPG Companion] Cleared all extension prompts');
-}
+// One place knows the prompt slots (index.js imports this from here)
+export { clearExtensionPrompts } from '../generation/injector.js';
 
 /**
  * Event handler for when generation stops or ends
