@@ -33,6 +33,7 @@ import {
     SPOTIFY_FORMAT_INSTRUCTION
 } from './promptBuilder.js';
 import { restoreCheckpointOnLoad } from '../features/chapterCheckpoint.js';
+import { advanceDiceRoll } from '../features/dice.js';
 import { commitTrackerDataFromPriorMessage } from '../../core/persistence.js';
 
 // Track suppression state for event handler
@@ -624,6 +625,11 @@ export async function onGenerationStarted(type, data, dryRun) {
 
     // Ensure checkpoint is applied before generation
     await restoreCheckpointOnLoad();
+
+    // A saved dice roll belongs to one turn
+    if (!shouldSuppress) {
+        advanceDiceRoll(type);
+    }
 
     // If this is a new generation (not a swipe and not the tracker update pass),
     // commit the tracker data from the last assistant message (N-1 rule).

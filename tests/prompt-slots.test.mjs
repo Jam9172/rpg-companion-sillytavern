@@ -105,3 +105,22 @@ test('history notes stay out of the prompt once RPG Companion is off or the chat
     await script.eventSource.emit('CHAT_CHANGED');
     assert.deepEqual(notesOn(await sent()), ['', '', ''], 'another chat');
 });
+
+test('a saved dice roll is sent for one turn (and its swipes), then forgotten', async () => {
+    const rolled = () => /rolled 17 on the last 1d20 roll/.test(slots['rpg-companion-inject']?.value || '');
+    setChat(reply('Welcome.'), user('I pick the lock.'), reply('You are in a cell.', 'Cell'));
+    s.lastDiceRoll = { formula: '1d20', total: 17, rolls: [17] };
+
+    await generate();              // the message the roll was made for
+    assert.equal(rolled(), true, 'the turn it was rolled for');
+    script.chat.push(user('I climb out.'), reply('You slip.', 'Yard'));
+    await generate('swipe');       // another try at that reply: same roll
+    assert.equal(rolled(), true, 'a swipe of that reply');
+    await generate('regenerate');
+    assert.equal(rolled(), true, 'Regenerate of that reply');
+
+    script.chat.push(user('I get up.'), reply('You stand.', 'Yard'));
+    await generate();              // the next turn
+    assert.equal(rolled(), false, 'the next turn');
+    assert.equal(s.lastDiceRoll, null);
+});

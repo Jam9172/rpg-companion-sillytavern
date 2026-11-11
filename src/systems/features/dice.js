@@ -116,6 +116,25 @@ export function clearDiceRoll() {
 }
 
 /**
+ * A saved roll is for one turn: the reply to the next message, and any swipe or Regenerate of that reply.
+ * Called when a generation starts. A new turn uses the roll if it is fresh, and drops one that an earlier
+ * turn already used (it used to be sent with every later message, in every chat, until cleared by hand).
+ * @param {string} generationType - SillyTavern's generation type
+ */
+export function advanceDiceRoll(generationType) {
+    const roll = extensionSettings.lastDiceRoll;
+    const startsNewTurn = !generationType || generationType === 'normal';
+    if (!roll || !startsNewTurn) return;
+
+    if (roll.used) {
+        clearDiceRoll();
+    } else {
+        roll.used = true;
+        saveSettings();
+    }
+}
+
+/**
  * Adds the Roll Dice quick reply button.
  */
 export function addDiceQuickReply() {

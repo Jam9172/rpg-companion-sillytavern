@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Fixed a saved dice roll being sent with every later message, in every chat, until you cleared it by hand. A roll is now for one turn: the reply to your next message, and any swipe or Regenerate of that reply. When the turn after that starts, "Last Roll" goes back to None.
 - Fixed History Persistence notes landing on the wrong message for short messages (chat completion APIs). The message was looked for by searching every prompt entry for its text, first entry first, so "ok" matched "Look…" in the main prompt and the notes for several turns piled up there. Notes now only go on a chat message of the right role whose whole text matches, found in the chat's own order.
 - Fixed prompts being left behind. After the story was deleted back to the greeting, the old location, items and stats were still sent as the "previous trackers" until the chat was switched or reloaded. Turning RPG Companion off left the Deception, Omniscience Filter and CYOA prompts in place, and History Persistence notes from the last turn could follow into the next request, even in another chat. Every slot is now emptied in one place, and the notes are dropped when the extension is off, for image prompts and on a chat switch.
 - Fixed a chat without a greeting getting no previous trackers on its second turn (Together mode).
