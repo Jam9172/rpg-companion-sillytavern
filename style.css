@@ -114,6 +114,18 @@ body:has(.rpg-panel.rpg-position-left) #sheld {
     border-radius: 0 0.5em 0.5em 0;
 }
 
+/* Desktop, panel open: the tab sits across the panel's edge (half in the panel's own gutter) instead of
+   wholly over the chat, where it covered the edit and "..." buttons of the message beside it */
+@media (min-width: 1001px) {
+    .rpg-panel.rpg-position-right:not(.rpg-collapsed) .rpg-collapse-toggle {
+        left: -1.125rem;
+    }
+
+    .rpg-panel.rpg-position-left:not(.rpg-collapsed) .rpg-collapse-toggle {
+        right: -1.125rem;
+    }
+}
+
 /* Hide collapse button for top position */
 .rpg-panel.rpg-position-top .rpg-collapse-toggle {
     display: none;
