@@ -1,5 +1,8 @@
 {
     "settings.language.label": "Язык",
+    "template.promptsEditor.messages.saved": "Промпты сохранены.",
+    "template.promptsEditor.messages.restored": "В поле показан текст по умолчанию. Нажмите «Сохранить», чтобы оставить его.",
+    "template.promptsEditor.messages.restoredAll": "Во всех полях показан текст по умолчанию. Нажмите «Сохранить», чтобы оставить его.",
     "settings.language.option.en": "English",
     "settings.language.option.zh-cn": "简体中文",
     "settings.language.option.zh-tw": "繁體中文",

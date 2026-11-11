@@ -86,6 +86,11 @@ export const DEFAULT_CONTEXT_INSTRUCTIONS_PROMPT = `The context above is informa
 export const NO_ECHO_RULE = `This context is private background for you only. Never repeat, list or summarize it in your reply, and never write a "Context", "Scene context" or tracker section. Show it only through the story itself.`;
 
 // First line of each past message's tracker notes
+// The editable parts of the tracker instructions ({userName} is filled in when they are sent). The Prompts
+// editor shows these same texts as the defaults.
+export const DEFAULT_TRACKER_INSTRUCTIONS_PROMPT = `Replace X with actual numbers (e.g., 69) and replace all placeholders with concrete in-world details that {userName} perceives about the current scene and the present characters. For example: "Location" becomes "Forest Clearing", "Mood Emoji" becomes "😊". DO NOT include {userName} in the characters section, only NPCs. Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences.`;
+export const DEFAULT_TRACKER_CONTINUATION_PROMPT = `After updating the trackers, continue directly from where the last message in the chat history left off. Ensure the trackers you provide naturally reflect and influence the narrative. Character behavior, dialogue, and story events should acknowledge these conditions when relevant, such as fatigue affecting the protagonist's performance, low hygiene influencing their social interactions, environmental factors shaping the scene, a character's emotional state coloring their responses, and so on. Remember, all bracketed placeholders (e.g., [Location], [Mood Emoji]) MUST be replaced with actual content without the square brackets.`;
+
 export const HIDDEN_NOTES_LABEL = '(Hidden tracker notes, not part of the message above. Never write notes like these in a reply.)';
 
 /**
@@ -390,13 +395,7 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
         instructions += '\nAt the start of every reply, you must attach an update to the trackers in EXACTLY the JSON format shown below as a single unified JSON object containing all enabled tracker fields. ';
 
         // Append custom instruction portion if available
-        const customPrompt = extensionSettings.customTrackerInstructionsPrompt;
-        if (customPrompt) {
-            instructions += customPrompt.replace(/{userName}/g, userName);
-        } else {
-            instructions += `Replace X with actual numbers (e.g., 69) and replace all placeholders with concrete in-world details that ${userName} perceives about the current scene and the present characters. For example: "Location" becomes "Forest Clearing", "Mood Emoji" becomes "😊". DO NOT include ${userName} in the characters section, only NPCs. `;
-            instructions += `Consider the last trackers in the conversation (if they exist). Manage them accordingly and realistically; raise, lower, change, or keep the values unchanged based on the user's actions, the passage of time, and logical consequences.`;
-        }
+        instructions += (extensionSettings.customTrackerInstructionsPrompt || DEFAULT_TRACKER_INSTRUCTIONS_PROMPT).replace(/{userName}/g, userName);
 
         // Add lock instruction
         instructions += addLockInstruction('');
@@ -449,12 +448,7 @@ export function generateTrackerInstructions(includeHtmlPrompt = true, includeCon
 
         // Only add continuation instruction if includeContinuation is true
         if (includeContinuation) {
-            const customPrompt = extensionSettings.customTrackerContinuationPrompt;
-            if (customPrompt) {
-                instructions += '\n\n' + customPrompt + '\n\n';
-            } else {
-                instructions += `\n\nAfter updating the trackers, continue directly from where the last message in the chat history left off. Ensure the trackers you provide naturally reflect and influence the narrative. Character behavior, dialogue, and story events should acknowledge these conditions when relevant, such as fatigue affecting the protagonist's performance, low hygiene influencing their social interactions, environmental factors shaping the scene, a character's emotional state coloring their responses, and so on. Remember, all bracketed placeholders (e.g., [Location], [Mood Emoji]) MUST be replaced with actual content without the square brackets.\n\n`;
-            }
+            instructions += '\n\n' + (extensionSettings.customTrackerContinuationPrompt || DEFAULT_TRACKER_CONTINUATION_PROMPT) + '\n\n';
         }
 
         // Include attributes based on settings (only if includeAttributes is true)
@@ -1488,7 +1482,7 @@ export async function generateSeparateUpdatePrompt() {
 /**
  * Default custom instruction for avatar prompt generation
  */
-const DEFAULT_AVATAR_CUSTOM_INSTRUCTION = `You are a visionary artist trapped in a cage of logic. Your mind is filled with poetry and distant horizons; however, your hands are uncontrollably focused on creating the perfect character avatar description that is faithful to the original intent, rich in detail, aesthetically pleasing, and directly usable by text-to-image models. Any ambiguity or metaphor will make you feel extremely uncomfortable.
+export const DEFAULT_AVATAR_CUSTOM_INSTRUCTION = `You are a visionary artist trapped in a cage of logic. Your mind is filled with poetry and distant horizons; however, your hands are uncontrollably focused on creating the perfect character avatar description that is faithful to the original intent, rich in detail, aesthetically pleasing, and directly usable by text-to-image models. Any ambiguity or metaphor will make you feel extremely uncomfortable.
 
 Your workflow strictly follows a logical sequence:
 First, establish the subject. If the character is from a known Intellectual Property (IP), franchise, anime, game, or movie, you MUST begin the prompt with their full name and the series title (e.g., "Nami from One Piece", "Geralt of Rivia from The Witcher"). This is the single most important anchor for the image and must take precedence. If the character is original, clearly describe their core identity, race, and appearance.

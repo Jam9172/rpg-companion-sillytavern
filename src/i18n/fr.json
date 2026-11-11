@@ -1,5 +1,8 @@
 {
     "settings.language.label": "Langue",
+    "template.promptsEditor.messages.saved": "Prompts enregistrés.",
+    "template.promptsEditor.messages.restored": "La zone affiche le texte par défaut. Appuyez sur Enregistrer pour le conserver.",
+    "template.promptsEditor.messages.restoredAll": "Chaque zone affiche son texte par défaut. Appuyez sur Enregistrer pour les conserver.",
     "settings.language.option.en": "English",
     "settings.language.option.zh-cn": "简体中文",
     "settings.language.option.zh-tw": "繁體中文",

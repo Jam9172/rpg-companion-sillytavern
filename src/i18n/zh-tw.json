@@ -1,5 +1,8 @@
 {
     "settings.language.label": "語言",
+    "template.promptsEditor.messages.saved": "提示詞已儲存。",
+    "template.promptsEditor.messages.restored": "輸入框已顯示預設內容。點擊「儲存」以保留。",
+    "template.promptsEditor.messages.restoredAll": "所有輸入框已顯示預設內容。點擊「儲存」以保留。",
     "settings.language.option.en": "English",
     "settings.language.option.zh-cn": "简体中文",
     "settings.language.option.zh-tw": "繁體中文",
