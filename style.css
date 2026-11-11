@@ -16777,3 +16777,21 @@ body.rpg-compact-phone #rpg-plot-buttons .rpg-btn-text {
     font-style: italic;
     opacity: 0.7;
 }
+
+/* ==========================================================================
+   Full-screen layers (popup backdrops)
+   On phones SillyTavern fixes <body>, which leaves <html> with no height, and a fixed box is measured
+   against <html> (it has a transform). "inset: 0" alone then gives a layer with no height: nothing is
+   dimmed and a tap outside the popup doesn't close it. Sized by the viewport, they cover the screen on
+   every layout.
+   ========================================================================== */
+.rpg-settings-popup,
+.rpg-dice-popup,
+.rpg-focus-modal,
+#rpg-thoughts-backdrop,
+#rpg-elsewhere-backdrop {
+    box-sizing: border-box;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+}
