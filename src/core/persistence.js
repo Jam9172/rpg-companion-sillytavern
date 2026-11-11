@@ -892,12 +892,18 @@ export function getSwipeData(message, swipeId) {
  * @param {Object} message - Assistant message object
  * @returns {number} Active swipe index
  */
-function resolveActiveSwipeId(message) {
+export function resolveActiveSwipeId(message) {
     const fallbackSwipeId = Number(message?.swipe_id ?? 0);
     const swipes = Array.isArray(message?.swipes) ? message.swipes : null;
 
     if (!swipes || swipes.length === 0) {
         return Math.max(0, fallbackSwipeId);
+    }
+
+    // A new swipe being generated: SillyTavern sets swipe_id to swipes.length but leaves the text as the
+    // old swipe's, so matching by text would pick the swipe it replaces
+    if (fallbackSwipeId >= swipes.length) {
+        return fallbackSwipeId;
     }
 
     const currentText = typeof message?.mes === 'string' ? message.mes : '';

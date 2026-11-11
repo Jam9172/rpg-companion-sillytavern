@@ -4,6 +4,7 @@ Changes in this fork of [RPG Companion](https://github.com/SpicyMarinara/rpg-com
 
 ## Unreleased (next release: 1.1.0)
 
+- Fixed swipes and Regenerate starting from the wrong state. The model was given the trackers of the very reply being replaced as the "previous" state, so each new attempt built on the last one (HP 100 → 90 → 80 across three swipes of one turn, without the story moving). A swipe or Regenerate now starts from the state before the reply it replaces. In Separate and External modes the tracker update now also runs for a swiped or regenerated reply (it was skipped, so the panel kept the old reply's data).
 - Fixed a rare case where two of RPG Companion's background requests running at once (the tracker request and Cast, say) could get each other's reply, when the model's reply needed the extended-thinking fallback.
 - Fixed a tracker update being dropped when the model wrote an apostrophe as \' inside its JSON ("I don\'t trust him."), which models sometimes do.
 - The Info Box, the Status tab (mood, conditions, skills, stat and attribute values) and the phone panel-button widgets escape text from the model.

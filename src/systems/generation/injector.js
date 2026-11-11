@@ -10,7 +10,8 @@ import {
     committedTrackerData,
     lastGeneratedData,
     isGenerating,
-    lastActionWasSwipe
+    lastActionWasSwipe,
+    setIsAwaitingNewMessage
 } from '../../core/state.js';
 import { evaluateSuppression } from './suppression.js';
 import { parseUserStats } from './parser.js';
@@ -622,7 +623,13 @@ export async function onGenerationStarted(type, data, dryRun) {
     // commit the tracker data from the last assistant message (N-1 rule).
     // Passing chat.length ensures we start searching backwards from the end of the chat,
     // correctly finding the latest valid assistant state regardless of where the user message is.
-    if (!lastActionWasSwipe && !isGenerating) {
+    // A swipe or Regenerate replaces the last reply (still in the chat now), so the previous state is the
+    // one before it; and a tracker update must follow the new reply (Separate and External modes).
+    const replacesLastReply = (type === 'swipe' || type === 'regenerate') && chat?.length > 0 && !chat[chat.length - 1].is_user;
+    if (replacesLastReply) {
+        commitTrackerDataFromPriorMessage(chat.length - 1);
+        setIsAwaitingNewMessage(true);
+    } else if (!lastActionWasSwipe && !isGenerating) {
         commitTrackerDataFromPriorMessage(chat ? chat.length : 0);
     }
 

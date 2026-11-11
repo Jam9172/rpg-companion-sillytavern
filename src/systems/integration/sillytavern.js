@@ -36,7 +36,8 @@ import {
     inheritSwipeDataFromPriorMessage,
     flushDeferredChatDataSave,
     reindexSwipeTrackerData,
-    withUnchangedTrackers
+    withUnchangedTrackers,
+    resolveActiveSwipeId
 } from '../../core/persistence.js';
 import { i18n } from '../../core/i18n.js';
 
@@ -232,38 +233,6 @@ function getCurrentSwipeText(message) {
     }
 
     return typeof message?.mes === 'string' ? message.mes : '';
-}
-
-/**
- * Resolves the currently active swipe index for a message.
- * Some ST flows can briefly expose a stale message.swipe_id during swipe transitions,
- * so we also match against message.mes in the swipes array when possible.
- *
- * @param {Object} message - Assistant message object
- * @returns {number} Active swipe index
- */
-function resolveActiveSwipeId(message) {
-    const fallbackSwipeId = Number(message?.swipe_id ?? 0);
-    const swipes = Array.isArray(message?.swipes) ? message.swipes : null;
-
-    if (!swipes || swipes.length === 0) {
-        return Math.max(0, fallbackSwipeId);
-    }
-
-    const currentText = typeof message?.mes === 'string' ? message.mes : '';
-    if (currentText) {
-        for (let i = swipes.length - 1; i >= 0; i--) {
-            if (typeof swipes[i] === 'string' && swipes[i] === currentText) {
-                return i;
-            }
-        }
-    }
-
-    if (fallbackSwipeId < 0) {
-        return 0;
-    }
-
-    return Math.min(fallbackSwipeId, swipes.length - 1);
 }
 
 function repairLatestTrackerStateFromCurrentSwipeContent(chatMessages = getContext()?.chat || []) {
@@ -806,22 +775,12 @@ export function onMessageDeleted() {
     incrementSeparateGenerationId();
 
     const currentChat = getContext().chat || [];
-    let lastAssistantIndex = -1;
-    for (let i = currentChat.length - 1; i >= 0; i--) {
-        if (!currentChat[i].is_user && !currentChat[i].is_system) {
-            lastAssistantIndex = i;
-            break;
-        }
-    }
 
     syncDisplayedTrackerStateFromChat();
 
-    // After the display state has been rebuilt, restore generation context from
-    // the assistant message immediately before the new tail message so the next
-    // generation uses the correct N-1 tracker state.
-    if (lastAssistantIndex !== -1) {
-        commitTrackerDataFromPriorMessage(lastAssistantIndex);
-    }
+    // The next reply answers the chat as it now is, so its previous state is the latest reply's.
+    // (Regenerate deletes the old reply after generation has started from the state before it.)
+    commitTrackerDataFromPriorMessage(currentChat.length);
 
     saveChatData();
 }
